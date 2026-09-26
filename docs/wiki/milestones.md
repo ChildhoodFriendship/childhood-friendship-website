@@ -3,23 +3,27 @@
 ## Stato corrente
 
 **Fase:** 0 — Fondazioni e governance del progetto  
-**Stato:** Inizializzazione documentale completata; nessun componente applicativo ancora implementato.  
+**Stato:** Prima versione della landing page implementata e verificata con build Angular; nessun componente 3D o animazione avanzata ancora introdotto.  
 **Ultimo aggiornamento:** 2026-09-26
 
 ### Completato
 
-- Definito il contenuto operativo di `Agents.md`; creazione fisica del file ancora da completare manualmente.
+- Creato `Agents.md` nella root con istruzioni operative e riferimenti alla wiki.
 - Creata la wiki in `docs/wiki/`.
 - Definite best practices per Angular 22, Signal, Standalone Components e TypeScript rigoroso.
 - Definito il Design System iniziale con palette nero/viola, token UI, accessibilità e UI Kit condiviso.
 - Definite regole per SSR, Core Web Vitals, bundle size e caricamento delle risorse.
 - Definiti Conventional Commits e processo obbligatorio di aggiornamento della documentazione.
 - Definiti confini architetturali e limitazioni operative.
+- Creata la prima landing page responsive con sezioni hero, servizi, chi siamo, metodo di lavoro e contatti.
+- Configurata la shell standalone con route lazy-loaded per la landing page.
+- Centralizzati i token UI in `src/styles.scss` e applicata la palette ufficiale.
 
 ### In corso
 
-- Nessuna attività di codice in corso.
-- Attesa dell’autorizzazione a iniziare il primo componente applicativo.
+- Nessuna attività di codice bloccante.
+- Browser verification visuale non eseguita perché Chromium non è installato nell’ambiente; endpoint locale verificabile tramite server dev.
+- Effetti 3D e animazioni avanzate rimandati a una fase successiva.
 
 ## Roadmap
 
@@ -32,11 +36,13 @@
 
 ### Fase 1 — Shell applicativa e design foundation
 
-- [ ] Verificare e allineare la configurazione Angular 22 esistente.
-- [ ] Definire app shell, routing iniziale e layout responsive.
+- [x] Verificare e allineare la configurazione Angular 22 esistente.
+- [x] Definire app shell, routing iniziale e layout responsive.
 - [x] Definire token UI per palette nero/viola, tipografia, spaziature e stati.
-- [ ] Implementare `shared/components/` e il primo componente solo dopo conferma esplicita.
+- [x] Implementare la prima landing page responsive.
+- [ ] Implementare `shared/components/` per gli elementi UI riutilizzabili.
 - [ ] Verificare contrasto WCAG 2.2 AA e comportamento responsive del UI Kit.
+- [ ] Aggiungere effetti 3D e animazioni solo dopo una revisione dedicata.
 
 ### Fase 2 — Landing e posizionamento
 

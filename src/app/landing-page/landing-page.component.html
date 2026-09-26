@@ -1,0 +1,114 @@
+<header class="site-header">
+  <a class="brand" href="#top" aria-label="Childhood Friendship, torna all'inizio">
+    <span class="brand-mark" aria-hidden="true">CF</span>
+    <span class="brand-name">Childhood <strong>Friendship</strong></span>
+  </a>
+
+  <nav class="desktop-nav" aria-label="Navigazione principale">
+    <a href="#servizi">Cosa facciamo</a>
+    <a href="#metodo">Come lavoriamo</a>
+    <a href="#chi-siamo">Chi siamo</a>
+  </nav>
+
+  <a class="header-cta" href="#contatti">Parliamone <span aria-hidden="true">↗</span></a>
+</header>
+
+<main id="top">
+  <section class="hero section-shell" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Software studio indipendente</p>
+      <h1 id="hero-title">Idee ambiziose.<br><em>Radici solide.</em></h1>
+      <p class="hero-description">Costruiamo prodotti digitali su misura per aziende che vogliono muoversi veloce, senza compromessi sulla qualità.</p>
+      <div class="hero-actions">
+        <a class="button button-primary" href="#contatti">Raccontaci il tuo progetto <span aria-hidden="true">↗</span></a>
+        <a class="text-link" href="#servizi">Scopri cosa facciamo <span aria-hidden="true">↓</span></a>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-label="Illustrazione astratta del metodo Childhood Friendship" role="img">
+      <div class="visual-grid"></div>
+      <div class="visual-orbit orbit-one"></div>
+      <div class="visual-orbit orbit-two"></div>
+      <div class="visual-core"><span>CF</span></div>
+      <span class="visual-label label-top">BUILT WITH INTENT</span>
+      <span class="visual-label label-bottom">SINCE DAY ONE <b>✦</b></span>
+    </div>
+  </section>
+
+  <section class="trust-bar section-shell" aria-label="Punti di forza">
+    <span>Dal pensiero al prodotto</span>
+    <span class="trust-line"></span>
+    <span>Su misura, sempre</span>
+    <span class="trust-line"></span>
+    <span>Veloci per natura</span>
+  </section>
+
+  <section class="content-section section-shell" id="servizi" aria-labelledby="services-title">
+    <div class="section-heading">
+      <p class="eyebrow">Le nostre competenze</p>
+      <h2 id="services-title">Non vendiamo pacchetti.<br><em>Costruiamo possibilità.</em></h2>
+    </div>
+    <div class="service-grid">
+      @for (service of services; track service.number) {
+        <article class="service-card">
+          <div class="card-topline"><span>{{ service.number }}</span><span class="card-arrow" aria-hidden="true">↗</span></div>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+          <div class="tag-list" aria-label="Specializzazioni">
+            @for (tag of service.tags; track tag) {
+              <span>{{ tag }}</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="split-section section-shell" id="chi-siamo" aria-labelledby="about-title">
+    <div class="section-heading compact-heading">
+      <p class="eyebrow">Chi siamo</p>
+      <h2 id="about-title">L'amicizia ci ha dato il nome.<br><em>La disciplina ci definisce.</em></h2>
+    </div>
+    <div class="split-copy">
+      <p>Childhood Friendship nasce da un legame che dura nel tempo e da una convinzione semplice: il software migliore è quello costruito con cura, insieme alle persone giuste.</p>
+      <p>Uniamo pensiero strategico, design essenziale e ingegneria pragmatica per trasformare obiettivi complessi in prodotti digitali chiari, utili e pronti a crescere.</p>
+      <a class="text-link" href="#contatti">Conosciamoci <span aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+
+  <section class="process-section section-shell" id="metodo" aria-labelledby="process-title">
+    <div class="section-heading">
+      <p class="eyebrow">Il nostro metodo</p>
+      <h2 id="process-title">Pochi passaggi.<br><em>Nessun passaggio a vuoto.</em></h2>
+    </div>
+    <div class="process-list">
+      @for (step of process; track step.number) {
+        <article class="process-step">
+          <span class="step-number">{{ step.number }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.description }}</p>
+          <span class="step-line" aria-hidden="true"></span>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="contact-section section-shell" id="contatti" aria-labelledby="contact-title">
+    <div class="contact-card">
+      <div>
+        <p class="eyebrow">Hai un'idea?</p>
+        <h2 id="contact-title">Diamo forma a qualcosa<br><em>che resta.</em></h2>
+      </div>
+      <a class="button button-light" href="mailto:hello@childhoodfriendship.dev">hello@childhoodfriendship.dev <span aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer section-shell">
+  <a class="brand" href="#top" aria-label="Childhood Friendship, torna all'inizio">
+    <span class="brand-mark" aria-hidden="true">CF</span>
+    <span class="brand-name">Childhood <strong>Friendship</strong></span>
+  </a>
+  <p>Codice su misura, radici solide.</p>
+  <span class="footer-meta">© 2026 Childhood Friendship</span>
+</footer>
