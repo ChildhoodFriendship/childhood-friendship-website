@@ -260,25 +260,30 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // 3. Lighting (Vault Moody Neon Ambience + Spotlight on door & exhibits)
-    const ambientLight = new THREE.AmbientLight(0x282834, 1.4);
+    const ambientLight = new THREE.AmbientLight(0x353748, 2.2);
     this.scene.add(ambientLight);
 
-    const vaultSpotViolet = new THREE.SpotLight(0x8b5cf6, 5.0, 100, Math.PI / 3, 0.4, 1.2);
+    const vaultSpotViolet = new THREE.SpotLight(0x8b5cf6, 6.0, 120, Math.PI / 3, 0.4, 1.2);
     vaultSpotViolet.position.set(0, 35, 25);
     this.scene.add(vaultSpotViolet);
 
-    const vaultAccentCyan = new THREE.PointLight(0xa78bfa, 3.0, 70);
+    const vaultAccentCyan = new THREE.PointLight(0xa78bfa, 4.0, 80);
     vaultAccentCyan.position.set(-25, 18, 15);
     this.scene.add(vaultAccentCyan);
 
-    const vaultAccentPink = new THREE.PointLight(0xd946ef, 2.5, 70);
+    const vaultAccentPink = new THREE.PointLight(0xd946ef, 3.5, 80);
     vaultAccentPink.position.set(25, 18, 15);
     this.scene.add(vaultAccentPink);
 
     // Frontal directional key light hitting the metal vault door
-    const frontKeyLight = new THREE.DirectionalLight(0xe2e8f0, 2.2);
+    const frontKeyLight = new THREE.DirectionalLight(0xf1f5f9, 2.6);
     frontKeyLight.position.set(10, 20, 65);
     this.scene.add(frontKeyLight);
+
+    // Dedicated downlight illuminating the pedestals and computer mockups
+    const pedestalLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    pedestalLight.position.set(0, 25, 5);
+    this.scene.add(pedestalLight);
 
     // 4. Build Vault Door & Mechanism & Front Wall
     this.buildVaultDoor();
@@ -657,10 +662,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.scene.add(leftFillLight);
 
     // 1. Build 3 Pedestals with 3D Computer / Laptop Mockups
+    // Positioned gracefully across the hero view
     const positions = [
-      { x: -18, z: 0 },
-      { x: 0, z: -8 },
-      { x: 18, z: 0 }
+      { x: -14, z: 8 },
+      { x: 4, z: 2 },
+      { x: 22, z: 8 }
     ];
 
     this.projects.forEach((proj, i) => {
@@ -805,30 +811,30 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     const frameConfigs = [
       {
         project: this.projects[0],
-        x: -24,
-        y: 12,
-        z: -38,
-        width: 14,
-        height: 8.5,
-        rotY: 0.1
+        x: -26,
+        y: 11,
+        z: -20,
+        width: 15,
+        height: 9,
+        rotY: 0.28
       },
       {
         project: this.projects[1],
-        x: 0,
-        y: 14,
-        z: -39,
-        width: 16,
-        height: 9.5,
+        x: 2,
+        y: 13,
+        z: -24,
+        width: 17,
+        height: 10,
         rotY: 0
       },
       {
         project: this.projects[2],
-        x: 24,
-        y: 12,
-        z: -38,
-        width: 14,
-        height: 8.5,
-        rotY: -0.1
+        x: 28,
+        y: 11,
+        z: -20,
+        width: 15,
+        height: 9,
+        rotY: -0.28
       }
     ];
 
