@@ -3,7 +3,7 @@
 ## Stato corrente
 
 **Fase:** 0 — Fondazioni e governance del progetto  
-**Stato:** Prima versione della landing page implementata e verificata con build Angular; nessun componente 3D o animazione avanzata ancora introdotto.  
+**Stato:** Prima versione della landing page implementata e verificata con build Angular; form contatti Formspree implementato e configurato localmente, con invio reale ancora da verificare; nessun componente 3D o animazione avanzata ancora introdotto.  
 **Ultimo aggiornamento:** 2026-09-26
 
 ### Completato
@@ -16,6 +16,8 @@
 - Definiti Conventional Commits e processo obbligatorio di aggiornamento della documentazione.
 - Definiti confini architetturali e limitazioni operative.
 - Creata la prima landing page responsive con sezioni hero, servizi, chi siamo, metodo di lavoro e contatti.
+- Sostituito il collegamento `mailto:` con un form contatti AJAX basato su Formspree, senza pubblicare l’indirizzo email.
+- Centralizzato l’endpoint Formspree in `src/environments/environment.ts`, escluso da Git, con template condivisibile in `src/environments/environment.example.ts`.
 - Configurata la shell standalone con route lazy-loaded per la landing page.
 - Centralizzati i token UI in `src/styles.scss` e applicata la palette ufficiale.
 
@@ -48,7 +50,8 @@
 
 - [ ] Presentare servizi, metodo di lavoro e vantaggi competitivi.
 - [ ] Integrare slogan “Codice su misura, radici solide”.
-- [ ] Implementare CTA e contatto con accessibilità e validazione.
+- [x] Implementare CTA e contatto con accessibilità e validazione.
+- [ ] Verificare l’invio reale dopo la configurazione del Form ID in `src/environments/environment.ts`.
 
 ### Fase 3 — Qualità e rilascio
 

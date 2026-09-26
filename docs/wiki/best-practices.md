@@ -89,6 +89,14 @@ I token sono l’unica fonte autorizzata per i valori visuali ricorrenti. Non in
 - Per API disponibili solo nel browser usare guardie di piattaforma e iniezione dei token Angular appropriati; inizializzare tali effetti solo nel contesto browser.
 - Considerare il ciclo di vita server/client ed evitare effetti non idempotenti durante l’hydration.
 
+## Integrazioni esterne
+
+- Per il form contatti usare Formspree tramite `POST`/AJAX e un endpoint pubblico con il solo form ID; non inserire indirizzi email o credenziali nel frontend.
+- Il valore operativo del form è in `src/environments/environment.ts`, escluso da Git; usare `src/environments/environment.example.ts` come modello per altri ambienti.
+- I file di ambiente frontend vengono inclusi nel bundle: non inserirvi password, token segreti o credenziali. Il Form ID Formspree è un identificatore pubblico, non un segreto.
+- L’endpoint resta un segnaposto (`REPLACE_WITH_FORM_ID`) nel file di esempio fino alla configurazione da parte del proprietario dell’account.
+- Gestire esplicitamente stati di invio, successo ed errore e mantenere la validazione HTML nativa.
+
 ## Convenzioni Git
 
 Usare Conventional Commits con formato `<tipo>: <descrizione breve>`.

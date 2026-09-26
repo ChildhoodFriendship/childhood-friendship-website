@@ -99,7 +99,30 @@
         <p class="eyebrow">Hai un'idea?</p>
         <h2 id="contact-title">Diamo forma a qualcosa<br><em>che resta.</em></h2>
       </div>
-      <a class="button button-light" href="mailto:hello@childhoodfriendship.dev">hello@childhoodfriendship.dev <span aria-hidden="true">↗</span></a>
+      <form class="contact-form" [attr.action]="formspreeEndpoint" method="post" (submit)="submitContactForm($event, contactForm)" #contactForm>
+        <input type="hidden" name="_subject" value="Nuova richiesta dal sito Childhood Friendship">
+        <label for="contact-name">Nome</label>
+        <input id="contact-name" name="name" type="text" autocomplete="name" required>
+
+        <label for="contact-email">Email</label>
+        <input id="contact-email" name="email" type="email" autocomplete="email" required>
+
+        <label for="contact-message">Raccontaci il tuo progetto</label>
+        <textarea id="contact-message" name="message" rows="5" required></textarea>
+
+        <label class="honeypot" for="contact-website">Lascia vuoto questo campo</label>
+        <input id="contact-website" class="honeypot" name="_gotcha" type="text" tabindex="-1" autocomplete="off">
+
+        <button class="button button-light" type="submit" [disabled]="submissionState() === 'submitting'">
+          {{ submissionState() === 'submitting' ? 'Invio in corso…' : 'Invia il messaggio' }} <span aria-hidden="true">↗</span>
+        </button>
+        <p class="form-status" [class.form-status-success]="submissionState() === 'success'" [class.form-status-error]="submissionState() === 'error'" aria-live="polite">
+          @switch (submissionState()) {
+            @case ('success') { Grazie, abbiamo ricevuto il tuo messaggio. }
+            @case ('error') { Non è stato possibile inviare il messaggio. Riprova tra poco. }
+          }
+        </p>
+      </form>
     </div>
   </section>
 </main>
