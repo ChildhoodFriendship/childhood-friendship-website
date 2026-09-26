@@ -55,11 +55,25 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private vaultLockBars: THREE.Mesh[] = [];
   private exhibitMeshes: { mesh: THREE.Group; project: ProjectExhibit }[] = [];
   private wallFrames: { mesh: THREE.Group; borderMat?: THREE.MeshStandardMaterial; project: ProjectExhibit }[] = [];
+  private dustParticles?: THREE.Points;
+  private tecaSpotlights: THREE.SpotLight[] = [];
+  private ceilingLedMats: THREE.MeshStandardMaterial[] = [];
   private mouseX = 0;
   private mouseY = 0;
   private targetCameraPos = new THREE.Vector3(0, 0, 75);
   private currentCameraPos = new THREE.Vector3(0, 0, 75);
   private targetCameraRot = new THREE.Euler(0, 0, 0);
+
+  // Interactive Drag & Orbit Navigation
+  private isDragging = false;
+  private prevPointerX = 0;
+  private prevPointerY = 0;
+  private orbitYaw = 0;
+  private orbitPitch = 0;
+  private pointerDownListener?: (e: PointerEvent) => void;
+  private pointerMoveListener?: (e: PointerEvent) => void;
+  private pointerUpListener?: (e: PointerEvent) => void;
+  private wheelListener?: (e: WheelEvent) => void;
 
   // Projects list showcased in the vault pedestals & frames
   protected readonly projects: readonly ProjectExhibit[] = [
@@ -118,6 +132,13 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     }
     if (this.canvasClickListener && this.vaultCanvasRef?.nativeElement) {
       this.vaultCanvasRef.nativeElement.removeEventListener('click', this.canvasClickListener);
+    }
+    if (this.vaultCanvasRef?.nativeElement) {
+      const c = this.vaultCanvasRef.nativeElement;
+      if (this.pointerDownListener) c.removeEventListener('pointerdown', this.pointerDownListener);
+      if (this.pointerMoveListener) window.removeEventListener('pointermove', this.pointerMoveListener);
+      if (this.pointerUpListener) window.removeEventListener('pointerup', this.pointerUpListener);
+      if (this.wheelListener) c.removeEventListener('wheel', this.wheelListener);
     }
     this.renderer?.dispose();
   }
@@ -198,8 +219,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         this.vaultUnlocked.set(true);
         this.isUnlocking.set(false);
 
-        // Slow cinematic camera push into the room
-        this.targetCameraPos.set(0, 4, 34);
+        // Slow cinematic camera push into the room (Lower, wider perspective with dramatic upward tilt)
+        this.targetCameraPos.set(0, 3.2, 31);
       }
     }, 28);
   }
@@ -210,10 +231,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.isUnlocking.set(false);
     this.vaultDoorGroup.rotation.y = -Math.PI * 0.85;
     this.vaultDoorGroup.position.x = -80;
-    this.targetCameraPos.set(0, 4, 34);
-    this.currentCameraPos.set(0, 4, 34);
+    this.targetCameraPos.set(0, 3.2, 31);
+    this.currentCameraPos.set(0, 3.2, 31);
     if (this.camera) {
-      this.camera.position.set(0, 4, 34);
+      this.camera.position.set(0, 3.2, 31);
     }
   }
 
@@ -221,9 +242,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.selectedProject.set(project);
     const idx = this.projects.findIndex(p => p.id === project.id);
     if (idx !== -1) {
-      const angle = (idx - 1) * 0.35;
+      const angle = (idx - 1) * 0.28;
       this.targetCameraRot.y = -angle;
-      this.targetCameraPos.x = (idx - 1) * 6;
+      this.targetCameraPos.x = (idx - 1) * 8;
+      this.targetCameraPos.z = 26; // Smooth zoom into the selected exhibit
     }
   }
 
@@ -231,6 +253,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.selectedProject.set(null);
     this.targetCameraRot.y = 0;
     this.targetCameraPos.x = 0;
+    this.targetCameraPos.z = 31;
   }
 
   private initThreeVault(): void {
@@ -249,7 +272,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 300);
     this.camera.position.copy(this.currentCameraPos);
 
-    // 2. Renderer
+    // 2. Renderer (Cinema High-End Configuration)
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
@@ -258,9 +281,13 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
-    // 3. Lighting (Vault Moody Neon Ambience + Spotlight on door & exhibits)
-    const ambientLight = new THREE.AmbientLight(0x353748, 2.2);
+    // 3. Lighting (Vault Moody Neon Ambience + Spotlights & Rim Lights)
+    const ambientLight = new THREE.AmbientLight(0x28263a, 1.8);
     this.scene.add(ambientLight);
 
     const vaultSpotViolet = new THREE.SpotLight(0x8b5cf6, 6.0, 120, Math.PI / 3, 0.4, 1.2);
@@ -328,167 +355,247 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     };
     canvas.addEventListener('click', this.canvasClickListener);
 
-    // 7. Responsive Resizer
-    this.resizeListener = () => {
-      if (!this.camera || !this.renderer || !canvas) return;
-      const p = canvas.parentElement;
-      const w = p?.clientWidth || window.innerWidth;
-      const h = p?.clientHeight || window.innerHeight;
-      this.camera.aspect = w / h;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(w, h);
-    };
-    window.addEventListener('resize', this.resizeListener);
+      // 7. Interactive Free Drag & Orbit & Zoom Navigation (Cinematic 3D Room exploration)
+      this.pointerDownListener = (e: PointerEvent) => {
+        if (!this.vaultUnlocked()) return;
+        this.isDragging = true;
+        this.prevPointerX = e.clientX;
+        this.prevPointerY = e.clientY;
+      };
+      canvas.addEventListener('pointerdown', this.pointerDownListener);
 
-    // 8. Render Loop
-    const clock = new THREE.Clock();
-    const animate = () => {
-      this.animFrameId = requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      const elapsed = clock.getElapsedTime();
+      this.pointerMoveListener = (e: PointerEvent) => {
+        if (!this.isDragging || !this.vaultUnlocked()) return;
+        const dx = e.clientX - this.prevPointerX;
+        const dy = e.clientY - this.prevPointerY;
+        this.prevPointerX = e.clientX;
+        this.prevPointerY = e.clientY;
 
-      // Smooth camera interpolation
-      const smoothFactor = 0.05;
-      this.currentCameraPos.lerp(this.targetCameraPos, smoothFactor);
-      
-      if (this.camera) {
-        this.camera.position.x = this.currentCameraPos.x + this.mouseX * 2.5;
-        this.camera.position.y = this.currentCameraPos.y + this.mouseY * 1.5;
-        this.camera.position.z = this.currentCameraPos.z;
+        this.orbitYaw -= dx * 0.004;
+        this.orbitPitch -= dy * 0.003;
+        // Clamp pitch to avoid flipping
+        this.orbitPitch = Math.max(-0.45, Math.min(0.55, this.orbitPitch));
+      };
+      window.addEventListener('pointermove', this.pointerMoveListener);
 
-        this.camera.rotation.y += (this.targetCameraRot.y - this.camera.rotation.y) * 0.05;
-      }
+      this.pointerUpListener = () => {
+        this.isDragging = false;
+      };
+      window.addEventListener('pointerup', this.pointerUpListener);
 
-      // Vault door swing open animation when unlocked
-      if (this.vaultUnlocked()) {
-        if (this.vaultDoorGroup.rotation.y > -Math.PI * 0.85) {
-          this.vaultDoorGroup.rotation.y -= delta * 2.0;
+      // Smooth mouse wheel zoom in/out
+      this.wheelListener = (e: WheelEvent) => {
+        if (!this.vaultUnlocked()) return;
+        e.preventDefault();
+        const zoomDelta = e.deltaY * 0.025;
+        this.targetCameraPos.z = Math.max(16, Math.min(42, this.targetCameraPos.z + zoomDelta));
+      };
+      canvas.addEventListener('wheel', this.wheelListener, { passive: false });
+
+      // 8. Responsive Resizer
+      this.resizeListener = () => {
+        if (!this.camera || !this.renderer || !canvas) return;
+        const p = canvas.parentElement;
+        const w = p?.clientWidth || window.innerWidth;
+        const h = p?.clientHeight || window.innerHeight;
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(w, h);
+      };
+      window.addEventListener('resize', this.resizeListener);
+
+      // 9. Render Loop
+      const clock = new THREE.Clock();
+      const animate = () => {
+        this.animFrameId = requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        const elapsed = clock.getElapsedTime();
+
+        // Smooth camera interpolation
+        const smoothFactor = 0.05;
+        this.currentCameraPos.lerp(this.targetCameraPos, smoothFactor);
+        
+        if (this.camera) {
+          // Cinematic camera floating + user orbit yaw/pitch
+          const breatheY = Math.sin(elapsed * 0.8) * 0.25;
+          const breatheX = Math.cos(elapsed * 0.6) * 0.35;
+
+          this.camera.position.x = this.currentCameraPos.x + breatheX + this.mouseX * 2.2;
+          this.camera.position.y = this.currentCameraPos.y + breatheY + this.mouseY * 1.4;
+          this.camera.position.z = this.currentCameraPos.z;
+
+          // Camera rotation with drag-orbit yaw & pitch + subtle mouse sway
+          const targetRotY = this.targetCameraRot.y + this.orbitYaw - this.mouseX * 0.12;
+          const targetRotX = this.orbitPitch + this.mouseY * 0.08;
+
+          this.camera.rotation.y += (targetRotY - this.camera.rotation.y) * 0.06;
+          this.camera.rotation.x += (targetRotX - this.camera.rotation.x) * 0.06;
         }
-        if (this.vaultDoorGroup.position.x > -65) {
-          this.vaultDoorGroup.position.x -= delta * 32;
+
+        // Vault door swing open animation when unlocked
+        if (this.vaultUnlocked()) {
+          if (this.vaultDoorGroup.rotation.y > -Math.PI * 0.85) {
+            this.vaultDoorGroup.rotation.y -= delta * 2.0;
+          }
+          if (this.vaultDoorGroup.position.x > -65) {
+            this.vaultDoorGroup.position.x -= delta * 32;
+          }
         }
-      }
 
-      // Subtle float animation for computer mockups
-      this.exhibitMeshes.forEach((item, index) => {
-        const floatOffset = Math.sin(elapsed * 1.6 + index * 1.8) * 0.15;
-        item.mesh.position.y = 5.2 + floatOffset;
-        item.mesh.rotation.y += 0.006;
-      });
+        // Subtle float animation for computer mockups
+        this.exhibitMeshes.forEach((item, index) => {
+          const floatOffset = Math.sin(elapsed * 1.6 + index * 1.8) * 0.15;
+          item.mesh.position.y = 5.2 + floatOffset;
+          item.mesh.rotation.y += 0.006;
+        });
 
-      // Subtle hover glow animation on wall frames
-      this.wallFrames.forEach((frame, index) => {
-        const pulse = 0.9 + Math.sin(elapsed * 2.0 + index) * 0.15;
-        if (frame.borderMat) {
-          frame.borderMat.emissiveIntensity = pulse;
+        // Subtle hover glow animation on wall frames
+        this.wallFrames.forEach((frame, index) => {
+          const pulse = 0.9 + Math.sin(elapsed * 2.0 + index) * 0.15;
+          if (frame.borderMat) {
+            frame.borderMat.emissiveIntensity = pulse;
+          }
+        });
+
+        // Dynamic breathing for honeycomb ceiling LED lights
+        this.ceilingLedMats.forEach((mat, idx) => {
+          mat.emissiveIntensity = 1.4 + Math.sin(elapsed * 2.2 + idx * 0.4) * 0.8;
+        });
+
+        // Atmospheric dust particle drifting
+        if (this.dustParticles) {
+          this.dustParticles.rotation.y = elapsed * 0.02;
+          this.dustParticles.rotation.x = Math.sin(elapsed * 0.015) * 0.05;
         }
-      });
 
-      if (this.renderer && this.scene && this.camera) {
-        this.renderer.render(this.scene, this.camera);
-      }
-    };
-    animate();
-  }
+        // Museum spotlight breathing effect on teche
+        this.tecaSpotlights.forEach((spot, i) => {
+          spot.intensity = 4.2 + Math.sin(elapsed * 1.5 + i * 1.2) * 0.6;
+        });
+
+        if (this.renderer && this.scene && this.camera) {
+          this.renderer.render(this.scene, this.camera);
+        }
+      };
+      animate();
+    }
 
   private buildVaultDoor(): void {
     if (!this.scene) return;
 
     // A. Front Massive Reinforced Wall (Surrounding the vault door at z = 44)
+    // The door center is at y = 0. The portal opening is a clean full-circle cutout of radius 17.5.
     const frontWallGroup = new THREE.Group();
     frontWallGroup.position.set(0, 0, 44);
 
     const wallConcreteMat = new THREE.MeshStandardMaterial({
-      color: 0x1f2227,
-      metalness: 0.55,
-      roughness: 0.65
+      color: 0x16181f,
+      metalness: 0.65,
+      roughness: 0.6
     });
     const wallTrimMat = new THREE.MeshStandardMaterial({
-      color: 0x333740,
-      metalness: 0.85,
-      roughness: 0.3
+      color: 0x333742,
+      metalness: 0.9,
+      roughness: 0.25
     });
 
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(100, 70, 4), wallConcreteMat);
-    leftWall.position.set(-68, 0, 0);
+    // Outer wall slabs: left, right, top, bottom, positioned outside the circular radius
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 4), wallConcreteMat);
+    leftWall.position.set(-67.5, 0, 0);
     frontWallGroup.add(leftWall);
 
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(100, 70, 4), wallConcreteMat);
-    rightWall.position.set(68, 0, 0);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 4), wallConcreteMat);
+    rightWall.position.set(67.5, 0, 0);
     frontWallGroup.add(rightWall);
 
-    const topWall = new THREE.Mesh(new THREE.BoxGeometry(40, 20, 4), wallConcreteMat);
-    topWall.position.set(0, 25, 0);
+    const topWall = new THREE.Mesh(new THREE.BoxGeometry(36, 40, 4), wallConcreteMat);
+    topWall.position.set(0, 37.5, 0);
     frontWallGroup.add(topWall);
 
-    const bottomWall = new THREE.Mesh(new THREE.BoxGeometry(40, 20, 4), wallConcreteMat);
-    bottomWall.position.set(0, -25, 0);
+    const bottomWall = new THREE.Mesh(new THREE.BoxGeometry(36, 40, 4), wallConcreteMat);
+    bottomWall.position.set(0, -37.5, 0);
     frontWallGroup.add(bottomWall);
 
-    const portalRimGeo = new THREE.TorusGeometry(18.8, 1.8, 20, 64);
+    // Diagonal corner fillers for a neat circular silhouette
+    [-1, 1].forEach(sx => {
+      [-1, 1].forEach(sy => {
+        const cornerGeo = new THREE.BoxGeometry(18, 18, 4);
+        const corner = new THREE.Mesh(cornerGeo, wallConcreteMat);
+        corner.position.set(sx * 22, sy * 22, 0);
+        corner.rotation.z = Math.PI / 4;
+        frontWallGroup.add(corner);
+      });
+    });
+
+    // Vault portal opening rim trim (Heavy Machined Titanium Ring)
+    const portalRimGeo = new THREE.TorusGeometry(17.6, 1.4, 24, 80);
     const portalRim = new THREE.Mesh(portalRimGeo, wallTrimMat);
     portalRim.position.set(0, 0, 1.5);
     frontWallGroup.add(portalRim);
 
     this.scene.add(frontWallGroup);
 
-    // B. Vault Door Group
+    // B. Vault Door Group (Scaled and centered to be 100% complete and fully circular)
     this.vaultDoorGroup = new THREE.Group();
     this.vaultDoorGroup.position.set(0, 0, 45);
 
     const industrialGraySteel = new THREE.MeshStandardMaterial({
       color: 0x4a4e56,
-      metalness: 0.92,
-      roughness: 0.28
+      metalness: 0.94,
+      roughness: 0.25
     });
     const darkArmoredSteel = new THREE.MeshStandardMaterial({
-      color: 0x2b2e34,
-      metalness: 0.88,
-      roughness: 0.35
+      color: 0x24272f,
+      metalness: 0.9,
+      roughness: 0.32
     });
     const machinedBronzeGold = new THREE.MeshStandardMaterial({
       color: 0xd4a359,
-      metalness: 0.92,
-      roughness: 0.22,
+      metalness: 0.95,
+      roughness: 0.2,
       emissive: 0x422d0c,
-      emissiveIntensity: 0.25
+      emissiveIntensity: 0.3
     });
     const gearPurpleMat = new THREE.MeshStandardMaterial({
       color: 0x8b5cf6,
-      metalness: 0.8,
-      roughness: 0.25,
+      metalness: 0.85,
+      roughness: 0.22,
       emissive: 0x3b1d75,
-      emissiveIntensity: 0.35
+      emissiveIntensity: 0.4
     });
 
-    const rimGeo = new THREE.TorusGeometry(18.2, 2.0, 24, 64);
+    // 1. Heavy Outer Steel Bezel Ring (R = 16.5)
+    const rimGeo = new THREE.TorusGeometry(16.5, 1.3, 24, 80);
     const rim = new THREE.Mesh(rimGeo, darkArmoredSteel);
     this.vaultDoorGroup.add(rim);
 
-    const doorGeo = new THREE.CylinderGeometry(17.6, 17.6, 2.6, 64);
+    // 2. Thick Vault Door Core Disc (Gray machined metal, R = 16.0)
+    const doorGeo = new THREE.CylinderGeometry(16.0, 16.0, 2.4, 80);
     const door = new THREE.Mesh(doorGeo, industrialGraySteel);
     door.rotation.x = Math.PI / 2;
     this.vaultDoorGroup.add(door);
 
-    const innerPlateGeo = new THREE.CylinderGeometry(13.8, 14.2, 0.6, 64);
+    // Central stepped metallic relief plate (R = 12.6)
+    const innerPlateGeo = new THREE.CylinderGeometry(12.6, 13.0, 0.6, 80);
     const innerPlate = new THREE.Mesh(innerPlateGeo, darkArmoredSteel);
     innerPlate.rotation.x = Math.PI / 2;
-    innerPlate.position.z = 1.35;
+    innerPlate.position.z = 1.25;
     this.vaultDoorGroup.add(innerPlate);
 
+    // 3. Perimeter Bronze/Gold Rivet Bolts around the circle
     const rivetCount = 36;
-    const rivetGeo = new THREE.SphereGeometry(0.44, 14, 14);
+    const rivetGeo = new THREE.SphereGeometry(0.38, 14, 14);
     for (let i = 0; i < rivetCount; i++) {
       const angle = (i / rivetCount) * Math.PI * 2;
       const rivet = new THREE.Mesh(rivetGeo, machinedBronzeGold);
-      rivet.position.set(Math.cos(angle) * 16.8, Math.sin(angle) * 16.8, 1.4);
+      rivet.position.set(Math.cos(angle) * 15.2, Math.sin(angle) * 15.2, 1.25);
       this.vaultDoorGroup.add(rivet);
     }
 
     for (let i = 0; i < 20; i++) {
       const angle = (i / 20) * Math.PI * 2;
       const innerRivet = new THREE.Mesh(rivetGeo, machinedBronzeGold);
-      innerRivet.position.set(Math.cos(angle) * 12.8, Math.sin(angle) * 12.8, 1.7);
+      innerRivet.position.set(Math.cos(angle) * 11.6, Math.sin(angle) * 11.6, 1.55);
       this.vaultDoorGroup.add(innerRivet);
     }
 
@@ -640,6 +747,62 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     backWall.position.set(0, 15, -40);
     this.scene.add(backWall);
 
+    // Architectural Dark Ceiling
+    const ceilingGeo = new THREE.PlaneGeometry(240, 120);
+    const ceilingMat = new THREE.MeshStandardMaterial({
+      color: 0x08090d,
+      roughness: 0.8,
+      metalness: 0.4
+    });
+    const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.set(0, 32, -5);
+    this.scene.add(ceiling);
+
+    // Simulated Honeycomb/Alveolare LED Ceiling Lights Matrix
+    const honeycombGroup = new THREE.Group();
+    honeycombGroup.position.set(0, 31.8, -8);
+    honeycombGroup.rotation.x = Math.PI / 2;
+
+    const hexCols = 7;
+    const hexRows = 3;
+    const hexRadius = 4.2;
+    const dx = hexRadius * 1.732;
+    const dy = hexRadius * 1.5;
+
+    for (let r = 0; r < hexRows; r++) {
+      for (let c = 0; c < hexCols; c++) {
+        const xOffset = (c - (hexCols - 1) / 2) * dx + (r % 2 === 1 ? dx / 2 : 0);
+        const yOffset = (r - (hexRows - 1) / 2) * dy;
+
+        // Thin glowing hexagon ring
+        const hexGeo = new THREE.RingGeometry(hexRadius - 0.22, hexRadius, 6);
+        const hexLedMat = new THREE.MeshStandardMaterial({
+          color: (c + r) % 2 === 0 ? 0x8b5cf6 : 0x38bdf8,
+          emissive: (c + r) % 2 === 0 ? 0x8b5cf6 : 0x38bdf8,
+          emissiveIntensity: 1.8,
+          roughness: 0.2
+        });
+        const hexMesh = new THREE.Mesh(hexGeo, hexLedMat);
+        hexMesh.position.set(xOffset, yOffset, 0);
+        honeycombGroup.add(hexMesh);
+        this.ceilingLedMats.push(hexLedMat);
+
+        // Center light node inside hexagon
+        const nodeGeo = new THREE.CircleGeometry(0.35, 12);
+        const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
+        nodeMesh.position.set(xOffset, yOffset, 0.05);
+        honeycombGroup.add(nodeMesh);
+      }
+    }
+    this.scene.add(honeycombGroup);
+
+    // Overhead ambient fill from honeycomb lights
+    const honeycombFill = new THREE.PointLight(0xa78bfa, 2.5, 75);
+    honeycombFill.position.set(0, 28, -8);
+    this.scene.add(honeycombFill);
+
     // Vault Side Walls
     const sideWallGeo = new THREE.PlaneGeometry(120, 80);
     const leftSideWall = new THREE.Mesh(sideWallGeo, wallMat);
@@ -675,41 +838,87 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       exhibitGroup.position.set(pos.x, -6, pos.z);
       exhibitGroup.userData['project'] = proj;
 
-      const baseGeo = new THREE.CylinderGeometry(3.6, 4.2, 4, 32);
+      // 1. Pedestal Base (Machined Dark Obsidian & Chamfered Rim)
+      const baseGeo = new THREE.CylinderGeometry(3.6, 4.3, 4, 40);
       const baseMat = new THREE.MeshStandardMaterial({
-        color: 0x181a20,
-        metalness: 0.8,
-        roughness: 0.3
+        color: 0x14161d,
+        metalness: 0.88,
+        roughness: 0.25
       });
       const base = new THREE.Mesh(baseGeo, baseMat);
       base.position.y = 2;
+      base.castShadow = true;
+      base.receiveShadow = true;
       exhibitGroup.add(base);
 
-      const ringGeo = new THREE.TorusGeometry(3.9, 0.16, 12, 32);
+      // Base top metal trim ring
+      const baseTopTrimGeo = new THREE.CylinderGeometry(3.65, 3.65, 0.25, 40);
+      const metalTrimMat = new THREE.MeshStandardMaterial({
+        color: 0x334155,
+        metalness: 0.95,
+        roughness: 0.2
+      });
+      const baseTrim = new THREE.Mesh(baseTopTrimGeo, metalTrimMat);
+      baseTrim.position.y = 4.0;
+      exhibitGroup.add(baseTrim);
+
+      // 2. Pedestal Neon Ring (Vibrant glowing laser ring)
+      const ringGeo = new THREE.TorusGeometry(3.7, 0.14, 16, 48);
       const ringMat = new THREE.MeshStandardMaterial({
         color: proj.color,
         emissive: proj.color,
-        emissiveIntensity: 1.8
+        emissiveIntensity: 2.8,
+        roughness: 0.1
       });
       const neonRing = new THREE.Mesh(ringGeo, ringMat);
       neonRing.rotation.x = Math.PI / 2;
-      neonRing.position.y = 4.1;
+      neonRing.position.y = 4.15;
       exhibitGroup.add(neonRing);
 
-      const glassGeo = new THREE.CylinderGeometry(3.3, 3.3, 7.0, 32, 1, true);
+      // Upward Internal Glow from pedestal floor
+      const internalUpLight = new THREE.PointLight(proj.color, 2.5, 12, 1.5);
+      internalUpLight.position.set(0, 4.4, 0);
+      exhibitGroup.add(internalUpLight);
+
+      // 3. Luxury Glass Showcase Case (Ultra-clear bevelled museum bell)
+      // Glass body
+      const glassGeo = new THREE.CylinderGeometry(3.4, 3.4, 7.2, 40, 1, true);
       const glassMat = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,
         transparent: true,
-        opacity: 0.18,
-        roughness: 0.05,
-        metalness: 0.1,
-        transmission: 0.9,
-        ior: 1.5
+        opacity: 0.32,
+        roughness: 0.04,
+        metalness: 0.08,
+        transmission: 0.95,
+        ior: 1.52,
+        reflectivity: 0.9
       });
       const glassTeca = new THREE.Mesh(glassGeo, glassMat);
-      glassTeca.position.y = 7.5;
+      glassTeca.position.y = 7.7;
       exhibitGroup.add(glassTeca);
 
+      // Glass Top Dome / Cap
+      const glassCapGeo = new THREE.CylinderGeometry(3.4, 3.4, 0.2, 40);
+      const glassCap = new THREE.Mesh(glassCapGeo, glassMat);
+      glassCap.position.y = 11.3;
+      exhibitGroup.add(glassCap);
+
+      // Metal Ring Crown on top of glass
+      const glassCrownGeo = new THREE.TorusGeometry(3.42, 0.1, 12, 40);
+      const crownMesh = new THREE.Mesh(glassCrownGeo, metalTrimMat);
+      crownMesh.rotation.x = Math.PI / 2;
+      crownMesh.position.y = 11.3;
+      exhibitGroup.add(crownMesh);
+
+      // 4. Dedicated Overhead Museum Spotlight for this pedestal
+      const tecaSpot = new THREE.SpotLight(proj.color, 4.5, 30, Math.PI / 4, 0.35, 1.2);
+      tecaSpot.position.set(pos.x, 18, pos.z + 2);
+      tecaSpot.target = exhibitGroup;
+      tecaSpot.castShadow = true;
+      this.scene?.add(tecaSpot);
+      this.tecaSpotlights.push(tecaSpot);
+
+      // 5. 3D Computer / Laptop Mockup inside the glass showcase
       const computerMockup = this.createComputerMockup(proj, i);
       computerMockup.position.y = 5.2;
       computerMockup.userData['project'] = proj;
@@ -719,7 +928,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       this.exhibitMeshes.push({ mesh: computerMockup, project: proj });
     });
 
-    // 2. Build Interactive Framed Exhibits on Wall
+    // 2. Add Floating Ambient Light Particle Dust ("Lucciole / Polvere luminosa")
+    this.buildAtmosphericParticles();
+
+    // 3. Build Interactive Framed Exhibits on Wall
     this.buildInteractiveWallFrames();
   }
 
@@ -882,6 +1094,46 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       this.scene?.add(frameGroup);
       this.wallFrames.push({ mesh: frameGroup, borderMat, project: cfg.project });
     });
+  }
+
+  // Floating ambient light particles / dust motes in the 3D room
+  private buildAtmosphericParticles(): void {
+    if (!this.scene) return;
+
+    const particleCount = 280;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+
+    const violetColor = new THREE.Color(0xa78bfa);
+    const cyanColor = new THREE.Color(0x38bdf8);
+    const goldColor = new THREE.Color(0xfbbf24);
+
+    for (let i = 0; i < particleCount; i++) {
+      // Spread across room volume
+      positions[i * 3] = (Math.random() - 0.5) * 80;
+      positions[i * 3 + 1] = -4 + Math.random() * 26;
+      positions[i * 3 + 2] = -35 + Math.random() * 65;
+
+      const pickColor = i % 3 === 0 ? violetColor : (i % 3 === 1 ? cyanColor : goldColor);
+      colors[i * 3] = pickColor.r;
+      colors[i * 3 + 1] = pickColor.g;
+      colors[i * 3 + 2] = pickColor.b;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+      size: 0.38,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending
+    });
+
+    this.dustParticles = new THREE.Points(geometry, material);
+    this.scene.add(this.dustParticles);
   }
 
   private createWebsiteTexture(title: string, category: string, accentColor: number): THREE.CanvasTexture {
