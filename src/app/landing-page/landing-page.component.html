@@ -14,25 +14,79 @@
 </header>
 
 <main id="top">
-  <section class="hero section-shell" aria-labelledby="hero-title">
-    <div class="hero-copy">
-      <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Software studio indipendente</p>
-      <h1 id="hero-title">Idee ambiziose.<br><em>Radici solide.</em></h1>
-      <p class="hero-description">Costruiamo prodotti digitali su misura per aziende che vogliono muoversi veloce, senza compromessi sulla qualità.</p>
-      <div class="hero-actions">
-        <a class="button button-primary" href="#contatti">Raccontaci il tuo progetto <span aria-hidden="true">↗</span></a>
-        <a class="text-link" href="#servizi">Scopri cosa facciamo <span aria-hidden="true">↓</span></a>
+  <!-- Immersive Full-Bleed 3D Vault Hero Section -->
+  <section class="hero-vault-fullbleed" aria-labelledby="hero-title">
+    <!-- Three.js Canvas covering the entire Hero -->
+    <canvas #vaultCanvas class="vault-fullbleed-canvas"></canvas>
+
+    <!-- Ambient Vignette & Depth Gradients -->
+    <div class="vault-vignette" aria-hidden="true"></div>
+
+    <!-- Cinematic Auto-loading Vault Overlay -->
+    @if (!vaultUnlocked()) {
+      <div class="vault-loading-screen" [class.fade-out]="unlockProgress() >= 100">
+        <div class="vault-status-indicator">
+          <div class="status-top">
+            <span class="vault-pulse-dot"></span>
+            <span class="vault-code-text">VAULT SECURE ENTRY // MECHANICAL UNLOCK</span>
+          </div>
+          <div class="vault-progress-track">
+            <div class="vault-progress-bar" [style.width.%]="unlockProgress()"></div>
+          </div>
+          <div class="status-bottom">
+            <span class="status-step">{{ currentUnlockPhase() }}</span>
+            <span class="status-percent">{{ unlockProgress() }}%</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Hero Content Overlay: pure clean text without boxy containers -->
+    <div class="vault-hero-content section-shell" [class.content-visible]="vaultUnlocked()">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Software studio indipendente</p>
+        <h1 id="hero-title">Idee ambiziose.<br><em>Radici solide.</em></h1>
+        <p class="hero-description">
+          Costruiamo prodotti digitali su misura per aziende che vogliono muoversi veloce, senza compromessi sulla qualità.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#contatti">Raccontaci il tuo progetto <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="#servizi">Scopri cosa facciamo <span aria-hidden="true">↓</span></a>
+        </div>
       </div>
     </div>
 
-    <div class="hero-visual" aria-label="Illustrazione astratta del metodo Childhood Friendship" role="img">
-      <div class="visual-grid"></div>
-      <div class="visual-orbit orbit-one"></div>
-      <div class="visual-orbit orbit-two"></div>
-      <div class="visual-core"><span>CF</span></div>
-      <span class="visual-label label-top">BUILT WITH INTENT</span>
-      <span class="visual-label label-bottom">SINCE DAY ONE <b>✦</b></span>
-    </div>
+    <!-- Interactive 3D Showcase Drawer/Modal when clicking an exhibit or quadro -->
+    @if (selectedProject(); as proj) {
+      <div class="exhibit-modal-backdrop" (click)="closeProjectModal()">
+        <aside class="exhibit-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" [attr.aria-label]="proj.title">
+          <button class="modal-close-btn" (click)="closeProjectModal()" aria-label="Chiudi finestra">✕</button>
+          <div class="modal-header">
+            <span class="modal-badge">{{ proj.category }}</span>
+            <h3>{{ proj.title }}</h3>
+          </div>
+          <p class="modal-desc">{{ proj.description }}</p>
+          <div class="modal-meta">
+            <div class="meta-row">
+              <span class="meta-label">Stack</span>
+              <div class="meta-tags">
+                @for (t of proj.tech; track t) {
+                  <span class="tech-tag">{{ t }}</span>
+                }
+              </div>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Benchmark</span>
+              <span class="meta-value">{{ proj.metrics }}</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <a class="button button-primary" href="#contatti" (click)="closeProjectModal()">Richiedi un'architettura simile <span aria-hidden="true">↗</span></a>
+            <button class="button button-ghost" (click)="closeProjectModal()">Torna alla panoramica 3D</button>
+          </div>
+        </aside>
+      </div>
+    }
   </section>
 
   <section class="trust-bar section-shell" aria-label="Punti di forza">
