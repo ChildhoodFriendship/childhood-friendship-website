@@ -1,0 +1,9 @@
+.section-shell { margin-inline: auto; width: min(100% - 3rem, 1180px); }
+.trust-bar { align-items: center; border-bottom: 1px solid var(--cf-color-border); border-top: 1px solid var(--cf-color-border); color: var(--cf-color-text-muted); display: flex; font-size: .65rem; font-weight: 700; justify-content: space-between; letter-spacing: .12em; padding-block: 1.3rem; text-transform: uppercase; }
+.trust-line { background: var(--cf-color-border); height: 1px; width: 10%; }
+
+@media (max-width: 480px) {
+  .section-shell { width: min(100% - 2rem, 1180px); }
+  .trust-bar { align-items: start; flex-direction: column; gap: .7rem; }
+  .trust-line { display: none; }
+}

@@ -7,6 +7,8 @@ Queste regole definiscono il modo standard di progettare e implementare il proge
 ## Angular 22 — radici solide
 
 - Usare **Standalone Components** come standard assoluto: ogni componente, direttiva e pipe deve essere standalone e autocontenuto; non introdurre `NgModule`.
+- Organizzare ogni sezione significativa della landing come componente standalone dentro la propria cartella feature, con file affiancati `.ts`, `.html` e `.css`.
+- Usare esclusivamente CSS nativo per gli stili del progetto; non introdurre file `.scss` o dipendenze Sass.
 - Preferire componenti piccoli, con una responsabilità chiara e dipendenze esplicite nell’array `imports`.
 - Usare `ChangeDetectionStrategy.OnPush` nei componenti applicativi.
 - Preferire la sintassi moderna dei template (`@if`, `@for`, `@switch`) e fornire sempre una `track` stabile nei cicli.
@@ -92,7 +94,7 @@ I token sono l’unica fonte autorizzata per i valori visuali ricorrenti. Non in
 ## Integrazioni esterne
 
 - Per il form contatti usare Formspree tramite `POST`/AJAX e un endpoint pubblico con il solo form ID; non inserire indirizzi email o credenziali nel frontend.
-- Il valore operativo del form è in `src/environments/environment.ts`, escluso da Git; usare `src/environments/environment.example.ts` come modello per altri ambienti.
+- Il valore operativo del form è in `src/environments/environment.ts` e viene versionato perché l’endpoint Formspree è un identificativo pubblico, non una credenziale; usare `src/environments/environment.example.ts` come modello per altri ambienti.
 - I file di ambiente frontend vengono inclusi nel bundle: non inserirvi password, token segreti o credenziali. Il Form ID Formspree è un identificatore pubblico, non un segreto.
 - L’endpoint resta un segnaposto (`REPLACE_WITH_FORM_ID`) nel file di esempio fino alla configurazione da parte del proprietario dell’account.
 - Gestire esplicitamente stati di invio, successo ed errore e mantenere la validazione HTML nativa.

@@ -3,7 +3,7 @@
 ## Stato corrente
 
 **Fase:** 0 — Fondazioni e governance del progetto  
-**Stato:** Prima versione della landing page implementata e verificata con build Angular; form contatti Formspree implementato e configurato localmente, con invio reale ancora da verificare; nessun componente 3D o animazione avanzata ancora introdotto.  
+**Stato:** Landing page responsive implementata e verificata con build Angular; Formspree configurato localmente e refactor CSS/componenti completato; invio reale già verificato; nessun componente 3D o animazione avanzata ancora introdotto.  
 **Ultimo aggiornamento:** 2026-09-26
 
 ### Completato
@@ -17,9 +17,10 @@
 - Definiti confini architetturali e limitazioni operative.
 - Creata la prima landing page responsive con sezioni hero, servizi, chi siamo, metodo di lavoro e contatti.
 - Sostituito il collegamento `mailto:` con un form contatti AJAX basato su Formspree, senza pubblicare l’indirizzo email.
-- Centralizzato l’endpoint Formspree in `src/environments/environment.ts`, escluso da Git, con template condivisibile in `src/environments/environment.example.ts`.
+- Centralizzato l’endpoint Formspree in `src/environments/environment.ts`, versionato perché contiene solo un identificativo pubblico, con template condivisibile in `src/environments/environment.example.ts`.
 - Configurata la shell standalone con route lazy-loaded per la landing page.
-- Centralizzati i token UI in `src/styles.scss` e applicata la palette ufficiale.
+- Centralizzati i token UI in `src/styles.css` e applicata la palette ufficiale.
+- Suddivisa la landing page in componenti standalone per header, hero, trust bar, servizi, chi siamo, metodo, contatti e footer, ciascuno con file `.ts`, `.html` e `.css`.
 
 ### In corso
 
@@ -43,6 +44,8 @@
 - [x] Definire token UI per palette nero/viola, tipografia, spaziature e stati.
 - [x] Implementare la prima landing page responsive.
 - [ ] Implementare `shared/components/` per gli elementi UI riutilizzabili.
+- [x] Suddividere la landing page in componenti standalone con HTML, TypeScript e CSS separati.
+- [x] Convertire gli stili del progetto da SCSS a CSS nativo.
 - [ ] Verificare contrasto WCAG 2.2 AA e comportamento responsive del UI Kit.
 - [ ] Aggiungere effetti 3D e animazioni solo dopo una revisione dedicata.
 
@@ -51,7 +54,7 @@
 - [ ] Presentare servizi, metodo di lavoro e vantaggi competitivi.
 - [ ] Integrare slogan “Codice su misura, radici solide”.
 - [x] Implementare CTA e contatto con accessibilità e validazione.
-- [ ] Verificare l’invio reale dopo la configurazione del Form ID in `src/environments/environment.ts`.
+- [x] Verificare l’invio reale dopo la configurazione del Form ID in `src/environments/environment.ts`.
 
 ### Fase 3 — Qualità e rilascio
 

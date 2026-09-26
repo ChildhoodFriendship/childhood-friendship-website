@@ -1,0 +1,16 @@
+<section class="process-section section-shell" id="metodo" aria-labelledby="process-title">
+  <div class="section-heading">
+    <p class="eyebrow">Il nostro metodo</p>
+    <h2 id="process-title">Pochi passaggi.<br><em>Nessun passaggio a vuoto.</em></h2>
+  </div>
+  <div class="process-list">
+    @for (step of process; track step.number) {
+      <article class="process-step">
+        <span class="step-number">{{ step.number }}</span>
+        <h3>{{ step.title }}</h3>
+        <p>{{ step.description }}</p>
+        <span class="step-line" aria-hidden="true"></span>
+      </article>
+    }
+  </div>
+</section>
