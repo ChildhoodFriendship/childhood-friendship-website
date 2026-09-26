@@ -3,7 +3,7 @@
 ## Stato corrente
 
 **Fase:** 0 — Fondazioni e governance del progetto  
-**Stato:** Landing page responsive implementata e verificata con build Angular; Formspree configurato localmente e refactor CSS/componenti completato; invio reale già verificato; nessun componente 3D o animazione avanzata ancora introdotto.  
+**Stato:** Landing page responsive implementata e verificata con build Angular; Formspree configurato localmente e refactor CSS/componenti completato; invio reale già verificato; workflow GitHub Actions per il deploy production su Vercel aggiunto; nessun componente 3D o animazione avanzata ancora introdotto.
 **Ultimo aggiornamento:** 2026-09-26
 
 ### Completato
@@ -21,6 +21,7 @@
 - Configurata la shell standalone con route lazy-loaded per la landing page.
 - Centralizzati i token UI in `src/styles.css` e applicata la palette ufficiale.
 - Suddivisa la landing page in componenti standalone per header, hero, trust bar, servizi, chi siamo, metodo, contatti e footer, ciascuno con file `.ts`, `.html` e `.css`.
+- Aggiunto `.github/workflows/deploy.yml`: ogni push su `main` avvia il deploy production tramite Vercel CLI e i secret GitHub `VERCEL_TOKEN`, `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID`.
 
 ### In corso
 
@@ -60,7 +61,8 @@
 
 - [ ] Aggiungere test unitari e di integrazione secondo il rischio.
 - [ ] Verificare performance, responsive behavior, SEO e accessibilità.
-- [ ] Definire pipeline di build, controllo qualità e deployment.
+- [x] Definire pipeline di deployment production tramite GitHub Actions e Vercel CLI.
+- [ ] Configurare i secret GitHub e verificare un deploy reale dal repository.
 
 ### Fase 4 — Evoluzione
 
