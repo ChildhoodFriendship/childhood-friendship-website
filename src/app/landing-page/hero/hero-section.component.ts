@@ -864,10 +864,13 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       frameGroup.add(borderMesh);
 
       const screenTexture = this.createWallFrameTexture(cfg.project);
-      const screenMat = new THREE.MeshBasicMaterial({ map: screenTexture });
+      const screenMat = new THREE.MeshBasicMaterial({ 
+        map: screenTexture,
+        side: THREE.FrontSide
+      });
       const screenGeo = new THREE.PlaneGeometry(cfg.width, cfg.height);
       const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-      screenMesh.position.z = 0.25;
+      screenMesh.position.z = 0.32; // Elevated clearly above the outer and border box
       screenMesh.userData['project'] = cfg.project;
       frameGroup.add(screenMesh);
 
