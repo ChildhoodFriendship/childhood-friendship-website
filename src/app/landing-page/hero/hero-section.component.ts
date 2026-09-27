@@ -462,11 +462,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
           mat.emissiveIntensity = 1.4 + Math.sin(elapsed * 2.2 + idx * 0.4) * 0.8;
         });
 
-        // Atmospheric dust particle drifting
-        if (this.dustParticles) {
-          this.dustParticles.rotation.y = elapsed * 0.02;
-          this.dustParticles.rotation.x = Math.sin(elapsed * 0.015) * 0.05;
-        }
+
+
 
         // Museum spotlight breathing effect on teche
         this.tecaSpotlights.forEach((spot, i) => {
@@ -929,7 +926,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     });
 
     // 2. Add Floating Ambient Light Particle Dust ("Lucciole / Polvere luminosa")
-    this.buildAtmosphericParticles();
+    // Atmospheric particles removed per design decision
 
     // 3. Build Interactive Framed Exhibits on Wall
     this.buildInteractiveWallFrames();

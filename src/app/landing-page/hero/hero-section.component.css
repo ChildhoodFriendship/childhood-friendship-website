@@ -34,97 +34,8 @@
   z-index: 2;
 }
 
-/* Minimalist Cinematic Vault Loading Screen */
-.vault-loading-screen {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  inset: 0;
-  justify-content: flex-end;
-  padding-bottom: 3.5rem;
-  pointer-events: none;
-  position: absolute;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
-  z-index: 15;
-}
 
-.vault-loading-screen.fade-out {
-  opacity: 0;
-  visibility: hidden;
-}
 
-.vault-status-indicator {
-  backdrop-filter: blur(12px);
-  background: rgba(12, 12, 16, 0.75);
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  border-radius: 12px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(124, 58, 237, 0.2);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 480px;
-  padding: 1.2rem 1.6rem;
-  width: 90%;
-}
-
-.status-top {
-  align-items: center;
-  display: flex;
-  gap: 0.6rem;
-}
-
-.vault-pulse-dot {
-  animation: pulse-ring 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  background: #4ade80;
-  border-radius: 50%;
-  box-shadow: 0 0 10px #4ade80;
-  display: inline-block;
-  height: 8px;
-  width: 8px;
-}
-
-.vault-code-text {
-  color: var(--cf-color-violet-light);
-  font-family: 'DM Mono', monospace;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
-.vault-progress-track {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  height: 5px;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-}
-
-.vault-progress-bar {
-  background: linear-gradient(90deg, var(--cf-color-violet), #c084fc, #4ade80);
-  border-radius: 999px;
-  box-shadow: 0 0 12px rgba(192, 132, 252, 0.8);
-  height: 100%;
-  transition: width 0.08s ease-out;
-  width: 0%;
-}
-
-.status-bottom {
-  align-items: center;
-  display: flex;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.72rem;
-  justify-content: space-between;
-}
-
-.status-step {
-  color: var(--cf-color-text-muted);
-}
-
-.status-percent {
-  color: white;
-  font-weight: 700;
-}
 
 /* Vault Hero Content Overlay */
 .vault-hero-content {
@@ -159,10 +70,11 @@
   align-items: center;
   color: var(--cf-color-violet-light);
   display: flex;
-  font-size: 0.68rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.72rem;
   font-weight: 700;
   gap: 0.65rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   margin: 0 0 1.6rem;
   text-transform: uppercase;
 }
@@ -176,7 +88,9 @@
 }
 
 h1 {
+  font-family: 'Manrope', sans-serif;
   font-size: clamp(3.7rem, 7.2vw, 6.5rem);
+  font-weight: 800;
   letter-spacing: -0.085em;
   line-height: 0.92;
   margin: 0 0 2rem;
@@ -190,6 +104,7 @@ h1 em {
 
 .hero-description {
   color: var(--cf-color-text-muted);
+  font-family: 'Manrope', sans-serif;
   font-size: 1.06rem;
   line-height: 1.7;
   max-width: 480px;
@@ -206,15 +121,17 @@ h1 em {
 .button {
   align-items: center;
   border: 1px solid transparent;
+  border-radius: 999px;
   display: inline-flex;
-  font-size: 0.78rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
   font-weight: 700;
-  gap: 1rem;
+  gap: 0.6rem;
   justify-content: center;
-  letter-spacing: 0.02em;
-  padding: 1rem 1.2rem;
+  letter-spacing: 0.01em;
+  padding: 0.9rem 1.6rem;
   text-decoration: none;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .button:hover, .button:focus-visible {
@@ -223,39 +140,51 @@ h1 em {
 
 .button-primary {
   background: var(--cf-color-violet);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35);
   color: white;
 }
 
 .button-primary:hover, .button-primary:focus-visible {
   background: var(--cf-color-violet-light);
+  box-shadow: 0 6px 28px rgba(139, 92, 246, 0.5);
 }
 
 .button-ghost {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
   color: var(--cf-color-text-muted);
   cursor: pointer;
 }
 
 .button-ghost:hover {
-  border-color: white;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
   color: white;
 }
 
 .text-link {
   color: var(--cf-color-text);
-  font-size: 0.78rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
   font-weight: 700;
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .text-link span {
   color: var(--cf-color-violet-light);
-  margin-left: 0.5rem;
+  margin-left: 0.4rem;
+  transition: transform 0.2s ease;
+  display: inline-block;
 }
 
 .text-link:hover, .text-link:focus-visible {
   color: var(--cf-color-violet-light);
+}
+
+.text-link:hover span {
+  transform: translateY(2px);
 }
 
 /* Exhibit Modal Backdrop & Drawer */
@@ -275,6 +204,7 @@ h1 em {
   animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   background: #0f1118;
   border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 20px;
   box-shadow: -20px 0 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(124, 58, 237, 0.25);
   display: flex;
   flex-direction: column;
@@ -293,6 +223,7 @@ h1 em {
 .modal-close-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
   color: var(--cf-color-text-muted);
   cursor: pointer;
   font-size: 1rem;
@@ -362,10 +293,11 @@ h1 em {
 .tech-tag {
   background: rgba(139, 92, 246, 0.15);
   border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 999px;
   color: var(--cf-color-violet-light);
   font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem 0.6rem;
 }
 
 .meta-value {
