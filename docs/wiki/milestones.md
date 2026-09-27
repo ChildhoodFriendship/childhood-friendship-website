@@ -3,8 +3,8 @@
 ## Stato corrente
 
 **Fase:** 0 — Fondazioni e governance del progetto  
-**Stato:** Landing page responsive implementata e verificata con build Angular; dipendenze Three.js e relativi tipi configurate per la hero 3D; Formspree configurato localmente e refactor CSS/componenti completato; invio reale già verificato; workflow GitHub Actions per il deploy production su Vercel aggiunto.
-**Ultimo aggiornamento:** 2026-09-26
+**Stato:** Landing page responsive implementata e verificata con build Angular; sezione prezzi e pacchetti commerciali integrata; Formspree configurato localmente e refactor CSS/componenti completato; invio reale già verificato; workflow GitHub Actions per il deploy production su Vercel aggiunto.
+**Ultimo aggiornamento:** 2026-09-27
 
 ### Completato
 
@@ -23,6 +23,8 @@
 - Suddivisa la landing page in componenti standalone per header, hero, trust bar, servizi, chi siamo, metodo, contatti e footer, ciascuno con file `.ts`, `.html` e `.css`.
 - Aggiunto `.github/workflows/deploy.yml`: ogni push su `main` avvia il deploy production tramite Vercel CLI e i secret GitHub `VERCEL_TOKEN`, `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID`.
 - Aggiunte `three` e `@types/three` alle dipendenze per compilare la hero 3D interattiva.
+- Integrata la sezione prezzi con tab per sviluppo iniziale e gestione post-lancio, card commerciali e nota esplicita sull’esclusione di hosting e infrastruttura.
+- Documentato il listino ufficiale in `docs/wiki/pricing.md`.
 
 ### In corso
 
@@ -54,7 +56,8 @@
 ### Fase 2 — Landing e posizionamento
 
 - [ ] Presentare servizi, metodo di lavoro e vantaggi competitivi.
-- [ ] Integrare slogan “Codice su misura, radici solide”.
+- [x] Integrare slogan “Codice su misura, radici solide”.
+- [x] Integrare listino prezzi e pacchetti commerciali nella landing page.
 - [x] Implementare CTA e contatto con accessibilità e validazione.
 - [x] Verificare l’invio reale dopo la configurazione del Form ID in `src/environments/environment.ts`.
 

@@ -8,6 +8,7 @@ Queste regole definiscono il modo standard di progettare e implementare il proge
 
 - Usare **Standalone Components** come standard assoluto: ogni componente, direttiva e pipe deve essere standalone e autocontenuto; non introdurre `NgModule`.
 - Organizzare ogni sezione significativa della landing come componente standalone dentro la propria cartella feature, con file affiancati `.ts`, `.html` e `.css`.
+- Mantenere il listino commerciale in `docs/wiki/pricing.md` e sincronizzarlo con il componente `src/app/landing-page/pricing/`; i costi di hosting e infrastruttura devono restare esplicitamente esclusi dall’offerta tecnica.
 - Usare esclusivamente CSS nativo per gli stili del progetto; non introdurre file `.scss` o dipendenze Sass.
 - Preferire componenti piccoli, con una responsabilità chiara e dipendenze esplicite nell’array `imports`.
 - Usare `ChangeDetectionStrategy.OnPush` nei componenti applicativi.
