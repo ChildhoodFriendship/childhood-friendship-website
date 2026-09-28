@@ -1,28 +1,38 @@
-# Listino commerciale
+---
+title: Offerta e listino
+created: 2026-09-28
+updated: 2026-09-28
+type: concept
+tags: [project, documentation]
+project: childhood-friendship-website
+status: active
+confidence: high
+sources: [src/app/landing-page/pricing/pricing-section.component.ts, src/app/landing-page/pricing/pricing-section.component.html]
+---
 
-## Sviluppo iniziale — one-off
+# Offerta e listino
 
-| Pacchetto | Prezzo | Include |
+La sezione prezzi della landing espone due viste gestite dal Signal `activeView`.
+
+## Sviluppo iniziale
+
+| Piano | Prezzo esposto | Elementi dichiarati |
 |---|---:|---|
-| Landing Page | €200 | Monopagina ad alta conversione, design custom dark/tech, ottimizzazione SEO tecnica e form di contatto |
-| Web App | €600 | Applicazione web multipagina custom basata su Angular 22, routing avanzato, gestione stato e integrazione API/database |
-| App Mobile | €700 | Applicazione mobile cross-platform ad alte prestazioni, logica di base, gestione dati e autenticazione |
+| Landing Page | €200 | Design custom dark/tech, SEO tecnica, form di contatto |
+| Web App | €600 | Angular 22 e routing, gestione stato, integrazione API e database |
+| App Mobile | €700 | Cross-platform, logica e dati, autenticazione |
 
-## Gestione post-lancio e manutenzione
+## Gestione post-lancio
 
-| Servizio | Prezzo | Include |
+| Piano | Prezzo esposto | Elementi dichiarati |
 |---|---:|---|
-| Canone di manutenzione | €20 / mese | Supporto continuativo, verifiche di stabilità e piccoli interventi di controllo |
-| Modifica a chiamata | €50 / modifica | Singola modifica testuale, grafica o aggiornamento spot richiesto dal cliente |
+| Canone di manutenzione | €20/mese | Supporto, verifiche di stabilità, piccoli interventi |
+| Modifica a chiamata | €50/modifica | Modifica testuale, aggiornamento grafico, intervento singolo |
 
-## Esclusioni
+## Vincolo commerciale esplicito
 
-I costi di hosting, dominio, servizi cloud, database gestiti, servizi email, store mobile e qualsiasi altra infrastruttura sono completamente esclusi dall’offerta tecnica. Devono essere valutati e sostenuti separatamente dal cliente.
+Il template specifica che hosting, dominio, servizi cloud e infrastruttura sono esclusi dall'offerta tecnica.
 
-## Implementazione frontend
+Questa pagina documenta ciò che il codice espone; non aggiunge condizioni commerciali non presenti nella landing.
 
-Il listino è presentato nella landing page dal componente standalone `src/app/landing-page/pricing/`, composto da:
-
-- `pricing-section.component.ts` per dati tipizzati e Signal della tab attiva;
-- `pricing-section.component.html` per card, tab accessibili e CTA;
-- `pricing-section.component.css` per la presentazione dark/tech coerente con il design system.
+Pagine correlate: [[projects/childhood-friendship-website.md|progetto]], [[modules/component-catalog.md|catalogo componenti]] e [[current-status.md|stato]].

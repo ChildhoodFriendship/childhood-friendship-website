@@ -1,0 +1,23 @@
+# Log della wiki del progetto
+
+> Append-only. Formato: `## [YYYY-MM-DD] action | subject`  
+> Azioni: create, update, verify, archive, lint, query.
+
+## [2026-09-28] create | Wiki del progetto corrente
+- Analizzato il modello documentale di riferimento senza trasferirne contenuti specifici.
+- Ricostruita la struttura della wiki per `childhood-friendship-website`.
+
+## [2026-09-28] create | Pagine iniziali
+- Create pagine di progetto, architettura, moduli, catalogo componenti, runbook, stato, guida agenti e uso del contesto.
+- Aggiunte le pagine all'indice con riferimenti relativi al repository.
+
+## [2026-09-28] verify | Snapshot del progetto
+- `npm run build`: passato; bundle iniziali e chunk lazy generati.
+- `npm run test`: bloccato dagli argomenti `--watch` e `--browsers` rifiutati dal builder corrente.
+- `npm run lint`: bloccato dall'assenza del target `lint` in `angular.json`.
+- `git diff --check`: passato.
+
+## [2026-09-28] update | Regole operative agenti
+- Trasferite e adattate le regole di orientamento, gerarchia delle fonti, modifica minima, verifica, handoff e manutenzione wiki.
+- Integrate anche le regole su commit/push, access modifier, formattazione, commenti, naming degli endpoint e gestione futura dei flussi settings/realtime.
+- `Agents.md` resta da sincronizzare perché la scrittura del file protetto richiede un'approvazione del sistema non ricevuta.
