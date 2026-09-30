@@ -37,6 +37,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   protected readonly isUnlocking = signal<boolean>(false);
   protected readonly currentUnlockPhase = signal<string>('Inizializzazione sensori...');
   protected readonly selectedProject = signal<ProjectExhibit | null>(null);
+  protected readonly hoveredProject = signal<ProjectExhibit | null>(null);
 
   // Three.js internal references
   private renderer?: THREE.WebGLRenderer;
@@ -116,8 +117,26 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       tech: ['iOS', 'Android', 'Flutter', 'React Native'],
       metrics: 'Seamless UX · Production Ready',
       color: 0x4ade80
-    }
-  ];
+      },
+      {
+        id: 'ecommerce',
+        title: 'E-Commerce Avanzati',
+        category: 'Digital Retail',
+        description: 'Piattaforme di vendita veloci, sicure e ottimizzate per la conversione.',
+        tech: ['Shopify', 'Stripe', 'Next.js'],
+        metrics: 'High Conversion · Secure',
+        color: 0xfacc15
+      },
+      {
+        id: 'ai-integration',
+        title: 'AI & Automazione',
+        category: 'Machine Learning',
+        description: 'Integrazione di intelligenza artificiale per automatizzare i processi aziendali.',
+        tech: ['OpenAI', 'Python', 'TensorFlow'],
+        metrics: 'Smart Operations · Scalable',
+        color: 0xec4899
+      }
+    ];
 
   ngAfterViewInit(): void {
     this.initThreeVault();
@@ -388,13 +407,40 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     // 5. Build Dark Gallery Room (Pedestals, Computer Mockups, Interactive Wall Frames)
     this.buildVaultGallery();
 
-    // 6. Interactive Mouse Parallax & Click Detection
+    // 6. Interactive Mouse Parallax, Click Detection, & Hover Raycaster
     this.mouseMoveListener = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
       this.mouseX = x;
       this.mouseY = y;
+      
+      if (this.camera && this.scene && this.vaultUnlocked()) {
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
+        
+        const interactables: THREE.Object3D[] = [];
+        this.wallFrames.forEach(f => interactables.push(f.mesh));
+        this.exhibitMeshes.forEach(m => interactables.push(m.mesh));
+        
+        const intersects = raycaster.intersectObjects(interactables, true);
+        let foundHover: ProjectExhibit | null = null;
+        
+        if (intersects.length > 0) {
+          let hit: THREE.Object3D | null = intersects[0].object;
+          while (hit && !hit.userData['project'] && hit.parent && hit !== this.scene) {
+            hit = hit.parent;
+          }
+          if (hit && hit.userData['project']) {
+            foundHover = hit.userData['project'];
+          }
+        }
+        
+        if (this.hoveredProject()?.id !== foundHover?.id) {
+           this.hoveredProject.set(foundHover);
+           document.body.style.cursor = foundHover ? 'pointer' : 'default';
+        }
+      }
     };
     window.addEventListener('mousemove', this.mouseMoveListener);
 
@@ -419,11 +465,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
           hit = hit.parent;
         }
         if (hit && hit.userData['project']) {
-          if (hit.userData['type'] === 'frame') {
-            window.open('https://example.com/project-placeholder', '_blank');
-          } else {
-            this.inspectProject(hit.userData['project']);
-          }
+          const proj = hit.userData['project'] as any; window.open(proj.link || 'https://example.com/project-placeholder', '_blank');
         }
       }
     };
@@ -579,11 +621,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
           }
         }
 
-        // Subtle hover glow animation on wall frames
+        // Hover glow animation on wall frames
         this.wallFrames.forEach((frame, index) => {
-          const pulse = 0.9 + Math.sin(elapsed * 2.0 + index) * 0.15;
+          const isHovered = this.hoveredProject()?.id === frame.project.id;
+          const targetPulse = isHovered ? 3.5 : 0.9 + Math.sin(elapsed * 2.0 + index) * 0.15;
           if (frame.borderMat) {
-            frame.borderMat.emissiveIntensity = pulse;
+            frame.borderMat.emissiveIntensity += (targetPulse - frame.borderMat.emissiveIntensity) * 0.1;
           }
         });
 
@@ -595,12 +638,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
           mat.opacity = 0.4 + Math.max(0, Math.sin(elapsed * 2.2 + idx * 0.4)) * 0.6;
         });
 
-
-
-
-        // Museum spotlight breathing effect on teche
+        // Museum spotlight hover effect on teche
         this.tecaSpotlights.forEach((spot, i) => {
-          spot.intensity = 4.2 + Math.sin(elapsed * 1.5 + i * 1.2) * 0.6;
+          const proj = this.projects[i];
+          const isHovered = this.hoveredProject()?.id === proj.id;
+          const targetIntensity = isHovered ? 12.0 : 4.2 + Math.sin(elapsed * 1.5 + i * 1.2) * 0.6;
+          spot.intensity += (targetIntensity - spot.intensity) * 0.1;
         });
 
         if (this.renderer && this.scene && this.camera) {
@@ -1137,9 +1180,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
     // 1. Build 3 Pedestals with 3D Computer / Laptop Mockups
     const positions = [
-      { x: -33, z: -2, rotY: Math.PI / 2 },
+      { x: -33, z: 8, rotY: Math.PI / 2 },
+      { x: -33, z: -10, rotY: Math.PI / 2 },
       { x: 0, z: -12, rotY: 0 },
-      { x: 33, z: -2, rotY: -Math.PI / 2 }
+      { x: 33, z: -10, rotY: -Math.PI / 2 },
+      { x: 33, z: 8, rotY: -Math.PI / 2 }
     ];
 
     this.projects.forEach((proj, i) => {
@@ -1224,13 +1269,19 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       crownMesh.position.y = 11.3;
       exhibitGroup.add(crownMesh);
 
-      // 4. Dedicated Overhead Museum Spotlight
+      // 4. Dedicated Overhead Museum Spotlight & Internal Glow
       const tecaSpot = new THREE.SpotLight(proj.color, 4.5, 30, Math.PI / 4, 0.35, 1.2);
-      tecaSpot.position.set(pos.x, 18, pos.z + 2);
-      tecaSpot.target = exhibitGroup;
+      tecaSpot.position.set(0, 15, 4);
+      tecaSpot.target.position.set(0, 5, 0);
       tecaSpot.castShadow = true;
-      this.galleryGroup?.add(tecaSpot);
+      exhibitGroup.add(tecaSpot);
+      exhibitGroup.add(tecaSpot.target);
       this.tecaSpotlights.push(tecaSpot);
+
+      // Add a subtle point light inside the teca to make the glass "glow"
+      const internalLight = new THREE.PointLight(proj.color, 1.5, 12);
+      internalLight.position.set(0, 6, 0);
+      exhibitGroup.add(internalLight);
 
       // 5. 3D Computer / Laptop Mockup
       const computerMockup = this.createComputerMockup(proj, i);
@@ -1336,33 +1387,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     if (!this.scene) return;
 
     const frameConfigs = [
-      {
-        project: this.projects[0],
-        x: -44.5,
-        y: 11,
-        z: -2,
-        width: 15,
-        height: 9,
-        rotY: Math.PI / 2
-      },
-      {
-        project: this.projects[1],
-        x: 0,
-        y: 13,
-        z: -25.5,
-        width: 17,
-        height: 10,
-        rotY: 0
-      },
-      {
-        project: this.projects[2],
-        x: 44.5,
-        y: 11,
-        z: -2,
-        width: 15,
-        height: 9,
-        rotY: -Math.PI / 2
-      }
+      { project: this.projects[0], x: -44.5, y: 11, z: 8, width: 14, height: 8.5, rotY: Math.PI / 2 },
+      { project: this.projects[1], x: -44.5, y: 11, z: -10, width: 14, height: 8.5, rotY: Math.PI / 2 },
+      { project: this.projects[2], x: 0, y: 13, z: -25.5, width: 17, height: 10, rotY: 0 },
+      { project: this.projects[3], x: 44.5, y: 11, z: -10, width: 14, height: 8.5, rotY: -Math.PI / 2 },
+      { project: this.projects[4], x: 44.5, y: 11, z: 8, width: 14, height: 8.5, rotY: -Math.PI / 2 }
     ];
 
     frameConfigs.forEach(cfg => {

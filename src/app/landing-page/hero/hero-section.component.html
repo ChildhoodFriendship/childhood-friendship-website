@@ -23,6 +23,26 @@
     </div>
   </div>
 
+  <!-- Holographic Hover Preview (Follows mouse cursor or centered on project) -->
+  @if (hoveredProject(); as hoveredProj) {
+    <div class="hologram-preview-overlay">
+      <div class="hologram-card">
+        <div class="holo-scanline"></div>
+        <div class="holo-header">
+          <span class="holo-badge">ANTEPRIMA</span>
+          <h4>{{ hoveredProj.title }}</h4>
+        </div>
+        <div class="holo-video-container">
+          <!-- Placeholder for user's future looping video -->
+          <div class="video-placeholder">
+            <span>[VIDEO LOOP OLOGRAFICO]</span>
+          </div>
+        </div>
+        <p class="holo-hint">Clicca per visitare il sito progetto</p>
+      </div>
+    </div>
+  }
+
   <!-- Interactive 3D Showcase Drawer/Modal when clicking an exhibit or quadro -->
   @if (selectedProject(); as proj) {
     <div class="exhibit-modal-backdrop" (click)="closeProjectModal()">
