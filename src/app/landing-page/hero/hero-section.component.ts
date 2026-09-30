@@ -58,6 +58,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private dustParticles?: THREE.Points;
   private tecaSpotlights: THREE.SpotLight[] = [];
   private ceilingLedMats: THREE.MeshStandardMaterial[] = [];
+  private floorMesh?: THREE.Mesh;
+  private gridHelper?: THREE.GridHelper;
+  private galleryGroup?: THREE.Group;
+  private doorDisplayCanvas?: HTMLCanvasElement;
+  private doorDisplayTexture?: THREE.CanvasTexture;
   private mouseX = 0;
   private mouseY = 0;
   private targetCameraPos = new THREE.Vector3(0, 0, 75);
@@ -144,17 +149,17 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   }
 
   // Synthesize realistic mechanical clicks via Web Audio API without external audio assets
-  private playMechanicalClick(freq = 420, duration = 0.04): void {
+  private playMechanicalClick(freq = 420, duration = 0.04, type: 'triangle' | 'square' | 'sawtooth' = 'triangle'): void {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'triangle';
+      osc.type = type;
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + duration);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.2, ctx.currentTime + duration);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -190,7 +195,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
       // Play subtle mechanical clicks every few percent
       if (rounded % 8 === 0 && rounded < 95) {
-        this.playMechanicalClick(300 + (rounded * 5));
+        this.playMechanicalClick(300 + (rounded * 5), 0.05, 'square');
+      }
+      if (rounded % 15 === 0 && rounded < 95) {
+        this.playMechanicalClick(120, 0.08, 'sawtooth'); // heavier clunk
       }
 
       // Progress phase messages
@@ -213,13 +221,23 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         this.currentUnlockPhase.set('Accesso concesso. Benvenuto.');
       }
 
+      // Update the 3D door display canvas
+      this.updateDoorDisplay(rounded, this.currentUnlockPhase());
+
       if (progress >= 100) {
         clearInterval(interval);
-        this.playMechanicalClick(180, 0.15); // Solid deep thud
+        this.playMechanicalClick(120, 0.25, 'square'); // Solid deep thud
+        setTimeout(() => this.playMechanicalClick(80, 0.4, 'sawtooth'), 150); // Echo thud
+        
         this.vaultUnlocked.set(true);
         this.isUnlocking.set(false);
 
-        // Slow cinematic camera push into the room (Lower, wider perspective with dramatic upward tilt)
+        // Show the gallery interior elements now that the door is opening
+        if (this.floorMesh) this.floorMesh.visible = true;
+        if (this.gridHelper) this.gridHelper.visible = true;
+        if (this.galleryGroup) this.galleryGroup.visible = true;
+
+        // Slow cinematic camera push into the room
         this.targetCameraPos.set(0, 3.2, 31);
       }
     }, 28);
@@ -231,6 +249,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.isUnlocking.set(false);
     this.vaultDoorGroup.rotation.y = -Math.PI * 0.85;
     this.vaultDoorGroup.position.x = -80;
+    
+    // Ensure gallery is visible
+    if (this.floorMesh) this.floorMesh.visible = true;
+    if (this.gridHelper) this.gridHelper.visible = true;
+    if (this.galleryGroup) this.galleryGroup.visible = true;
+    
     this.targetCameraPos.set(0, 3.2, 31);
     this.currentCameraPos.set(0, 3.2, 31);
     if (this.camera) {
@@ -709,29 +733,140 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       this.vaultLockPins.push(pin);
       this.vaultDoorGroup.add(pin);
     }
+    // Integrated Security Display Panel on the vault door surface
+    this.doorDisplayCanvas = document.createElement('canvas');
+    this.doorDisplayCanvas.width = 512;
+    this.doorDisplayCanvas.height = 192;
+    this.doorDisplayTexture = new THREE.CanvasTexture(this.doorDisplayCanvas);
+    this.doorDisplayTexture.minFilter = THREE.LinearFilter;
+    this.updateDoorDisplay(0, 'Inizializzazione sensori...');
+
+    // Display housing — dark recessed panel
+    const displayHousingGeo = new THREE.BoxGeometry(8.8, 3.6, 0.35);
+    const displayHousingMat = new THREE.MeshStandardMaterial({
+      color: 0x0c0e14,
+      metalness: 0.9,
+      roughness: 0.3
+    });
+    const displayHousing = new THREE.Mesh(displayHousingGeo, displayHousingMat);
+    displayHousing.position.set(-6.5, -9.5, 2.6);
+    this.vaultDoorGroup.add(displayHousing);
+
+    // Display trim border
+    const displayTrimGeo = new THREE.BoxGeometry(9.2, 4.0, 0.2);
+    const displayTrimMat = new THREE.MeshStandardMaterial({
+      color: 0x333742,
+      metalness: 0.95,
+      roughness: 0.2
+    });
+    const displayTrim = new THREE.Mesh(displayTrimGeo, displayTrimMat);
+    displayTrim.position.set(-6.5, -9.5, 2.42);
+    this.vaultDoorGroup.add(displayTrim);
+
+    // Glowing screen surface
+    const displayScreenGeo = new THREE.PlaneGeometry(8.4, 3.2);
+    const displayScreenMat = new THREE.MeshBasicMaterial({
+      map: this.doorDisplayTexture,
+      transparent: true
+    });
+    const displayScreen = new THREE.Mesh(displayScreenGeo, displayScreenMat);
+    displayScreen.position.set(-6.5, -9.5, 2.8);
+    this.vaultDoorGroup.add(displayScreen);
+
+    // Small LED indicator dot next to the display
+    const ledGeo = new THREE.CircleGeometry(0.18, 16);
+    const ledMat = new THREE.MeshBasicMaterial({ color: 0x4ade80 });
+    const ledDot = new THREE.Mesh(ledGeo, ledMat);
+    ledDot.position.set(-10.8, -8.2, 2.82);
+    this.vaultDoorGroup.add(ledDot);
 
     this.scene.add(this.vaultDoorGroup);
+  }
+
+  // Draw the progress UI onto the canvas texture applied to the door's built-in screen
+  private updateDoorDisplay(progressPercent: number, phaseText: string): void {
+    if (!this.doorDisplayCanvas || !this.doorDisplayTexture) return;
+
+    const ctx = this.doorDisplayCanvas.getContext('2d');
+    if (!ctx) return;
+
+    const width = this.doorDisplayCanvas.width;
+    const height = this.doorDisplayCanvas.height;
+
+    // Clear background (dark screen)
+    ctx.fillStyle = '#06070a';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw header text
+    ctx.font = 'bold 22px monospace';
+    ctx.fillStyle = '#8b5cf6'; // cf-color-violet-light
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('VAULT SECURE ENTRY // MECHANICAL UNLOCK', 30, 26);
+
+    // Draw track
+    const trackX = 30;
+    const trackY = 80;
+    const trackWidth = width - 60;
+    const trackHeight = 16;
+    const radius = 8;
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.beginPath();
+    ctx.roundRect(trackX, trackY, trackWidth, trackHeight, radius);
+    ctx.fill();
+
+    // Draw progress bar
+    if (progressPercent > 0) {
+      const pWidth = Math.max(radius * 2, (progressPercent / 100) * trackWidth);
+      const gradient = ctx.createLinearGradient(trackX, 0, trackX + pWidth, 0);
+      gradient.addColorStop(0, '#7c3aed'); // cf-color-violet
+      gradient.addColorStop(1, '#4ade80'); // cf-color-success
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.roundRect(trackX, trackY, pWidth, trackHeight, radius);
+      ctx.fill();
+    }
+
+    // Draw bottom texts (Phase and Percentage)
+    ctx.font = '18px monospace';
+    ctx.fillStyle = '#a3a3a3'; // cf-color-text-muted
+    ctx.fillText(phaseText, 30, 130);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${progressPercent}%`, width - 30, 130);
+
+    // Tell Three.js to update the material from canvas
+    this.doorDisplayTexture.needsUpdate = true;
   }
 
   private buildVaultGallery(): void {
     if (!this.scene) return;
 
-    // Architectural Dark Floor with Grid Lines
+    // Architectural Dark Floor with Grid Lines (hidden during vault loading)
     const floorGeo = new THREE.PlaneGeometry(240, 240, 40, 40);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x08080c,
       roughness: 0.85,
       metalness: 0.25
     });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -6;
-    this.scene.add(floor);
+    this.floorMesh = new THREE.Mesh(floorGeo, floorMat);
+    this.floorMesh.rotation.x = -Math.PI / 2;
+    this.floorMesh.position.y = -6;
+    this.floorMesh.visible = false;
+    this.scene.add(this.floorMesh);
 
-    // Floor Grid Overlay
-    const grid = new THREE.GridHelper(240, 80, 0x8b5cf6, 0x1f1d2b);
-    grid.position.y = -5.9;
-    this.scene.add(grid);
+    // Floor Grid Overlay (hidden during vault loading)
+    this.gridHelper = new THREE.GridHelper(240, 80, 0x8b5cf6, 0x1f1d2b);
+    this.gridHelper.position.y = -5.9;
+    this.gridHelper.visible = false;
+    this.scene.add(this.gridHelper);
+
+    // Gallery interior group — hidden during vault loading, shown after unlock
+    this.galleryGroup = new THREE.Group();
+    this.galleryGroup.visible = false;
 
     // Vault Rear Wall (Wide)
     const wallGeo = new THREE.PlaneGeometry(240, 80);
@@ -742,7 +877,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     });
     const backWall = new THREE.Mesh(wallGeo, wallMat);
     backWall.position.set(0, 15, -40);
-    this.scene.add(backWall);
+    this.galleryGroup.add(backWall);
 
     // Architectural Dark Ceiling
     const ceilingGeo = new THREE.PlaneGeometry(240, 120);
@@ -754,7 +889,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.set(0, 32, -5);
-    this.scene.add(ceiling);
+    this.galleryGroup.add(ceiling);
 
     // Simulated Honeycomb/Alveolare LED Ceiling Lights Matrix
     const honeycombGroup = new THREE.Group();
@@ -793,36 +928,35 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         honeycombGroup.add(nodeMesh);
       }
     }
-    this.scene.add(honeycombGroup);
+    this.galleryGroup.add(honeycombGroup);
 
     // Overhead ambient fill from honeycomb lights
     const honeycombFill = new THREE.PointLight(0xa78bfa, 2.5, 75);
     honeycombFill.position.set(0, 28, -8);
-    this.scene.add(honeycombFill);
+    this.galleryGroup.add(honeycombFill);
 
     // Vault Side Walls
     const sideWallGeo = new THREE.PlaneGeometry(120, 80);
     const leftSideWall = new THREE.Mesh(sideWallGeo, wallMat);
     leftSideWall.rotation.y = Math.PI / 2;
     leftSideWall.position.set(-60, 15, 0);
-    this.scene.add(leftSideWall);
+    this.galleryGroup.add(leftSideWall);
 
     const rightSideWall = new THREE.Mesh(sideWallGeo, wallMat);
     rightSideWall.rotation.y = -Math.PI / 2;
     rightSideWall.position.set(60, 15, 0);
-    this.scene.add(rightSideWall);
+    this.galleryGroup.add(rightSideWall);
 
     // Ambient neon fill lights
     const rightFillLight = new THREE.PointLight(0x7c3aed, 3.5, 90);
     rightFillLight.position.set(30, 12, 10);
-    this.scene.add(rightFillLight);
+    this.galleryGroup.add(rightFillLight);
 
     const leftFillLight = new THREE.PointLight(0x6366f1, 3.0, 90);
     leftFillLight.position.set(-30, 12, 10);
-    this.scene.add(leftFillLight);
+    this.galleryGroup.add(leftFillLight);
 
     // 1. Build 3 Pedestals with 3D Computer / Laptop Mockups
-    // Positioned gracefully across the hero view
     const positions = [
       { x: -14, z: 8 },
       { x: 4, z: 2 },
@@ -859,7 +993,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       baseTrim.position.y = 4.0;
       exhibitGroup.add(baseTrim);
 
-      // 2. Pedestal Neon Ring (Vibrant glowing laser ring)
+      // 2. Pedestal Neon Ring
       const ringGeo = new THREE.TorusGeometry(3.7, 0.14, 16, 48);
       const ringMat = new THREE.MeshStandardMaterial({
         color: proj.color,
@@ -872,13 +1006,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       neonRing.position.y = 4.15;
       exhibitGroup.add(neonRing);
 
-      // Upward Internal Glow from pedestal floor
+      // Upward Internal Glow
       const internalUpLight = new THREE.PointLight(proj.color, 2.5, 12, 1.5);
       internalUpLight.position.set(0, 4.4, 0);
       exhibitGroup.add(internalUpLight);
 
-      // 3. Luxury Glass Showcase Case (Ultra-clear bevelled museum bell)
-      // Glass body
+      // 3. Glass Showcase Case
       const glassGeo = new THREE.CylinderGeometry(3.4, 3.4, 7.2, 40, 1, true);
       const glassMat = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,
@@ -900,35 +1033,36 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       glassCap.position.y = 11.3;
       exhibitGroup.add(glassCap);
 
-      // Metal Ring Crown on top of glass
+      // Metal Ring Crown
       const glassCrownGeo = new THREE.TorusGeometry(3.42, 0.1, 12, 40);
       const crownMesh = new THREE.Mesh(glassCrownGeo, metalTrimMat);
       crownMesh.rotation.x = Math.PI / 2;
       crownMesh.position.y = 11.3;
       exhibitGroup.add(crownMesh);
 
-      // 4. Dedicated Overhead Museum Spotlight for this pedestal
+      // 4. Dedicated Overhead Museum Spotlight
       const tecaSpot = new THREE.SpotLight(proj.color, 4.5, 30, Math.PI / 4, 0.35, 1.2);
       tecaSpot.position.set(pos.x, 18, pos.z + 2);
       tecaSpot.target = exhibitGroup;
       tecaSpot.castShadow = true;
-      this.scene?.add(tecaSpot);
+      this.galleryGroup?.add(tecaSpot);
       this.tecaSpotlights.push(tecaSpot);
 
-      // 5. 3D Computer / Laptop Mockup inside the glass showcase
+      // 5. 3D Computer / Laptop Mockup
       const computerMockup = this.createComputerMockup(proj, i);
       computerMockup.position.y = 5.2;
       computerMockup.userData['project'] = proj;
       exhibitGroup.add(computerMockup);
 
-      this.scene?.add(exhibitGroup);
+      this.galleryGroup?.add(exhibitGroup);
       this.exhibitMeshes.push({ mesh: computerMockup, project: proj });
     });
 
-    // 2. Add Floating Ambient Light Particle Dust ("Lucciole / Polvere luminosa")
-    // Atmospheric particles removed per design decision
+    this.scene.add(this.galleryGroup);
 
-    // 3. Build Interactive Framed Exhibits on Wall
+    // 2. Atmospheric particles removed per design decision
+
+    // 3. Build Interactive Framed Exhibits on Wall (inside galleryGroup)
     this.buildInteractiveWallFrames();
   }
 
@@ -1086,9 +1220,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       const frameLight = new THREE.SpotLight(cfg.project.color, 3.2, 35, Math.PI / 4, 0.4);
       frameLight.position.set(cfg.x, cfg.y + 6, cfg.z + 10);
       frameLight.target = frameGroup;
-      this.scene?.add(frameLight);
+      this.galleryGroup?.add(frameLight);
 
-      this.scene?.add(frameGroup);
+      this.galleryGroup?.add(frameGroup);
       this.wallFrames.push({ mesh: frameGroup, borderMat, project: cfg.project });
     });
   }
