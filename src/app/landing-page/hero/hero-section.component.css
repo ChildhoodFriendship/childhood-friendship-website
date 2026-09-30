@@ -42,11 +42,9 @@
   align-items: center;
   display: flex;
   justify-content: flex-start;
-  opacity: 0;
+  opacity: 0; /* GSAP handles visibility */
   padding-block: 7rem;
   pointer-events: none;
-  transform: translateY(20px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
   width: 100%;
   z-index: 5;
 }
@@ -54,7 +52,6 @@
 .vault-hero-content.content-visible {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
 }
 
 .vault-hero-content .hero-copy {
@@ -64,6 +61,10 @@
   max-width: 760px;
   padding: 0;
   text-shadow: 0 4px 30px rgba(0, 0, 0, 0.9);
+}
+
+.vault-hero-content .hero-copy > * {
+  opacity: 0;
 }
 
 .eyebrow {

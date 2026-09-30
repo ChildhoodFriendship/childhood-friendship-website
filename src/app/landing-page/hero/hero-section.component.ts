@@ -8,6 +8,7 @@ import {
   signal 
 } from '@angular/core';
 import * as THREE from 'three';
+import gsap from 'gsap';
 
 export interface ProjectExhibit {
   readonly id: string;
@@ -239,6 +240,26 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
         // Slow cinematic camera push into the room
         this.targetCameraPos.set(0, 3.2, 31);
+
+        // GSAP Motion Design: Animate hero text stagger reveal
+        setTimeout(() => {
+          gsap.fromTo('.eyebrow', 
+            { opacity: 0, y: 15 },
+            { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
+          );
+          gsap.fromTo('#hero-title', 
+            { opacity: 0, y: 25 },
+            { opacity: 1, y: 0, duration: 1.0, ease: 'power4.out', delay: 0.15 }
+          );
+          gsap.fromTo('.hero-description', 
+            { opacity: 0, y: 15 },
+            { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.3 }
+          );
+          gsap.fromTo('.hero-actions', 
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', delay: 0.45 }
+          );
+        }, 100);
       }
     }, 28);
   }
@@ -260,6 +281,14 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     if (this.camera) {
       this.camera.position.set(0, 3.2, 31);
     }
+    
+    // GSAP Motion Design (immediate)
+    setTimeout(() => {
+      gsap.fromTo('.eyebrow', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' });
+      gsap.fromTo('#hero-title', { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 1.0, ease: 'power4.out', delay: 0.15 });
+      gsap.fromTo('.hero-description', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.3 });
+      gsap.fromTo('.hero-actions', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', delay: 0.45 });
+    }, 50);
   }
 
   protected inspectProject(project: ProjectExhibit): void {
@@ -411,12 +440,18 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       };
       window.addEventListener('pointerup', this.pointerUpListener);
 
-      // Smooth mouse wheel zoom in/out
+      // Smooth mouse wheel zoom in/out with deep exploration
       this.wheelListener = (e: WheelEvent) => {
         if (!this.vaultUnlocked()) return;
         e.preventDefault();
-        const zoomDelta = e.deltaY * 0.025;
-        this.targetCameraPos.z = Math.max(16, Math.min(42, this.targetCameraPos.z + zoomDelta));
+        const zoomDelta = e.deltaY * 0.035;
+        
+        // Deep zoom: from far outside door (z = 45) to deep into the gallery (z = -25)
+        this.targetCameraPos.z = Math.max(-25, Math.min(45, this.targetCameraPos.z + zoomDelta));
+        
+        // Adjust camera Y dynamically based on Z depth to look naturally up at wall frames when deep inside
+        const depthRatio = (this.targetCameraPos.z + 25) / 70; // 0 (deep) to 1 (far)
+        this.targetCameraPos.y = 2.0 + (depthRatio * 2.0); // Drop low when deep inside for dramatic angle
       };
       canvas.addEventListener('wheel', this.wheelListener, { passive: false });
 
@@ -882,38 +917,46 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     ceiling.position.set(0, 32, -5);
     this.galleryGroup.add(ceiling);
 
-    // Simulated Honeycomb/Alveolare LED Ceiling Lights Matrix
+    // Simulated Honeycomb/Alveolare LED Ceiling Lights Matrix (Expanded to cover ceiling)
     const honeycombGroup = new THREE.Group();
     honeycombGroup.position.set(0, 31.8, -8);
     honeycombGroup.rotation.x = Math.PI / 2;
 
-    const hexCols = 7;
-    const hexRows = 3;
+    const hexCols = 31;
+    const hexRows = 19;
     const hexRadius = 4.2;
     const dx = hexRadius * 1.732;
     const dy = hexRadius * 1.5;
+
+    // Create a pool of materials for performance instead of unique material per hex
+    const materialPoolSize = 16;
+    for (let i = 0; i < materialPoolSize; i++) {
+      const isViolet = i % 2 === 0;
+      const hexLedMat = new THREE.MeshStandardMaterial({
+        color: isViolet ? 0x8b5cf6 : 0x38bdf8,
+        emissive: isViolet ? 0x8b5cf6 : 0x38bdf8,
+        emissiveIntensity: 1.8,
+        roughness: 0.2
+      });
+      this.ceilingLedMats.push(hexLedMat);
+    }
+
+    const hexGeo = new THREE.RingGeometry(hexRadius - 0.22, hexRadius, 6);
+    const nodeGeo = new THREE.CircleGeometry(0.35, 12);
+    const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
     for (let r = 0; r < hexRows; r++) {
       for (let c = 0; c < hexCols; c++) {
         const xOffset = (c - (hexCols - 1) / 2) * dx + (r % 2 === 1 ? dx / 2 : 0);
         const yOffset = (r - (hexRows - 1) / 2) * dy;
+        const poolIndex = (r * hexCols + c) % materialPoolSize;
 
         // Thin glowing hexagon ring
-        const hexGeo = new THREE.RingGeometry(hexRadius - 0.22, hexRadius, 6);
-        const hexLedMat = new THREE.MeshStandardMaterial({
-          color: (c + r) % 2 === 0 ? 0x8b5cf6 : 0x38bdf8,
-          emissive: (c + r) % 2 === 0 ? 0x8b5cf6 : 0x38bdf8,
-          emissiveIntensity: 1.8,
-          roughness: 0.2
-        });
-        const hexMesh = new THREE.Mesh(hexGeo, hexLedMat);
+        const hexMesh = new THREE.Mesh(hexGeo, this.ceilingLedMats[poolIndex]);
         hexMesh.position.set(xOffset, yOffset, 0);
         honeycombGroup.add(hexMesh);
-        this.ceilingLedMats.push(hexLedMat);
 
         // Center light node inside hexagon
-        const nodeGeo = new THREE.CircleGeometry(0.35, 12);
-        const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
         nodeMesh.position.set(xOffset, yOffset, 0.05);
         honeycombGroup.add(nodeMesh);
@@ -921,10 +964,18 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     }
     this.galleryGroup.add(honeycombGroup);
 
-    // Overhead ambient fill from honeycomb lights
-    const honeycombFill = new THREE.PointLight(0xa78bfa, 2.5, 75);
-    honeycombFill.position.set(0, 28, -8);
-    this.galleryGroup.add(honeycombFill);
+    // Overhead ambient fill from honeycomb lights (Expanded to cover room)
+    const fillLight1 = new THREE.PointLight(0xa78bfa, 2.5, 120);
+    fillLight1.position.set(0, 28, 0);
+    this.galleryGroup.add(fillLight1);
+
+    const fillLight2 = new THREE.PointLight(0x38bdf8, 2.0, 120);
+    fillLight2.position.set(-35, 28, -25);
+    this.galleryGroup.add(fillLight2);
+
+    const fillLight3 = new THREE.PointLight(0x8b5cf6, 2.0, 120);
+    fillLight3.position.set(35, 28, -25);
+    this.galleryGroup.add(fillLight3);
 
     // Vault Side Walls (Non-reflective)
     const sideWallMat = new THREE.MeshStandardMaterial({
