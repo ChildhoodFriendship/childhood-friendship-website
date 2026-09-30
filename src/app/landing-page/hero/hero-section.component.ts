@@ -70,6 +70,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private currentCameraPos = new THREE.Vector3(0, 0, 120);
   private targetCameraRot = new THREE.Euler(0, 0, 0);
 
+  // Web Audio Context for synthesized mechanical sounds
+  private audioCtx?: AudioContext;
+
   // Interactive Drag & Orbit Navigation
   private isDragging = false;
   private prevPointerX = 0;
@@ -154,10 +157,21 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
   // Synthesize realistic mechanical clicks via Web Audio API without external audio assets
   private playMechanicalClick(freq = 420, duration = 0.04, type: 'triangle' | 'square' | 'sawtooth' = 'triangle'): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      if (!this.audioCtx) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        this.audioCtx = new AudioCtx();
+      }
+      
+      // If the context is blocked (suspended) due to browser autoplay rules, 
+      // exit early to prevent console spam and warnings.
+      if (this.audioCtx.state === 'suspended') {
+        return;
+      }
+
+      const ctx = this.audioCtx;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = type;
@@ -488,11 +502,14 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       window.addEventListener('resize', this.resizeListener);
 
       // 9. Render Loop
-      const clock = new THREE.Clock();
+      let lastTime = performance.now();
+      let elapsed = 0;
       const animate = () => {
         this.animFrameId = requestAnimationFrame(animate);
-        const delta = clock.getDelta();
-        const elapsed = clock.getElapsedTime();
+        const time = performance.now();
+        const delta = (time - lastTime) / 1000;
+        lastTime = time;
+        elapsed += delta;
 
         // WASD movement logic
         if (this.vaultUnlocked() && this.camera) {
