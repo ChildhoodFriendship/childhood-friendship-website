@@ -1118,12 +1118,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     const sideWallGeo = new THREE.PlaneGeometry(120, 80);
     const leftSideWall = new THREE.Mesh(sideWallGeo, wallMat);
     leftSideWall.rotation.y = Math.PI / 2;
-    leftSideWall.position.set(-60, 15, 0);
+    leftSideWall.position.set(-45, 15, 0);
     this.galleryGroup.add(leftSideWall);
 
     const rightSideWall = new THREE.Mesh(sideWallGeo, wallMat);
     rightSideWall.rotation.y = -Math.PI / 2;
-    rightSideWall.position.set(60, 15, 0);
+    rightSideWall.position.set(45, 15, 0);
     this.galleryGroup.add(rightSideWall);
 
     // Ambient neon fill lights
@@ -1137,15 +1137,16 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
     // 1. Build 3 Pedestals with 3D Computer / Laptop Mockups
     const positions = [
-      { x: -14, z: 8 },
-      { x: 4, z: 2 },
-      { x: 22, z: 8 }
+      { x: -33, z: -2, rotY: Math.PI / 2 },
+      { x: 0, z: -12, rotY: 0 },
+      { x: 33, z: -2, rotY: -Math.PI / 2 }
     ];
 
     this.projects.forEach((proj, i) => {
       const pos = positions[i];
       const exhibitGroup = new THREE.Group();
       exhibitGroup.position.set(pos.x, -6, pos.z);
+      if (pos.rotY) exhibitGroup.rotation.y = pos.rotY;
       exhibitGroup.userData['project'] = proj;
 
       // 1. Pedestal Base (Machined Dark Obsidian & Chamfered Rim)
@@ -1337,16 +1338,16 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     const frameConfigs = [
       {
         project: this.projects[0],
-        x: -26,
+        x: -44.5,
         y: 11,
-        z: -25.5,
+        z: -2,
         width: 15,
         height: 9,
-        rotY: 0
+        rotY: Math.PI / 2
       },
       {
         project: this.projects[1],
-        x: 2,
+        x: 0,
         y: 13,
         z: -25.5,
         width: 17,
@@ -1355,12 +1356,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       },
       {
         project: this.projects[2],
-        x: 28,
+        x: 44.5,
         y: 11,
-        z: -25.5,
+        z: -2,
         width: 15,
         height: 9,
-        rotY: 0
+        rotY: -Math.PI / 2
       }
     ];
 
@@ -1372,9 +1373,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       frameGroup.userData['type'] = 'frame';
 
       const frameMat = new THREE.MeshStandardMaterial({
-        color: 0x5e3a1f, // Retro wood color
+        color: 0x8b5a2b, // Lighter, warmer retro wood color
         metalness: 0.1,
-        roughness: 0.85
+        roughness: 0.75
       });
       const outerGeo = new THREE.BoxGeometry(cfg.width + 1.8, cfg.height + 1.8, 0.5); // Thicker classic frame
       const outerMesh = new THREE.Mesh(outerGeo, frameMat);
@@ -1411,7 +1412,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       frameGroup.add(screenMesh);
 
       const frameLight = new THREE.SpotLight(cfg.project.color, 3.2, 35, Math.PI / 4, 0.4);
-      frameLight.position.set(cfg.x, cfg.y + 6, cfg.z + 10);
+      
+      // Calculate light offset based on frame rotation to always push the light out into the room
+      const lightOffsetZ = Math.cos(cfg.rotY) * 10;
+      const lightOffsetX = Math.sin(cfg.rotY) * 10;
+      frameLight.position.set(cfg.x + lightOffsetX, cfg.y + 6, cfg.z + lightOffsetZ);
+      
       frameLight.target = frameGroup;
       this.galleryGroup?.add(frameLight);
 
