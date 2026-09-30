@@ -987,16 +987,45 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.galleryGroup = new THREE.Group();
     this.galleryGroup.visible = false;
 
-    // Vault Rear Wall (Wide)
+    // Vault Rear Distant Backdrop Wall
     const wallGeo = new THREE.PlaneGeometry(240, 80);
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x11131a, // Clean dark minimal wall
-      metalness: 0.1,
-      roughness: 0.9   // Matte finish
+      color: 0x0a0c12, // Darker minimal background
+      metalness: 0.05,
+      roughness: 0.95
     });
     const backWall = new THREE.Mesh(wallGeo, wallMat);
-    backWall.position.set(0, 15, -40);
+    backWall.position.set(0, 15, -45);
     this.galleryGroup.add(backWall);
+
+    // Architectural Exhibition Panels (Defined 3D walls for the web projects)
+    const panelMat = new THREE.MeshStandardMaterial({
+      color: 0x161821, // Slightly lighter monolithic concrete/slate
+      metalness: 0.15,
+      roughness: 0.75
+    });
+    const panelGeo = new THREE.BoxGeometry(24, 38, 2);
+
+    const panelConfigs = [
+      { x: -26, z: -20, rotY: 0.28 },
+      { x: 2, z: -24, rotY: 0 },
+      { x: 28, z: -20, rotY: -0.28 }
+    ];
+
+    panelConfigs.forEach((cfg) => {
+      const panel = new THREE.Mesh(panelGeo, panelMat);
+      panel.position.set(cfg.x, 13, cfg.z);
+      panel.rotation.y = cfg.rotY;
+      // Push back locally so the front face is at the frame's z-level
+      panel.translateZ(-1.2);
+      this.galleryGroup.add(panel);
+
+      // Add a subtle LED backlight behind each panel for a premium museum effect
+      const backlight = new THREE.PointLight(0x7c3aed, 2.0, 30);
+      backlight.position.set(cfg.x, 13, cfg.z);
+      backlight.translateZ(-3.0); // Behind the panel
+      this.galleryGroup.add(backlight);
+    });
 
     // Architectural Dark Ceiling
     const ceilingGeo = new THREE.PlaneGeometry(240, 120);
