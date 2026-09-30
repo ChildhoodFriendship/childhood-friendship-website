@@ -66,8 +66,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private doorDisplayTexture?: THREE.CanvasTexture;
   private mouseX = 0;
   private mouseY = 0;
-  private targetCameraPos = new THREE.Vector3(0, 0, 75);
-  private currentCameraPos = new THREE.Vector3(0, 0, 75);
+  private targetCameraPos = new THREE.Vector3(0, 0, 95);
+  private currentCameraPos = new THREE.Vector3(0, 0, 95);
   private targetCameraRot = new THREE.Euler(0, 0, 0);
 
   // Interactive Drag & Orbit Navigation
@@ -80,6 +80,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private pointerMoveListener?: (e: PointerEvent) => void;
   private pointerUpListener?: (e: PointerEvent) => void;
   private wheelListener?: (e: WheelEvent) => void;
+  private keyDownListener?: (e: KeyboardEvent) => void;
+  private keyUpListener?: (e: KeyboardEvent) => void;
+  private keys = { w: false, a: false, s: false, d: false };
 
   // Projects list showcased in the vault pedestals & frames
   protected readonly projects: readonly ProjectExhibit[] = [
@@ -455,6 +458,23 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       };
       canvas.addEventListener('wheel', this.wheelListener, { passive: false });
 
+      // WASD Videogame Navigation
+      this.keyDownListener = (e: KeyboardEvent) => {
+        if (!this.vaultUnlocked()) return;
+        const key = e.key.toLowerCase();
+        if (key in this.keys) {
+          this.keys[key as keyof typeof this.keys] = true;
+        }
+      };
+      this.keyUpListener = (e: KeyboardEvent) => {
+        const key = e.key.toLowerCase();
+        if (key in this.keys) {
+          this.keys[key as keyof typeof this.keys] = false;
+        }
+      };
+      window.addEventListener('keydown', this.keyDownListener);
+      window.addEventListener('keyup', this.keyUpListener);
+
       // 8. Responsive Resizer
       this.resizeListener = () => {
         if (!this.camera || !this.renderer || !canvas) return;
@@ -473,6 +493,43 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         this.animFrameId = requestAnimationFrame(animate);
         const delta = clock.getDelta();
         const elapsed = clock.getElapsedTime();
+
+        // WASD movement logic
+        if (this.vaultUnlocked() && this.camera) {
+          const moveSpeed = 40.0 * delta; // speed per second
+          
+          // Move in camera's local forward/right directions
+          const forward = new THREE.Vector3(0, 0, -1);
+          forward.applyQuaternion(this.camera.quaternion);
+          forward.y = 0; // Lock vertical movement for walking
+          forward.normalize();
+          
+          const right = new THREE.Vector3(1, 0, 0);
+          right.applyQuaternion(this.camera.quaternion);
+          right.y = 0;
+          right.normalize();
+
+          if (this.keys.w) {
+            this.targetCameraPos.addScaledVector(forward, moveSpeed);
+          }
+          if (this.keys.s) {
+            this.targetCameraPos.addScaledVector(forward, -moveSpeed);
+          }
+          if (this.keys.a) {
+            this.targetCameraPos.addScaledVector(right, -moveSpeed);
+          }
+          if (this.keys.d) {
+            this.targetCameraPos.addScaledVector(right, moveSpeed);
+          }
+
+          // Clamp movement boundaries (room limits)
+          this.targetCameraPos.x = Math.max(-50, Math.min(50, this.targetCameraPos.x));
+          this.targetCameraPos.z = Math.max(-25, Math.min(65, this.targetCameraPos.z));
+          
+          // Adjust height based on Z depth dynamically when moving
+          const depthRatio = (this.targetCameraPos.z + 25) / 90; // 0 (deep) to 1 (far)
+          this.targetCameraPos.y = 2.0 + (Math.max(0, depthRatio) * 2.0);
+        }
 
         // Smooth camera interpolation
         const smoothFactor = 0.05;
@@ -880,9 +937,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     // Architectural Dark Floor with Grid Lines (hidden during vault loading)
     const floorGeo = new THREE.PlaneGeometry(240, 240, 40, 40);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x08080c,
-      roughness: 0.85,
-      metalness: 0.25
+      color: 0x11131a, // Dark minimal floor
+      roughness: 0.75, // Matte finish to avoid blinding highlights
+      metalness: 0.2
     });
     this.floorMesh = new THREE.Mesh(floorGeo, floorMat);
     this.floorMesh.rotation.x = -Math.PI / 2;
@@ -897,9 +954,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     // Vault Rear Wall (Wide)
     const wallGeo = new THREE.PlaneGeometry(240, 80);
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x0f1118,
-      metalness: 0.7,
-      roughness: 0.6
+      color: 0x11131a, // Clean dark minimal wall
+      metalness: 0.1,
+      roughness: 0.9   // Matte finish
     });
     const backWall = new THREE.Mesh(wallGeo, wallMat);
     backWall.position.set(0, 15, -40);
@@ -922,9 +979,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     honeycombGroup.position.set(0, 31.8, -8);
     honeycombGroup.rotation.x = Math.PI / 2;
 
-    const hexCols = 31;
-    const hexRows = 19;
-    const hexRadius = 4.2;
+    const hexCols = 17; // Fewer columns
+    const hexRows = 11; // Fewer rows
+    const hexRadius = 8.5; // Larger radius to cover the same massive area efficiently
     const dx = hexRadius * 1.732;
     const dy = hexRadius * 1.5;
 
@@ -935,14 +992,14 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       const hexLedMat = new THREE.MeshStandardMaterial({
         color: isViolet ? 0x8b5cf6 : 0x38bdf8,
         emissive: isViolet ? 0x8b5cf6 : 0x38bdf8,
-        emissiveIntensity: 1.8,
+        emissiveIntensity: 1.2, // Toned down a bit
         roughness: 0.2
       });
       this.ceilingLedMats.push(hexLedMat);
     }
 
-    const hexGeo = new THREE.RingGeometry(hexRadius - 0.22, hexRadius, 6);
-    const nodeGeo = new THREE.CircleGeometry(0.35, 12);
+    const hexGeo = new THREE.RingGeometry(hexRadius - 0.4, hexRadius, 6);
+    const nodeGeo = new THREE.CircleGeometry(0.8, 12);
     const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
     for (let r = 0; r < hexRows; r++) {
@@ -965,31 +1022,33 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.galleryGroup.add(honeycombGroup);
 
     // Overhead ambient fill from honeycomb lights (Expanded to cover room)
-    const fillLight1 = new THREE.PointLight(0xa78bfa, 2.5, 120);
+    const fillLight1 = new THREE.PointLight(0xa78bfa, 2.0, 120);
     fillLight1.position.set(0, 28, 0);
     this.galleryGroup.add(fillLight1);
 
-    const fillLight2 = new THREE.PointLight(0x38bdf8, 2.0, 120);
+    const fillLight2 = new THREE.PointLight(0x38bdf8, 1.5, 120);
     fillLight2.position.set(-35, 28, -25);
     this.galleryGroup.add(fillLight2);
 
-    const fillLight3 = new THREE.PointLight(0x8b5cf6, 2.0, 120);
+    const fillLight3 = new THREE.PointLight(0x8b5cf6, 1.5, 120);
     fillLight3.position.set(35, 28, -25);
     this.galleryGroup.add(fillLight3);
 
-    // Vault Side Walls (Non-reflective)
-    const sideWallMat = new THREE.MeshStandardMaterial({
-      color: 0x0f1118,
-      metalness: 0.0,
-      roughness: 1.0
-    });
+    // Subtle ceiling directional light to highlight the floor and walls
+    const galleryDirectional = new THREE.DirectionalLight(0x6366f1, 0.3); // Drastically reduced intensity
+    galleryDirectional.position.set(0, 40, -10);
+    galleryDirectional.target.position.set(0, 0, -20);
+    this.galleryGroup.add(galleryDirectional);
+    this.galleryGroup.add(galleryDirectional.target);
+
+    // Vault Side Walls (Minimal Matte)
     const sideWallGeo = new THREE.PlaneGeometry(120, 80);
-    const leftSideWall = new THREE.Mesh(sideWallGeo, sideWallMat);
+    const leftSideWall = new THREE.Mesh(sideWallGeo, wallMat);
     leftSideWall.rotation.y = Math.PI / 2;
     leftSideWall.position.set(-60, 15, 0);
     this.galleryGroup.add(leftSideWall);
 
-    const rightSideWall = new THREE.Mesh(sideWallGeo, sideWallMat);
+    const rightSideWall = new THREE.Mesh(sideWallGeo, wallMat);
     rightSideWall.rotation.y = -Math.PI / 2;
     rightSideWall.position.set(60, 15, 0);
     this.galleryGroup.add(rightSideWall);
