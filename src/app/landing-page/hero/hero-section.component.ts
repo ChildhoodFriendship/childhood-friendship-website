@@ -465,7 +465,9 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
           hit = hit.parent;
         }
         if (hit && hit.userData['project']) {
-          const proj = hit.userData['project'] as any; window.open(proj.link || 'https://example.com/project-placeholder', '_blank');
+          const proj = hit.userData['project'] as any; 
+            // window.open(proj.link || 'https://example.com/project-placeholder', '_blank');
+            this.zoomToProject(hit, proj);
         }
       }
     };
@@ -481,17 +483,30 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       canvas.addEventListener('pointerdown', this.pointerDownListener);
 
       this.pointerMoveListener = (e: PointerEvent) => {
-        if (!this.isDragging || !this.vaultUnlocked()) return;
-        const dx = e.clientX - this.prevPointerX;
-        const dy = e.clientY - this.prevPointerY;
-        this.prevPointerX = e.clientX;
-        this.prevPointerY = e.clientY;
-
-        this.orbitYaw -= dx * 0.004;
-        this.orbitPitch -= dy * 0.003;
-        // Clamp pitch to avoid flipping
-        this.orbitPitch = Math.max(-0.45, Math.min(0.55, this.orbitPitch));
-      };
+          if (!this.isDragging || !this.vaultUnlocked() || !this.camera) return;
+          const dx = e.clientX - this.prevPointerX;
+          const dy = e.clientY - this.prevPointerY;
+          this.prevPointerX = e.clientX;
+          this.prevPointerY = e.clientY;
+          
+          if (e.buttons === 2 || e.shiftKey) {
+            // Pan
+            const forward = new THREE.Vector3(0, 0, -1).applyEuler(this.camera.rotation);
+            forward.y = 0;
+            forward.normalize();
+            const right = new THREE.Vector3(1, 0, 0).applyEuler(this.camera.rotation);
+            right.y = 0;
+            right.normalize();
+            
+            this.targetCameraPos.addScaledVector(right, -dx * 0.05);
+            this.targetCameraPos.addScaledVector(forward, dy * 0.05);
+          } else {
+            // Orbit
+            this.orbitYaw -= dx * 0.004;
+            this.orbitPitch -= dy * 0.003;
+            this.orbitPitch = Math.max(-0.45, Math.min(0.55, this.orbitPitch));
+          }
+        };
       window.addEventListener('pointermove', this.pointerMoveListener);
 
       this.pointerUpListener = () => {
@@ -652,6 +667,43 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       };
       animate();
     }
+
+  
+  private zoomToProject(hitObject: THREE.Object3D, proj: any): void {
+    if (!this.camera || !this.scene) return;
+    
+    let group = hitObject;
+    while(group.parent && group.parent !== this.scene && group.parent !== this.galleryGroup) {
+      group = group.parent;
+    }
+    
+    const worldPos = new THREE.Vector3();
+    group.getWorldPosition(worldPos);
+    
+    const offsetDistance = 18;
+    const heightOffset = 4;
+    
+    const euler = new THREE.Euler().setFromQuaternion(group.quaternion);
+    const rotY = euler.y;
+    
+    const offsetX = Math.sin(rotY) * offsetDistance;
+    const offsetZ = Math.cos(rotY) * offsetDistance;
+    
+    const destX = worldPos.x + offsetX;
+    const destY = worldPos.y + heightOffset;
+    const destZ = worldPos.z + offsetZ;
+    
+    const distSq = this.targetCameraPos.distanceToSquared(new THREE.Vector3(destX, destY, destZ));
+    if (distSq < 5.0) {
+      // Already zoomed in, open link
+      window.open(proj.link || 'https://example.com/project-placeholder', '_blank');
+      return;
+    }
+    
+    this.targetCameraPos.set(destX, destY, destZ);
+    this.orbitYaw = rotY; 
+    this.orbitPitch = 0;
+  }
 
   private buildVaultDoor(): void {
     if (!this.scene) return;
@@ -1159,12 +1211,12 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
     // Vault Side Walls (Minimal Matte)
     const sideWallGeo = new THREE.PlaneGeometry(120, 80);
-    const leftSideWall = new THREE.Mesh(sideWallGeo, wallMat);
+    const purpleMat = new THREE.MeshStandardMaterial({color: 0x1a052e, metalness: 0.15, roughness: 0.9, side: THREE.DoubleSide}); const leftSideWall = new THREE.Mesh(sideWallGeo, purpleMat);
     leftSideWall.rotation.y = Math.PI / 2;
     leftSideWall.position.set(-45, 15, 0);
     this.galleryGroup.add(leftSideWall);
 
-    const rightSideWall = new THREE.Mesh(sideWallGeo, wallMat);
+    const rightSideWall = new THREE.Mesh(sideWallGeo, purpleMat);
     rightSideWall.rotation.y = -Math.PI / 2;
     rightSideWall.position.set(45, 15, 0);
     this.galleryGroup.add(rightSideWall);
