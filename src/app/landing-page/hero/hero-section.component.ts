@@ -58,7 +58,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private wallFrames: { mesh: THREE.Group; borderMat?: THREE.MeshStandardMaterial; project: ProjectExhibit }[] = [];
   private dustParticles?: THREE.Points;
   private tecaSpotlights: THREE.SpotLight[] = [];
-  private ceilingLedMats: THREE.MeshStandardMaterial[] = [];
+  private ceilingLedMats: THREE.MeshBasicMaterial[] = [];
+  private ceilingNodeMats: THREE.MeshBasicMaterial[] = [];
   private floorMesh?: THREE.Mesh;
   private gridHelper?: THREE.GridHelper;
   private galleryGroup?: THREE.Group;
@@ -588,7 +589,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
         // Dynamic breathing for honeycomb ceiling LED lights
         this.ceilingLedMats.forEach((mat, idx) => {
-          mat.emissiveIntensity = 1.4 + Math.sin(elapsed * 2.2 + idx * 0.4) * 0.8;
+          mat.opacity = 0.15 + Math.max(0, Math.sin(elapsed * 2.2 + idx * 0.4)) * 0.4;
+        });
+        this.ceilingNodeMats.forEach((mat, idx) => {
+          mat.opacity = 0.4 + Math.max(0, Math.sin(elapsed * 2.2 + idx * 0.4)) * 0.6;
         });
 
 
@@ -1026,22 +1030,48 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     const dx = hexRadius * 1.732;
     const dy = hexRadius * 1.5;
 
+    // Procedural Glow Texture for ceiling LED nodes
+    const glowCanvas = document.createElement('canvas');
+    glowCanvas.width = 64;
+    glowCanvas.height = 64;
+    const glowCtx = glowCanvas.getContext('2d')!;
+    const glowGrad = glowCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    glowGrad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    glowGrad.addColorStop(0.2, 'rgba(190, 210, 255, 0.8)');
+    glowGrad.addColorStop(0.5, 'rgba(100, 150, 255, 0.2)');
+    glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    glowCtx.fillStyle = glowGrad;
+    glowCtx.fillRect(0, 0, 64, 64);
+    const glowTexture = new THREE.CanvasTexture(glowCanvas);
+
     // Create a pool of materials for performance instead of unique material per hex
     const materialPoolSize = 16;
     for (let i = 0; i < materialPoolSize; i++) {
       const isViolet = i % 2 === 0;
-      const hexLedMat = new THREE.MeshStandardMaterial({
-        color: isViolet ? 0x8b5cf6 : 0x38bdf8,
-        emissive: isViolet ? 0x8b5cf6 : 0x38bdf8,
-        emissiveIntensity: 1.2, // Toned down a bit
-        roughness: 0.2
+      const baseColor = isViolet ? 0x8b5cf6 : 0x38bdf8;
+      
+      const hexLedMat = new THREE.MeshBasicMaterial({
+        color: baseColor,
+        transparent: true,
+        opacity: 0.35,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
       });
       this.ceilingLedMats.push(hexLedMat);
+
+      const nodeLedMat = new THREE.MeshBasicMaterial({
+        map: glowTexture,
+        color: baseColor,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 0.85
+      });
+      this.ceilingNodeMats.push(nodeLedMat);
     }
 
-    const hexGeo = new THREE.RingGeometry(hexRadius - 0.4, hexRadius, 6);
-    const nodeGeo = new THREE.CircleGeometry(0.8, 12);
-    const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const hexGeo = new THREE.RingGeometry(hexRadius - 0.2, hexRadius, 6);
+    const nodeGeo = new THREE.PlaneGeometry(6, 6);
 
     for (let r = 0; r < hexRows; r++) {
       for (let c = 0; c < hexCols; c++) {
@@ -1054,8 +1084,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         hexMesh.position.set(xOffset, yOffset, 0);
         honeycombGroup.add(hexMesh);
 
-        // Center light node inside hexagon
-        const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
+        // Center light node inside hexagon (glowing aura)
+        const nodeMesh = new THREE.Mesh(nodeGeo, this.ceilingNodeMats[poolIndex]);
         nodeMesh.position.set(xOffset, yOffset, 0.05);
         honeycombGroup.add(nodeMesh);
       }
