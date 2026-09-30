@@ -373,7 +373,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
           hit = hit.parent;
         }
         if (hit && hit.userData['project']) {
-          this.inspectProject(hit.userData['project']);
+          if (hit.userData['type'] === 'frame') {
+            window.open('https://example.com/project-placeholder', '_blank');
+          } else {
+            this.inspectProject(hit.userData['project']);
+          }
         }
       }
     };
@@ -465,13 +469,6 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
             this.vaultDoorGroup.position.x -= delta * 32;
           }
         }
-
-        // Subtle float animation for computer mockups
-        this.exhibitMeshes.forEach((item, index) => {
-          const floatOffset = Math.sin(elapsed * 1.6 + index * 1.8) * 0.15;
-          item.mesh.position.y = 5.2 + floatOffset;
-          item.mesh.rotation.y += 0.006;
-        });
 
         // Subtle hover glow animation on wall frames
         this.wallFrames.forEach((frame, index) => {
@@ -858,12 +855,6 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.floorMesh.visible = false;
     this.scene.add(this.floorMesh);
 
-    // Floor Grid Overlay (hidden during vault loading)
-    this.gridHelper = new THREE.GridHelper(240, 80, 0x8b5cf6, 0x1f1d2b);
-    this.gridHelper.position.y = -5.9;
-    this.gridHelper.visible = false;
-    this.scene.add(this.gridHelper);
-
     // Gallery interior group — hidden during vault loading, shown after unlock
     this.galleryGroup = new THREE.Group();
     this.galleryGroup.visible = false;
@@ -935,14 +926,19 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     honeycombFill.position.set(0, 28, -8);
     this.galleryGroup.add(honeycombFill);
 
-    // Vault Side Walls
+    // Vault Side Walls (Non-reflective)
+    const sideWallMat = new THREE.MeshStandardMaterial({
+      color: 0x0f1118,
+      metalness: 0.0,
+      roughness: 1.0
+    });
     const sideWallGeo = new THREE.PlaneGeometry(120, 80);
-    const leftSideWall = new THREE.Mesh(sideWallGeo, wallMat);
+    const leftSideWall = new THREE.Mesh(sideWallGeo, sideWallMat);
     leftSideWall.rotation.y = Math.PI / 2;
     leftSideWall.position.set(-60, 15, 0);
     this.galleryGroup.add(leftSideWall);
 
-    const rightSideWall = new THREE.Mesh(sideWallGeo, wallMat);
+    const rightSideWall = new THREE.Mesh(sideWallGeo, sideWallMat);
     rightSideWall.rotation.y = -Math.PI / 2;
     rightSideWall.position.set(60, 15, 0);
     this.galleryGroup.add(rightSideWall);
@@ -1186,15 +1182,25 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       frameGroup.position.set(cfg.x, cfg.y, cfg.z);
       frameGroup.rotation.y = cfg.rotY;
       frameGroup.userData['project'] = cfg.project;
+      frameGroup.userData['type'] = 'frame';
 
       const frameMat = new THREE.MeshStandardMaterial({
-        color: 0x1e2029,
-        metalness: 0.9,
-        roughness: 0.25
+        color: 0x5e3a1f, // Retro wood color
+        metalness: 0.1,
+        roughness: 0.85
       });
-      const outerGeo = new THREE.BoxGeometry(cfg.width + 1.2, cfg.height + 1.2, 0.4);
+      const outerGeo = new THREE.BoxGeometry(cfg.width + 1.8, cfg.height + 1.8, 0.5); // Thicker classic frame
       const outerMesh = new THREE.Mesh(outerGeo, frameMat);
       frameGroup.add(outerMesh);
+
+      const innerTrimMat = new THREE.MeshStandardMaterial({
+        color: 0xd4af37, // Gold accent trim
+        metalness: 0.8,
+        roughness: 0.3
+      });
+      const innerTrimGeo = new THREE.BoxGeometry(cfg.width + 0.6, cfg.height + 0.6, 0.6);
+      const innerTrimMesh = new THREE.Mesh(innerTrimGeo, innerTrimMat);
+      frameGroup.add(innerTrimMesh);
 
       const borderMat = new THREE.MeshStandardMaterial({
         color: cfg.project.color,
