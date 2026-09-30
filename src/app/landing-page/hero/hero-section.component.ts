@@ -594,14 +594,13 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     if (!this.scene) return;
 
     // A. Front Massive Reinforced Wall (Surrounding the vault door at z = 44)
-    // The door center is at y = 0. The portal opening is a clean full-circle cutout of radius 17.5.
     const frontWallGroup = new THREE.Group();
     frontWallGroup.position.set(0, 0, 44);
 
     const wallConcreteMat = new THREE.MeshStandardMaterial({
-      color: 0x16181f,
-      metalness: 0.65,
-      roughness: 0.6
+      color: 0x0c0d14, // Cohesive dark matte gallery wall
+      metalness: 0.1,
+      roughness: 0.95
     });
     const wallTrimMat = new THREE.MeshStandardMaterial({
       color: 0x333742,
@@ -609,34 +608,24 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       roughness: 0.25
     });
 
-    // Outer wall slabs: left, right, top, bottom, positioned outside the circular radius
-    // Made massive (800x800) so the wall fully fills the background
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(400, 400, 4), wallConcreteMat);
-    leftWall.position.set(-217.5, 0, 0);
-    frontWallGroup.add(leftWall);
+    // Create a massive wall with a perfect circular hole for the vault door
+    const wallShape = new THREE.Shape();
+    wallShape.moveTo(-400, -400);
+    wallShape.lineTo(400, -400);
+    wallShape.lineTo(400, 400);
+    wallShape.lineTo(-400, 400);
+    wallShape.lineTo(-400, -400);
+    
+    const holePath = new THREE.Path();
+    holePath.absarc(0, 0, 17.5, 0, Math.PI * 2, false);
+    wallShape.holes.push(holePath);
 
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(400, 400, 4), wallConcreteMat);
-    rightWall.position.set(217.5, 0, 0);
-    frontWallGroup.add(rightWall);
-
-    const topWall = new THREE.Mesh(new THREE.BoxGeometry(800, 400, 4), wallConcreteMat);
-    topWall.position.set(0, 217.5, 0);
-    frontWallGroup.add(topWall);
-
-    const bottomWall = new THREE.Mesh(new THREE.BoxGeometry(800, 400, 4), wallConcreteMat);
-    bottomWall.position.set(0, -217.5, 0);
-    frontWallGroup.add(bottomWall);
-
-    // Diagonal corner fillers for a neat circular silhouette
-    [-1, 1].forEach(sx => {
-      [-1, 1].forEach(sy => {
-        const cornerGeo = new THREE.BoxGeometry(18, 18, 4);
-        const corner = new THREE.Mesh(cornerGeo, wallConcreteMat);
-        corner.position.set(sx * 22, sy * 22, 0);
-        corner.rotation.z = Math.PI / 4;
-        frontWallGroup.add(corner);
-      });
-    });
+    const extrudeSettings = { depth: 4, bevelEnabled: false, curveSegments: 48 };
+    const frontWallGeo = new THREE.ExtrudeGeometry(wallShape, extrudeSettings);
+    const frontWallMesh = new THREE.Mesh(frontWallGeo, wallConcreteMat);
+    // Extrude geometry grows in +Z, so if we want it centered at 0 we move it back
+    frontWallMesh.position.z = -2;
+    frontWallGroup.add(frontWallMesh);
 
     // Vault portal opening rim trim (Heavy Machined Titanium Ring)
     const portalRimGeo = new THREE.TorusGeometry(17.6, 1.4, 24, 80);
@@ -935,7 +924,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private buildVaultGallery(): void {
     if (!this.scene) return;
 
-    // Procedural Dark Glossy Tiles for Floor
+    // Procedural Dark Glossy Tiles for Floor and Walls
     const tileCanvas = document.createElement('canvas');
     tileCanvas.width = 512;
     tileCanvas.height = 512;
@@ -987,45 +976,16 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.galleryGroup = new THREE.Group();
     this.galleryGroup.visible = false;
 
-    // Vault Rear Distant Backdrop Wall
+    // Realistic Matte Backdrop Wall
     const wallGeo = new THREE.PlaneGeometry(240, 80);
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x0a0c12, // Darker minimal background
-      metalness: 0.05,
+      color: 0x0c0d14, // Dark matte finish, same as front vault wall
+      metalness: 0.1,
       roughness: 0.95
     });
     const backWall = new THREE.Mesh(wallGeo, wallMat);
-    backWall.position.set(0, 15, -45);
+    backWall.position.set(0, 15, -26); // Moved closer to be the actual backdrop
     this.galleryGroup.add(backWall);
-
-    // Architectural Exhibition Panels (Defined 3D walls for the web projects)
-    const panelMat = new THREE.MeshStandardMaterial({
-      color: 0x161821, // Slightly lighter monolithic concrete/slate
-      metalness: 0.15,
-      roughness: 0.75
-    });
-    const panelGeo = new THREE.BoxGeometry(24, 38, 2);
-
-    const panelConfigs = [
-      { x: -26, z: -20, rotY: 0.28 },
-      { x: 2, z: -24, rotY: 0 },
-      { x: 28, z: -20, rotY: -0.28 }
-    ];
-
-    panelConfigs.forEach((cfg) => {
-      const panel = new THREE.Mesh(panelGeo, panelMat);
-      panel.position.set(cfg.x, 13, cfg.z);
-      panel.rotation.y = cfg.rotY;
-      // Push back locally so the front face is at the frame's z-level
-      panel.translateZ(-1.2);
-      this.galleryGroup?.add(panel);
-
-      // Add a subtle LED backlight behind each panel for a premium museum effect
-      const backlight = new THREE.PointLight(0x7c3aed, 2.0, 30);
-      backlight.position.set(cfg.x, 13, cfg.z);
-      backlight.translateZ(-3.0); // Behind the panel
-      this.galleryGroup?.add(backlight);
-    });
 
     // Architectural Dark Ceiling
     const ceilingGeo = new THREE.PlaneGeometry(240, 120);
@@ -1331,16 +1291,16 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         project: this.projects[0],
         x: -26,
         y: 11,
-        z: -20,
+        z: -25.5,
         width: 15,
         height: 9,
-        rotY: 0.28
+        rotY: 0
       },
       {
         project: this.projects[1],
         x: 2,
         y: 13,
-        z: -24,
+        z: -25.5,
         width: 17,
         height: 10,
         rotY: 0
@@ -1349,10 +1309,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         project: this.projects[2],
         x: 28,
         y: 11,
-        z: -20,
+        z: -25.5,
         width: 15,
         height: 9,
-        rotY: -0.28
+        rotY: 0
       }
     ];
 
