@@ -66,8 +66,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private doorDisplayTexture?: THREE.CanvasTexture;
   private mouseX = 0;
   private mouseY = 0;
-  private targetCameraPos = new THREE.Vector3(0, 0, 95);
-  private currentCameraPos = new THREE.Vector3(0, 0, 95);
+  private targetCameraPos = new THREE.Vector3(0, 0, 160);
+  private currentCameraPos = new THREE.Vector3(0, 0, 160);
   private targetCameraRot = new THREE.Euler(0, 0, 0);
 
   // Interactive Drag & Orbit Navigation
@@ -242,7 +242,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
         if (this.galleryGroup) this.galleryGroup.visible = true;
 
         // Slow cinematic camera push into the room
-        this.targetCameraPos.set(0, 3.2, 31);
+        this.targetCameraPos.set(0, 4.0, 45);
 
         // GSAP Motion Design: Animate hero text stagger reveal
         setTimeout(() => {
@@ -279,10 +279,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     if (this.gridHelper) this.gridHelper.visible = true;
     if (this.galleryGroup) this.galleryGroup.visible = true;
     
-    this.targetCameraPos.set(0, 3.2, 31);
-    this.currentCameraPos.set(0, 3.2, 31);
+    this.targetCameraPos.set(0, 4.0, 45);
+    this.currentCameraPos.set(0, 4.0, 45);
     if (this.camera) {
-      this.camera.position.set(0, 3.2, 31);
+      this.camera.position.set(0, 4.0, 45);
     }
     
     // GSAP Motion Design (immediate)
@@ -610,20 +610,21 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     });
 
     // Outer wall slabs: left, right, top, bottom, positioned outside the circular radius
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 4), wallConcreteMat);
-    leftWall.position.set(-67.5, 0, 0);
+    // Made massive (800x800) so the wall fully fills the background
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(400, 400, 4), wallConcreteMat);
+    leftWall.position.set(-217.5, 0, 0);
     frontWallGroup.add(leftWall);
 
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 4), wallConcreteMat);
-    rightWall.position.set(67.5, 0, 0);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(400, 400, 4), wallConcreteMat);
+    rightWall.position.set(217.5, 0, 0);
     frontWallGroup.add(rightWall);
 
-    const topWall = new THREE.Mesh(new THREE.BoxGeometry(36, 40, 4), wallConcreteMat);
-    topWall.position.set(0, 37.5, 0);
+    const topWall = new THREE.Mesh(new THREE.BoxGeometry(800, 400, 4), wallConcreteMat);
+    topWall.position.set(0, 217.5, 0);
     frontWallGroup.add(topWall);
 
-    const bottomWall = new THREE.Mesh(new THREE.BoxGeometry(36, 40, 4), wallConcreteMat);
-    bottomWall.position.set(0, -37.5, 0);
+    const bottomWall = new THREE.Mesh(new THREE.BoxGeometry(800, 400, 4), wallConcreteMat);
+    bottomWall.position.set(0, -217.5, 0);
     frontWallGroup.add(bottomWall);
 
     // Diagonal corner fillers for a neat circular silhouette
@@ -934,12 +935,47 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private buildVaultGallery(): void {
     if (!this.scene) return;
 
-    // Architectural Dark Floor with Grid Lines (hidden during vault loading)
-    const floorGeo = new THREE.PlaneGeometry(240, 240, 40, 40);
+    // Procedural Dark Glossy Tiles for Floor
+    const tileCanvas = document.createElement('canvas');
+    tileCanvas.width = 512;
+    tileCanvas.height = 512;
+    const tileCtx = tileCanvas.getContext('2d')!;
+    
+    // Draw tile
+    tileCtx.fillStyle = '#08080c'; // Base glossy color
+    tileCtx.fillRect(0, 0, 512, 512);
+    // Draw grout (rough borders)
+    tileCtx.lineWidth = 12;
+    tileCtx.strokeStyle = '#020202';
+    tileCtx.strokeRect(0, 0, 512, 512);
+    
+    const tileTexture = new THREE.CanvasTexture(tileCanvas);
+    tileTexture.wrapS = THREE.RepeatWrapping;
+    tileTexture.wrapT = THREE.RepeatWrapping;
+    tileTexture.repeat.set(30, 30); // 240/30 = 8x8 units per tile
+
+    // Roughness map (white = rough grout, black = glossy tile)
+    const roughCanvas = document.createElement('canvas');
+    roughCanvas.width = 512;
+    roughCanvas.height = 512;
+    const roughCtx = roughCanvas.getContext('2d')!;
+    roughCtx.fillStyle = '#111111'; // Glossy center (roughness 0.06)
+    roughCtx.fillRect(0, 0, 512, 512);
+    roughCtx.lineWidth = 12;
+    roughCtx.strokeStyle = '#ffffff'; // Rough grout (roughness 1.0)
+    roughCtx.strokeRect(0, 0, 512, 512);
+
+    const roughTexture = new THREE.CanvasTexture(roughCanvas);
+    roughTexture.wrapS = THREE.RepeatWrapping;
+    roughTexture.wrapT = THREE.RepeatWrapping;
+    roughTexture.repeat.set(30, 30);
+
+    const floorGeo = new THREE.PlaneGeometry(240, 240, 1, 1);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x11131a, // Dark minimal floor
-      roughness: 0.75, // Matte finish to avoid blinding highlights
-      metalness: 0.2
+      map: tileTexture,
+      roughnessMap: roughTexture,
+      roughness: 0.8, // Base roughness (scaled by map)
+      metalness: 0.15,
     });
     this.floorMesh = new THREE.Mesh(floorGeo, floorMat);
     this.floorMesh.rotation.x = -Math.PI / 2;
@@ -1112,9 +1148,13 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       neonRing.position.y = 4.15;
       exhibitGroup.add(neonRing);
 
-      // Upward Internal Glow
-      const internalUpLight = new THREE.PointLight(proj.color, 2.5, 12, 1.5);
-      internalUpLight.position.set(0, 4.4, 0);
+      // Upward Internal Glow (Spotlight highlighting the mockup from below)
+      const internalUpLight = new THREE.SpotLight(proj.color, 4.5, 25, Math.PI / 4, 0.5, 1.0);
+      internalUpLight.position.set(0, 4.2, 0);
+      const targetObj = new THREE.Object3D();
+      targetObj.position.set(0, 10, 0); // Point straight up at the mockup
+      exhibitGroup.add(targetObj);
+      internalUpLight.target = targetObj;
       exhibitGroup.add(internalUpLight);
 
       // 3. Glass Showcase Case
