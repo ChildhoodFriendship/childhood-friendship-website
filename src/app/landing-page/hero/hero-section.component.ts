@@ -618,9 +618,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     frontWallGroup.position.set(0, 0, 44);
 
     const wallConcreteMat = new THREE.MeshStandardMaterial({
-      color: 0x0c0d14, // Cohesive dark matte gallery wall
-      metalness: 0.1,
-      roughness: 0.95
+      color: 0x14161c, // Slightly lighter than interior so it catches the outside light
+      metalness: 0.2,
+      roughness: 0.85,
+      side: THREE.DoubleSide // Prevent backface culling which made it invisible from outside!
     });
     const wallTrimMat = new THREE.MeshStandardMaterial({
       color: 0x333742,
@@ -999,9 +1000,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     // Realistic Matte Backdrop Wall
     const wallGeo = new THREE.PlaneGeometry(240, 80);
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x0c0d14, // Dark matte finish, same as front vault wall
+      color: 0x0c0d14, // Dark matte finish
       metalness: 0.1,
-      roughness: 0.95
+      roughness: 0.95,
+      side: THREE.DoubleSide
     });
     const backWall = new THREE.Mesh(wallGeo, wallMat);
     backWall.position.set(0, 15, -26); // Moved closer to be the actual backdrop
