@@ -1232,11 +1232,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
     // 1. Build 3 Pedestals with 3D Computer / Laptop Mockups
     const positions = [
-      { x: -33, z: 8, rotY: Math.PI / 2 },
-      { x: -33, z: -10, rotY: Math.PI / 2 },
-      { x: 0, z: -12, rotY: 0 },
-      { x: 33, z: -10, rotY: -Math.PI / 2 },
-      { x: 33, z: 8, rotY: -Math.PI / 2 }
+      { x: -28, z: -14, rotY: 0 },
+      { x: -14, z: -8, rotY: 0 },
+      { x: 0, z: -16, rotY: 0 },
+      { x: 16, z: -10, rotY: 0 },
+      { x: 32, z: -15, rotY: 0 }
     ];
 
     this.projects.forEach((proj, i) => {
@@ -1323,7 +1323,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
       // 4. Dedicated Overhead Museum Spotlight & Internal Glow
       const tecaSpot = new THREE.SpotLight(proj.color, 4.5, 30, Math.PI / 4, 0.35, 1.2);
-      tecaSpot.position.set(0, 15, 4);
+      tecaSpot.position.set(0, 15, 2); tecaSpot.intensity = 8.0;
       tecaSpot.target.position.set(0, 5, 0);
       tecaSpot.castShadow = true;
       exhibitGroup.add(tecaSpot);
@@ -1331,7 +1331,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       this.tecaSpotlights.push(tecaSpot);
 
       // Add a subtle point light inside the teca to make the glass "glow"
-      const internalLight = new THREE.PointLight(proj.color, 1.5, 12);
+      const internalLight = new THREE.PointLight(proj.color, 8.0, 16); // Increased internal brightness
       internalLight.position.set(0, 6, 0);
       exhibitGroup.add(internalLight);
 
@@ -1439,11 +1439,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     if (!this.scene) return;
 
     const frameConfigs = [
-      { project: this.projects[0], x: -44.5, y: 11, z: 8, width: 14, height: 8.5, rotY: Math.PI / 2 },
-      { project: this.projects[1], x: -44.5, y: 11, z: -10, width: 14, height: 8.5, rotY: Math.PI / 2 },
-      { project: this.projects[2], x: 0, y: 13, z: -25.5, width: 17, height: 10, rotY: 0 },
-      { project: this.projects[3], x: 44.5, y: 11, z: -10, width: 14, height: 8.5, rotY: -Math.PI / 2 },
-      { project: this.projects[4], x: 44.5, y: 11, z: 8, width: 14, height: 8.5, rotY: -Math.PI / 2 }
+      { project: this.projects[0], x: -30, y: 15, z: -25.5, width: 12, height: 7.5, rotY: 0 },
+      { project: this.projects[1], x: -14, y: 10, z: -25.5, width: 14, height: 8.5, rotY: 0 },
+      { project: this.projects[2], x: 2, y: 17, z: -25.5, width: 13, height: 8, rotY: 0 },
+      { project: this.projects[3], x: 18, y: 12, z: -25.5, width: 15, height: 9.5, rotY: 0 },
+      { project: this.projects[4], x: 33, y: 16, z: -25.5, width: 11, height: 7, rotY: 0 }
     ];
 
     frameConfigs.forEach(cfg => {
@@ -1492,7 +1492,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       screenMesh.userData['project'] = cfg.project;
       frameGroup.add(screenMesh);
 
-      const frameLight = new THREE.SpotLight(cfg.project.color, 3.2, 35, Math.PI / 4, 0.4);
+      const frameLight = new THREE.SpotLight(cfg.project.color, 8.0, 40, Math.PI / 3, 0.6);
+        // Also add a local PointLight for extra inner brightness
+        const innerGlow = new THREE.PointLight(cfg.project.color, 4.0, 15);
+        innerGlow.position.set(0, 0, 1.5);
+        frameGroup.add(innerGlow);
       
       // Calculate light offset based on frame rotation to always push the light out into the room
       const lightOffsetZ = Math.cos(cfg.rotY) * 10;
