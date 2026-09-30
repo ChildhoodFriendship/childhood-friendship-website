@@ -155,9 +155,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     this.renderer?.dispose();
   }
 
-  // Synthesize realistic mechanical clicks via Web Audio API without external audio assets
   private playMechanicalClick(freq = 420, duration = 0.04, type: 'triangle' | 'square' | 'sawtooth' = 'triangle'): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (typeof window === 'undefined') return;
     try {
       if (!this.audioCtx) {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
