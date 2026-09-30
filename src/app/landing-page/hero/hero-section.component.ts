@@ -66,8 +66,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private doorDisplayTexture?: THREE.CanvasTexture;
   private mouseX = 0;
   private mouseY = 0;
-  private targetCameraPos = new THREE.Vector3(0, 0, 160);
-  private currentCameraPos = new THREE.Vector3(0, 0, 160);
+  private targetCameraPos = new THREE.Vector3(0, 0, 120);
+  private currentCameraPos = new THREE.Vector3(0, 0, 120);
   private targetCameraRot = new THREE.Euler(0, 0, 0);
 
   // Interactive Drag & Orbit Navigation
@@ -323,7 +323,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     // 1. Scene & Camera
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0a0a0a);
-    this.scene.fog = new THREE.FogExp2(0x0a0a0a, 0.018);
+    this.scene.fog = new THREE.FogExp2(0x0a0a0a, 0.006);
 
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 300);
     this.camera.position.copy(this.currentCameraPos);
@@ -1018,13 +1018,13 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       panel.rotation.y = cfg.rotY;
       // Push back locally so the front face is at the frame's z-level
       panel.translateZ(-1.2);
-      this.galleryGroup.add(panel);
+      this.galleryGroup?.add(panel);
 
       // Add a subtle LED backlight behind each panel for a premium museum effect
       const backlight = new THREE.PointLight(0x7c3aed, 2.0, 30);
       backlight.position.set(cfg.x, 13, cfg.z);
       backlight.translateZ(-3.0); // Behind the panel
-      this.galleryGroup.add(backlight);
+      this.galleryGroup?.add(backlight);
     });
 
     // Architectural Dark Ceiling
