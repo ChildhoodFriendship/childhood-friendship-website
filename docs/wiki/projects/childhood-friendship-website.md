@@ -1,7 +1,7 @@
 ---
 title: Childhood Friendship website
 created: 2026-09-28
-updated: 2026-09-28
+updated: 2026-10-03
 type: project
 tags: [project, deployment, integration]
 project: childhood-friendship-website
@@ -14,29 +14,15 @@ sources: [package.json, angular.json, src/main.ts, src/app/app.routes.ts, src/in
 
 ## Scopo
 
-È una landing page Angular per presentare Childhood Friendship come studio software indipendente. Espone servizi per siti web, web app e app mobile, un listino iniziale, il metodo di lavoro e un form per richieste di contatto.
+Piattaforma di Childhood Friendship: landing commerciale, area admin per gestire clienti, progetti, documenti e marketing, portale per i clienti. Il form contatti alimenta i lead interni.
 
 ## Repository e comandi
 
-- Repository root: `.`
-- Branch osservato: `main`
-- Versione package: `0.1.0`
-- Installazione: `npm ci`
-- Avvio locale: `npm start`
-- Build: `npm run build`
-- Test dichiarato: `npm run test` (attualmente bloccato dalla sintassi degli argomenti)
-- Lint dichiarato: `npm run lint` (attualmente senza target configurato)
+Monorepo npm workspaces (`apps/web`, `apps/api`, `packages/shared`). Comandi in `README.md`; dettagli in [[../runbooks/local-development.md|sviluppo locale]].
 
 ## Forma del sistema
 
-- Entry point browser: `src/main.ts`.
-- Bootstrap standalone con `provideRouter`.
-- Route vuota lazy-loaded verso `LandingPageComponent`; ogni altro percorso redirige a quella route.
-- La landing compone nove componenti di sezione sotto `src/app/landing-page/`.
-- Three.js è usato nell'hero; Signals gestiscono stato locale dell'hero, del listino e del form.
-- Il form usa un endpoint Formspree letto da `src/environments/environment.ts`; il valore non va copiato nella wiki.
-
-Vedere [[../architecture/system-architecture.md|architettura]] e [[../modules/application-modules.md|moduli applicativi]].
+Vedi [[../architecture/system-architecture.md|architettura]], [[../modules/api-backend.md|API]], [[../modules/admin-portal.md|admin e portale]] e [[../decisions/adr-001-piattaforma.md|ADR-001]].
 
 ## Sviluppo locale
 
@@ -44,13 +30,13 @@ Vedere [[../architecture/system-architecture.md|architettura]] e [[../modules/ap
 2. Verificare `git status --short --branch`.
 3. Avviare con `npm start`.
 4. Eseguire build e controlli disponibili prima dell'handoff.
-5. Usare un invio di test controllato per verificare Formspree, senza registrare dati personali o segreti.
+5. Inviare una richiesta di prova dal form e verificarla in Admin → Lead.
 
 Vedere [[../runbooks/local-development.md|runbook di sviluppo locale]].
 
 ## Deployment e operatività
 
-Il repository contiene la configurazione Angular di build production e l'output sotto `dist/` viene generato dal build. Non sono documentati in questo repository provider di hosting, pipeline di deployment, health check o rollback.
+Deploy su Vercel (sito statico + function `/api`) con Postgres Neon; procedure in [[../runbooks/deploy-production.md|runbook deploy]].
 
 ## Vincoli noti
 

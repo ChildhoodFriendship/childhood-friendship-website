@@ -1,64 +1,89 @@
 ---
-title: Architettura di sistema — Childhood Friendship website
+title: Architettura di sistema — Childhood Friendship
 created: 2026-09-28
-updated: 2026-09-28
+updated: 2026-10-03
 type: architecture
-tags: [architecture, integration, security, performance]
+tags: [architecture, security, database, integration]
 project: childhood-friendship-website
 status: active
 confidence: high
-sources: [src/main.ts, src/app/app.config.ts, src/app/app.routes.ts, src/app/app.component.ts, src/app/landing-page/landing-page.component.ts, src/app/landing-page/hero/hero-section.component.ts, src/app/landing-page/contact/contact-section.component.ts, src/environments/environment.ts, angular.json]
+sources: [package.json, apps/api/src/app.ts, apps/api/src/db/schema.ts, apps/web/src/app/app.routes.ts, vercel.json]
 ---
 
 # Architettura di sistema
 
-## Contesto
+## Vista d'insieme
 
-Il progetto è una singola applicazione browser Angular 22, standalone, che presenta una landing marketing. Non risultano backend applicativo o database nel repository; il solo servizio esterno osservabile è l'endpoint Formspree per il form.
+```mermaid
+flowchart LR
+  subgraph Browser
+    L[Landing /] -->|form contatti| P1
+    A[Admin /admin] --> P2
+    C[Portale /portale] --> P2
+  end
+  subgraph Vercel
+    S[Static Angular] 
+    F[Function /api → Express]
+  end
+  P1[POST /api/public/leads] --> F
+  P2[/api/* cookie + CSRF/] --> F
+  F --> DB[(Postgres Neon)]
+  F --> AI[Gemini / OpenAI-compatible]
+```
+
+Stesso dominio per sito e API: i cookie di sessione restano first-party (`SameSite=Lax/Strict`, `HttpOnly`, `Secure` in produzione).
 
 ## Componenti
 
-| Componente | Responsabilità | Evidenza |
+| Componente | Responsabilità | Sorgente |
 |---|---|---|
-| Bootstrap | Crea l'app standalone e gestisce errori di bootstrap | `src/main.ts` |
-| Router | Lazy-load della landing e redirect wildcard | `src/app/app.routes.ts` |
-| Root | Espone `router-outlet` con OnPush | `src/app/app.component.ts` |
-| Landing shell | Ordina header, sezioni e footer | `src/app/landing-page/landing-page.component.*` |
-| Hero | Canvas Three.js, segnali di stato e modale progetto | `src/app/landing-page/hero/hero-section.component.*` |
-| Pricing | Alterna viste sviluppo/manutenzione e piani tipizzati | `src/app/landing-page/pricing/*` |
-| Contact | Invia FormData via `fetch` e mostra stato del submit | `src/app/landing-page/contact/*` |
-| Stili globali | Palette, font, focus visible e base responsive | `src/styles.css` |
+| `packages/shared` | Catalogo dominio (22 tipi documento, fasi, stati), schemi Zod, DTO | `catalog.ts`, `schemas.ts`, `types.ts` |
+| API Express | Middleware sicurezza, auth, moduli di dominio | `apps/api/src/app.ts` |
+| DB | 18 tabelle Drizzle, migrazioni versionate | `apps/api/src/db/schema.ts`, `apps/api/drizzle/` |
+| Web | Landing, admin, portale (lazy routes per area) | `apps/web/src/app` |
 
-## Flusso runtime
+## Pipeline di una richiesta API
 
-1. `main.ts` esegue `bootstrapApplication` con `appConfig`.
-2. `appConfig` registra il router.
-3. La route vuota carica `LandingPageComponent` tramite `loadComponent`.
-4. Il componente landing renderizza le sezioni standalone in ordine.
-5. L'hero inizializza l'interazione Three.js nel canvas; gli eventi aggiornano Signals e modale.
-6. Il listino cambia vista aggiornando `activeView`.
-7. Il form costruisce `FormData`, esegue POST verso l'endpoint configurato e aggiorna `submissionState`.
+1. `helmet` → JSON (limite 1 MB) → cookie → rate limit globale (300/min/IP).
+2. `csrf` double-submit (`XSRF-TOKEN` / `X-XSRF-TOKEN`), escluso `/api/public/*`.
+3. `authenticate`: verifica JWT di accesso (15 min) + sessione non revocata + utente attivo → `req.user`.
+4. `requireAuth` / `requireRole` / `projectScope` (isolamento per cliente).
+5. Validazione Zod → logica → `audit()` → `serialize()`.
+6. `errorHandler`: errori uniformi `{ error: { code, message, details } }`.
 
-## Confini dati e controllo
+## Modello dati
 
-- **Routing:** il router controlla l'accesso alla sola pagina presente; non esiste guard di autenticazione.
-- **Stato UI:** ogni sezione possiede lo stato strettamente necessario; non esiste uno store globale osservato.
-- **Rendering 3D:** Three.js resta confinato all'hero e alle sue referenze canvas.
-- **Contatto:** il browser invia i dati direttamente al servizio esterno; il repository non contiene un proxy o un backend.
-- **Configurazione:** l'environment fornisce il valore dell'endpoint; non documentare il valore concreto.
-- **Stili:** `src/styles.css` definisce fondazioni globali, mentre ogni sezione mantiene il proprio CSS.
+```mermaid
+erDiagram
+  clients ||--o{ projects : ha
+  clients ||--o{ users : "utenti cliente"
+  projects ||--o{ tasks : checklist
+  projects ||--o{ documents : documenti
+  documents ||--o{ document_versions : versioni
+  projects ||--o{ messages : messaggi
+  projects ||--o{ credentials : "accessi cifrati"
+  projects ||--o{ appointments : appuntamenti
+  projects ||--o{ marketing_platforms : piattaforme
+  projects ||--o{ marketing_campaigns : campagne
+  projects ||--o{ marketing_contents : calendario
+  projects ||--o{ marketing_analyses : analisi
+  users ||--o{ sessions : "refresh token"
+  leads }o--|| clients : "conversione"
+```
 
-## Failure modes
+## Autenticazione
 
-- Un errore nel bootstrap viene scritto in console.
-- Un errore di rete o una risposta non OK del form porta lo stato a `error`.
-- Un percorso sconosciuto viene reindirizzato alla landing.
-- Un build riuscito non dimostra che canvas, viewport, Formspree o accessibilità funzionino in un browser reale.
+- Login → access JWT (cookie `cf_at`, path `/api`, 15 min) + refresh opaco (cookie `cf_rt`, path `/api/auth`, 14 giorni, solo hash nel DB).
+- Refresh ruotato a ogni uso; il riuso di un token già ruotato revoca tutte le sessioni dell'utente.
+- 5 password errate → blocco 15 minuti. Password: scrypt (N=2^15).
+- Disattivare un utente o cambiarne il ruolo revoca subito le sue sessioni.
 
-## Confini di sicurezza
+## Ruoli
 
-- Non registrare endpoint sensibili, dati del form, token o credenziali nella wiki o nei log.
-- Mantenere il campo honeypot e la validazione HTML del form salvo decisione esplicita.
-- Trattare il servizio esterno come dipendenza runtime non verificata dal solo build.
+| Ruolo | Può |
+|---|---|
+| admin | Tutto, inclusi utenti/inviti, registro attività, rivelare credenziali, eliminare |
+| staff | Gestire clienti, progetti, documenti, marketing, lead, credenziali (senza rivelarle) |
+| client | Vedere i progetti del proprio cliente, documenti visibili, approvare/richiedere modifiche, messaggi |
 
-Pagine correlate: [[../projects/childhood-friendship-website.md|progetto]], [[../modules/application-modules.md|moduli]], [[../runbooks/local-development.md|runbook]] e [[../current-status.md|stato]].
+Pagine correlate: [[modules/api-backend.md|API]], [[modules/admin-portal.md|admin e portale]], [[boundaries.md|confini]], [[decisions/adr-001-piattaforma.md|ADR-001]].

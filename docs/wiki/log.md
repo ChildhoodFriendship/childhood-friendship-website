@@ -21,3 +21,13 @@
 - Trasferite e adattate le regole di orientamento, gerarchia delle fonti, modifica minima, verifica, handoff e manutenzione wiki.
 - Integrate anche le regole su commit/push, access modifier, formattazione, commenti, naming degli endpoint e gestione futura dei flussi settings/realtime.
 - `Agents.md` resta da sincronizzare perché la scrittura del file protetto richiede un'approvazione del sistema non ricevuta.
+
+## [2026-10-03] update | Piattaforma v0.2 (refactor/platform)
+- Monorepo: `apps/web`, `apps/api`, `packages/shared`; consolidati EliteWebAgency (backend) ed elitespaceweb (dominio, AI).
+- Nuove dipendenze approvate: API (express, drizzle-orm, pg, zod, jose, helmet, express-rate-limit, cookie-parser; dev: pglite, vitest, supertest, tsx, esbuild, drizzle-kit); web (`@angular/forms`, builder `@angular/build` al posto di `@angular-devkit/build-angular` deprecato).
+- Create: milestones, boundaries, best-practices, modules/api-backend, modules/admin-portal, decisions/adr-001, runbooks/deploy-production.
+- Aggiornate: architettura, progetto, stato, runbook locale, indice.
+
+## [2026-10-03] verify | Piattaforma v0.2
+- `npm run check`, `npm test` (26/26), `npm run build`: passati.
+- Smoke test Playwright end-to-end admin + cliente + landing desktop/mobile: passato.

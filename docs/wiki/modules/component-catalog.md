@@ -1,7 +1,7 @@
 ---
 title: Catalogo dei componenti della landing
 created: 2026-09-28
-updated: 2026-09-28
+updated: 2026-10-03
 type: module
 tags: [module, architecture, documentation]
 project: childhood-friendship-website
@@ -33,7 +33,8 @@ Catalogo derivato dai componenti presenti nel codice. La presenza del componente
 | `PricingSectionComponent` | Tab sviluppo/manutenzione e card prezzo | Signal locale; verificare tastiera e pannelli |
 | `AboutSectionComponent` | Posizionamento e identità | Contenuto statico |
 | `ProcessSectionComponent` | Tre passaggi del metodo | Array readonly tipizzato |
-| `ContactSectionComponent` | Form con validazione HTML e invio Formspree | Integrazione esterna non certificata |
+| `ContactSectionComponent` | Form contatti → `/api/public/leads` (lead in area admin) | Verificato con smoke test |
+| `HeroStaticComponent` | Hero HTML/CSS: fallback mobile, reduced-motion, senza WebGL e placeholder del 3D | Verificato |
 
 ## Tecnologie e convenzioni
 

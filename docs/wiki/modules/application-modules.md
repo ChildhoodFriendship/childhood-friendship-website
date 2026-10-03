@@ -1,7 +1,7 @@
 ---
 title: Moduli applicativi e confini condivisi
 created: 2026-09-28
-updated: 2026-09-28
+updated: 2026-10-03
 type: module
 tags: [module, architecture, integration, status]
 project: childhood-friendship-website
@@ -54,6 +54,6 @@ La consegna al servizio esterno richiede verifica browser controllata; non è di
 - Mantenere i dati statici readonly e tipizzati.
 - Mantenere `OnPush` nei componenti.
 - Smaltire correttamente eventuali risorse Three.js quando si modifica l'hero.
-- Tenere il contratto Formspree nell'environment e non hardcodare nuovi valori nel template.
+- Il form invia a `POST /api/public/leads` (validazione Zod lato server, honeypot `website`, consenso privacy obbligatorio).
 
 Pagine correlate: [[../architecture/system-architecture.md|architettura]], [[component-catalog.md|catalogo componenti]], [[../current-status.md|stato]] e [[../token-usage.md|contesto]].
