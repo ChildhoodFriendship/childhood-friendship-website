@@ -19,3 +19,6 @@ coverage/
 
 # Log
 npm-debug.log*
+
+# Archivi locali delle vecchie bozze (contengono .env: mai committare)
+.archivio/
