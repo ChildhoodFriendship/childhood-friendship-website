@@ -1,3 +1,4 @@
+import { LogoComponent } from '../../shared/logo.component';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -8,10 +9,10 @@ const STRONG = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
 @Component({
   selector: 'cf-invite-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [LogoComponent, ReactiveFormsModule, RouterLink],
   template: `
     <main class="app-root auth-card card">
-      <a class="brand" routerLink="/"><span class="brand-mark" aria-hidden="true">CF</span> Childhood Friendship</a>
+      <a class="brand" routerLink="/"><cf-logo class="brand-mark" /> Childhood Friendship</a>
       @if (invalid()) {
         <h1>Invito non valido</h1>
         <p class="muted">Il link è scaduto o è già stato usato. Chiedi al tuo referente un nuovo invito.</p>

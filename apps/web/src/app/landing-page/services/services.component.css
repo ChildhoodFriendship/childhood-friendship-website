@@ -1,0 +1,56 @@
+:host { display: block; }
+.services { background: var(--cf-chalk); color: var(--cf-ink-deep); padding: 0 clamp(1.25rem, 4vw, 4rem) clamp(5rem, 12vh, 9rem); }
+.head, .rows, .note { max-width: 1440px; margin-inline: auto; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; flex-wrap: wrap; padding-bottom: 2rem; border-bottom: 2px solid var(--cf-ink-deep); }
+h2 { font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 80, 'opsz' 96; font-size: clamp(2.6rem, 6.5vw, 6rem); letter-spacing: -.035em; line-height: .9; margin: 0; }
+.head p { font-family: var(--cf-display); font-size: 1.15rem; line-height: 1.5; max-width: 34ch; margin: 0; color: rgba(18, 10, 38, .7); }
+
+.rows { list-style: none; padding: 0; }
+.row { border-bottom: 1px solid rgba(18, 10, 38, .2); }
+.summary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: 2rem;
+  padding: clamp(1.4rem, 3vh, 2.2rem) 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+.summary::before { content: ''; position: absolute; inset: 0 calc(-1 * clamp(1.25rem, 4vw, 4rem)); background: var(--cf-ink-deep); transform: scaleY(0); transform-origin: bottom; transition: transform .45s cubic-bezier(.7, 0, .2, 1); z-index: 0; }
+.summary > * { position: relative; z-index: 1; transition: color .3s; }
+.summary:hover::before, .open .summary::before { transform: scaleY(1); }
+.summary:hover > *, .open .summary > * { color: var(--cf-chalk); }
+.title { font-family: var(--cf-display); font-weight: 700; font-variation-settings: 'wdth' 85, 'opsz' 72; font-size: clamp(2rem, 4.6vw, 4.2rem); letter-spacing: -.03em; line-height: 1; transition: font-variation-settings .4s; }
+.summary:hover .title { font-variation-settings: 'wdth' 100, 'opsz' 72; }
+.line { font-family: var(--cf-display); font-size: 1.1rem; line-height: 1.45; color: rgba(18, 10, 38, .7); }
+.plus { width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 2px solid currentColor; justify-self: end; position: relative; }
+.plus::before, .plus::after { content: ''; position: absolute; left: 50%; top: 50%; width: 14px; height: 2px; background: currentColor; transform: translate(-50%, -50%); transition: transform .3s; }
+.plus::after { transform: translate(-50%, -50%) rotate(90deg); }
+.open .plus::after { transform: translate(-50%, -50%) rotate(0deg); }
+
+.detail { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s cubic-bezier(.7, 0, .2, 1); background: var(--cf-ink-deep); color: var(--cf-chalk); margin-inline: calc(-1 * clamp(1.25rem, 4vw, 4rem)); }
+.open .detail { grid-template-rows: 1fr; }
+.detail-inner { overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 1.5rem 2rem; padding: 0 clamp(1.25rem, 4vw, 4rem); }
+.open .detail-inner { padding-bottom: 2.5rem; }
+.body { font-family: var(--cf-display); font-size: 1.15rem; line-height: 1.55; margin: 0; max-width: 40ch; color: rgba(246, 241, 255, .85); }
+.incl { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; align-content: flex-start; }
+.incl li { font-family: var(--cf-display); font-size: .95rem; padding: .45rem .9rem; border: 1px solid rgba(246, 241, 255, .3); border-radius: 999px; }
+.price { display: flex; flex-direction: column; align-items: flex-end; gap: .75rem; }
+.price span { font-family: var(--cf-display); font-weight: 800; font-size: 2rem; letter-spacing: -.02em; }
+.price a { font-family: var(--cf-display); font-weight: 600; color: var(--cf-ink-deep); background: var(--cf-chalk); padding: .8rem 1.2rem; border-radius: 999px; text-decoration: none; white-space: nowrap; }
+.price a:hover { background: var(--cf-violet); color: #fff; }
+.note { font-family: var(--cf-display); font-size: .95rem; color: rgba(18, 10, 38, .6); margin-top: 1.5rem; }
+
+@media (max-width: 860px) {
+  .summary { grid-template-columns: minmax(0, 1fr) 2.6rem; }
+  .line { grid-column: 1; grid-row: 2; font-size: 1rem; }
+  .plus { grid-row: 1 / span 2; grid-column: 2; }
+  .detail-inner { grid-template-columns: 1fr; }
+  .price { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .summary::before, .detail, .title { transition: none; } }

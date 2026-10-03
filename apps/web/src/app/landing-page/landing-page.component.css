@@ -1,4 +1,2 @@
-:host {
-  display: block;
-  overflow: hidden;
-}
+:host { display: block; background: var(--cf-ink-deep); overflow-x: clip; }
+:host(.custom-cursor), :host(.custom-cursor) a, :host(.custom-cursor) button { cursor: none; }

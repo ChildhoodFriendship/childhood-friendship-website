@@ -1,14 +1,15 @@
+import { LogoComponent } from '../../shared/logo.component';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'cf-portal-shell',
-  imports: [RouterOutlet, RouterLink],
+  imports: [LogoComponent, RouterOutlet, RouterLink],
   template: `
     <div class="app-root">
       <header class="bar no-print">
-        <a class="brand" routerLink="/portale"><span class="brand-mark" aria-hidden="true">CF</span><span>Area clienti</span></a>
+        <a class="brand" routerLink="/portale"><cf-logo class="brand-mark" /><span>Area clienti</span></a>
         <nav class="row">
           <a routerLink="/portale/account" class="small">{{ auth.user()?.name }}</a>
           <button class="btn btn-ghost btn-sm" (click)="auth.logout()">Esci</button>
@@ -21,7 +22,7 @@ import { AuthService } from '../../core/auth.service';
   styles: `
     .bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid var(--cf-color-border); position: sticky; top: 0; background: rgba(10,10,10,.9); backdrop-filter: blur(6px); z-index: 10; }
     .brand { display: flex; align-items: center; gap: 10px; color: var(--cf-color-text) !important; font-weight: 700; text-decoration: none !important; }
-    .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--cf-color-violet); color: #fff; font-family: var(--cf-mono); font-size: 12px; }
+    .brand-mark { width: 32px; height: 32px; flex: none; }
     .foot { text-align: center; padding: 32px 16px; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush

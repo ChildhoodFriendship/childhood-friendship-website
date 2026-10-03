@@ -1,7 +1,11 @@
 .section-shell { margin-inline: auto; width: min(100% - 3rem, 1180px); }
 .site-footer { align-items: center; border-top: 1px solid var(--cf-color-border); display: flex; justify-content: space-between; padding-block: 2rem; }
 .brand { align-items: center; color: var(--cf-color-text); display: inline-flex; gap: .7rem; text-decoration: none; }
-.brand-mark { align-items: center; background: var(--cf-color-violet); border-radius: .45rem; color: white; display: inline-flex; font-size: .65rem; font-weight: 800; height: 2rem; justify-content: center; letter-spacing: -.04em; width: 2rem; }
+.brand-mark {
+  flex: none;
+  height: 2.1rem;
+  width: 2.1rem;
+}
 .brand-name { font-size: .86rem; letter-spacing: -.02em; }
 .brand-name strong { font-weight: 700; }
 .site-footer p, .footer-meta { color: var(--cf-color-text-muted); font-size: .7rem; }

@@ -1,3 +1,4 @@
+import { LogoComponent } from '../../shared/logo.component';
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -5,10 +6,10 @@ import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'cf-login-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [LogoComponent, ReactiveFormsModule, RouterLink],
   template: `
     <main class="app-root auth-card card">
-      <a class="brand" routerLink="/"><span class="brand-mark" aria-hidden="true">CF</span> Childhood Friendship</a>
+      <a class="brand" routerLink="/"><cf-logo class="brand-mark" /> Childhood Friendship</a>
       <div>
         <h1>Accedi</h1>
         <p class="muted">Area riservata per il team e i clienti.</p>

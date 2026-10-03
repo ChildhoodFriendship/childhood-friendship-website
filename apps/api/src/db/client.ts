@@ -1,4 +1,5 @@
 import { drizzle as drizzlePg, type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { mkdir } from 'node:fs/promises';
 import pg from 'pg';
 import * as schema from './schema.js';
 
@@ -18,6 +19,7 @@ export async function createDb(url: string): Promise<DbHandle> {
     const { PGlite } = await import('@electric-sql/pglite');
     const { drizzle } = await import('drizzle-orm/pglite');
     const target = url.slice('pglite:'.length);
+    if (target !== 'memory') await mkdir(target, { recursive: true });
     const client = target === 'memory' ? new PGlite() : new PGlite(target);
     const db = drizzle(client, { schema, casing: 'snake_case' }) as unknown as Database;
     return { db, close: () => client.close() };

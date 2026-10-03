@@ -16,13 +16,13 @@ import { createWallFrameTexture, createWebsiteTexture } from './vault/textures';
 
 
 @Component({
-  selector: 'cf-hero-section',
+  selector: 'cf-caveau-scene',
   standalone: true,
-  templateUrl: './hero-section.component.html',
-  styleUrl: './hero-section.component.css',
+  templateUrl: './caveau-scene.component.html',
+  styleUrl: './caveau-scene.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HeroSectionComponent implements AfterViewInit, OnDestroy {
+export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
   @ViewChild('vaultCanvas', { static: false }) private readonly vaultCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   // Vault state signals

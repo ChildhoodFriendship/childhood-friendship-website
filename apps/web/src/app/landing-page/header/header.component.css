@@ -16,17 +16,9 @@
 }
 
 .brand-mark {
-  align-items: center;
-  background: var(--cf-color-violet);
-  border-radius: .45rem;
-  color: white;
-  display: inline-flex;
-  font-size: .65rem;
-  font-weight: 800;
-  height: 2rem;
-  justify-content: center;
-  letter-spacing: -.04em;
-  width: 2rem;
+  flex: none;
+  height: 2.1rem;
+  width: 2.1rem;
 }
 
 .brand-name { font-size: .86rem; letter-spacing: -.02em; }

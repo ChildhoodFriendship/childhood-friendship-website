@@ -1,0 +1,92 @@
+:host { display: block; }
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  padding: 8rem clamp(1.25rem, 4vw, 4rem) clamp(3rem, 8vh, 6rem);
+  background: var(--cf-ink-deep);
+  color: var(--cf-chalk);
+  overflow: hidden;
+}
+
+/* luce viola che segue il cursore: l'unico elemento decorativo dell'hero */
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(520px circle at var(--mx, 70%) var(--my, 30%), rgba(124, 58, 237, .42), transparent 70%);
+  transition: background .2s;
+}
+
+.inner { position: relative; width: 100%; max-width: 1440px; margin: 0 auto; }
+
+.kicker {
+  font-family: var(--cf-display);
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(246, 241, 255, .6);
+  margin: 0 0 1.5rem;
+  animation: fade .8s .2s both;
+}
+
+h1 {
+  font-family: var(--cf-display);
+  font-size: clamp(3.6rem, 14.5vw, 15rem);
+  line-height: .84;
+  letter-spacing: -.035em;
+  margin: 0;
+  font-weight: 800;
+}
+.line { display: block; white-space: nowrap; }
+.ch {
+  display: inline-block;
+  font-variation-settings: 'wght' 800, 'wdth' 75, 'opsz' 96;
+  transition: font-variation-settings .25s ease-out;
+  animation: drop .9s cubic-bezier(.2, .9, .2, 1) both;
+}
+.line:nth-child(2) .ch { color: var(--cf-violet-soft-text, #B9A2FF); }
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: clamp(2rem, 5vh, 3.5rem);
+  padding-top: 1.75rem;
+  border-top: 1px solid rgba(246, 241, 255, .2);
+  animation: fade .9s .9s both;
+}
+.lede { font-family: var(--cf-display); font-size: clamp(1.1rem, 1.6vw, 1.45rem); line-height: 1.45; max-width: 34ch; margin: 0; color: rgba(246, 241, 255, .85); }
+
+.cta {
+  font-family: var(--cf-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--cf-ink-deep);
+  background: var(--cf-chalk);
+  padding: 1.15rem 1.75rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background .2s, color .2s, transform .2s;
+}
+.cta:hover { background: var(--cf-violet); color: #fff; transform: translateY(-2px); }
+
+.scroll { position: absolute; right: clamp(1.25rem, 4vw, 4rem); top: 50%; width: 2px; height: 80px; background: rgba(246, 241, 255, .15); overflow: hidden; }
+.scroll span { position: absolute; left: 0; top: -40%; width: 100%; height: 40%; background: var(--cf-chalk); animation: scroll 1.8s ease-in-out infinite; }
+
+@keyframes drop { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scroll { to { top: 100%; } }
+
+@media (max-width: 720px) {
+  .hero { align-items: center; }
+  .scroll { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch, .kicker, .foot, .scroll span { animation: none; }
+  .ch { transition: none; }
+}

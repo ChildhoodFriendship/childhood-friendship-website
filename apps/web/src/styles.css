@@ -17,6 +17,18 @@
   color: var(--cf-color-text);
 }
 
+/* Landing "Il cortile" */
+:root {
+  --cf-ink: #1A1033;
+  --cf-ink-deep: #120A26;
+  --cf-chalk: #F6F1FF;
+  --cf-sun: #FFC93C;
+  --cf-berry: #FF7AA8;
+  --cf-violet: #7C3AED;
+  --cf-display: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif;
+  --cf-hand: 'Caveat', 'Comic Sans MS', cursive;
+}
+
 * { box-sizing: border-box; }
 html { background: var(--cf-color-black); scroll-behavior: smooth; }
 body { background: var(--cf-color-black); margin: 0; min-width: 320px; }

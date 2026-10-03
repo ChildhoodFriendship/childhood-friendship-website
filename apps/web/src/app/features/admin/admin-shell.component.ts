@@ -1,3 +1,4 @@
+import { LogoComponent } from '../../shared/logo.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -18,12 +19,12 @@ const NAV: NavItem[] = [
 
 @Component({
   selector: 'cf-admin-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [LogoComponent, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <div class="app-root shell" [class.nav-open]="navOpen()">
       <a class="skip-link" href="#main">Vai al contenuto</a>
       <aside class="sidebar no-print" aria-label="Navigazione area admin">
-        <a class="brand" routerLink="/admin"><span class="brand-mark" aria-hidden="true">CF</span><span>Studio<br /><small class="muted">Childhood Friendship</small></span></a>
+        <a class="brand" routerLink="/admin"><cf-logo class="brand-mark" /><span>Studio<br /><small class="muted">Childhood Friendship</small></span></a>
         <nav>
           @for (item of nav(); track item.path) {
             <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: !!item.exact }" (click)="navOpen.set(false)">
@@ -52,7 +53,7 @@ const NAV: NavItem[] = [
     .shell { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
     .sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 24px; padding: 20px 14px; border-right: 1px solid var(--cf-color-border); background: #0d0d0f; }
     .brand { display: flex; align-items: center; gap: 10px; color: var(--cf-color-text) !important; text-decoration: none !important; font-weight: 700; line-height: 1.2; padding: 0 6px; }
-    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--cf-color-violet); color: #fff; font-family: var(--cf-mono); font-size: 13px; flex: none; }
+    .brand-mark { width: 34px; height: 34px; flex: none; }
     nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
     nav a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--cf-color-text-muted); font-weight: 600; text-decoration: none !important; }
     nav a:hover { background: var(--cf-color-surface); color: var(--cf-color-text); }

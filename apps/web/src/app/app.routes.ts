@@ -8,6 +8,11 @@ export const routes: Routes = [
     loadComponent: () => import('./landing-page/landing-page.component').then((m) => m.LandingPageComponent)
   },
   {
+    path: 'caveau',
+    title: 'Il caveau — Childhood Friendship',
+    loadComponent: () => import('./landing-page/caveau/caveau.page').then((m) => m.CaveauPage)
+  },
+  {
     path: 'login',
     title: 'Accedi — Childhood Friendship',
     canMatch: [guestGuard],
