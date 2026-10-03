@@ -1,0 +1,30 @@
+{
+  "name": "@cf/web",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "start": "ng serve --proxy-config proxy.conf.json",
+    "build": "ng build",
+    "check": "ng build --configuration development"
+  },
+  "dependencies": {
+    "@angular/common": "^22.0.0",
+    "@angular/compiler": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "@angular/platform-browser": "^22.0.0",
+    "@angular/router": "^22.0.0",
+    "gsap": "^3.15.0",
+    "rxjs": "~7.8.0",
+    "three": "^0.186.1",
+    "tslib": "^2.8.0",
+    "zone.js": "~0.15.0",
+    "@angular/forms": "^22.0.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^22.0.0",
+    "@angular/cli": "^22.0.0",
+    "@angular/compiler-cli": "^22.0.0",
+    "@types/three": "^0.186.0",
+    "typescript": "~6.0.0"
+  }
+}
