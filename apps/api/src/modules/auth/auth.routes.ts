@@ -21,6 +21,15 @@ export function authRouter(ctx: AppContext): Router {
     message: { error: { code: 'rate_limited', message: 'Troppi tentativi. Riprova tra qualche minuto.' } }
   });
 
+  // Il refresh avviene in automatico ogni ~15 minuti per scheda: limite più ampio del login
+  const refreshLimiter = rateLimit({
+    windowMs: 15 * 60_000,
+    limit: ctx.env.NODE_ENV === 'test' ? 1000 : 120,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: { code: 'rate_limited', message: 'Troppe richieste di sessione.' } }
+  });
+
   const setCookies = (res: Response, t: IssuedTokens) => {
     res.cookie(ACCESS_COOKIE, t.accessToken, { httpOnly: true, secure, sameSite: 'lax', path: '/api', maxAge: t.accessMaxAgeMs });
     res.cookie(REFRESH_COOKIE, t.refreshToken, { httpOnly: true, secure, sameSite: 'strict', path: '/api/auth', maxAge: t.refreshMaxAgeMs });
@@ -42,7 +51,7 @@ export function authRouter(ctx: AppContext): Router {
     res.json({ user: tokens.user });
   });
 
-  router.post('/refresh', loginLimiter, async (req, res) => {
+  router.post('/refresh', refreshLimiter, async (req, res) => {
     const token: unknown = req.cookies?.[REFRESH_COOKIE];
     if (typeof token !== 'string' || !token) {
       clearCookies(res);
