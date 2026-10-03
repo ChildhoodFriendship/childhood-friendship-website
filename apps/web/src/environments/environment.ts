@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  formspreeEndpoint: 'https://formspree.io/f/xaenpaob'
+  /** In sviluppo `ng serve` inoltra /api a localhost:3000 (proxy.conf.json). */
+  apiBaseUrl: '/api'
 } as const;

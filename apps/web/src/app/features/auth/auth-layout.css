@@ -1,0 +1,6 @@
+:host { display: grid; place-items: center; min-height: 100vh; padding: 24px 16px;
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(124, 58, 237, .22), transparent 60%), var(--cf-color-black); }
+.auth-card { width: min(420px, 100%); display: flex; flex-direction: column; gap: 20px; padding: 32px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--cf-color-text) !important; text-decoration: none !important; font-weight: 700; }
+.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--cf-color-violet); color: #fff; font-family: var(--cf-mono); font-size: 13px; }
+form { display: flex; flex-direction: column; gap: 16px; }

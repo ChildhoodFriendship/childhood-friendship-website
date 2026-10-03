@@ -9,17 +9,11 @@ import {
 } from '@angular/core';
 import * as THREE from 'three';
 import gsap from 'gsap';
+import { VaultAudio } from './vault/audio';
+import { VAULT_PROJECTS, type ProjectExhibit } from './vault/projects.data';
+import { createWallFrameTexture, createWebsiteTexture } from './vault/textures';
 
-export interface ProjectExhibit {
-  readonly id: string;
-  readonly title: string;
-  readonly category: string;
-  readonly description: string;
-  readonly tech: readonly string[];
-  readonly metrics: string;
-  readonly link?: string;
-  readonly color: number;
-}
+
 
 @Component({
   selector: 'cf-hero-section',
@@ -73,7 +67,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private targetCameraRot = new THREE.Euler(0, 0, 0);
 
   // Web Audio Context for synthesized mechanical sounds
-  private audioCtx?: AudioContext;
+  private readonly audio = new VaultAudio();
 
   // Interactive Drag & Orbit Navigation
   private isDragging = false;
@@ -90,53 +84,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
   private keys = { w: false, a: false, s: false, d: false };
 
   // Projects list showcased in the vault pedestals & frames
-  protected readonly projects: readonly ProjectExhibit[] = [
-    {
-      id: 'core-web',
-      title: 'Siti & Web App',
-      category: 'Digital Architecture',
-      description: 'Piattaforme web performanti, veloci, responsive e ottimizzate per massimizzare conversioni e scalabilità.',
-      tech: ['Angular', 'Next.js', 'TypeScript', 'Tailwind'],
-      metrics: 'Ultra-fast · Solid Foundations',
-      color: 0x8b5cf6
-    },
-    {
-      id: 'custom-software',
-      title: 'Software su Misura',
-      category: 'Bespoke Engineering',
-      description: 'Architetture e gestionali costruiti attorno ai reali processi aziendali, senza vincoli di piattaforme preconfezionate.',
-      tech: ['Cloud Architecture', 'Node.js', 'PostgreSQL', 'APIs'],
-      metrics: 'Custom Built · Zero Compromises',
-      color: 0x7c3aed
-    },
-    {
-      id: 'mobile-ecosystem',
-      title: 'App Mobile & Prodotti',
-      category: 'Cross-Platform',
-      description: 'Applicazioni native e cross-platform stabili, curate in ogni dettaglio interattivo e pronte a scalare.',
-      tech: ['iOS', 'Android', 'Flutter', 'React Native'],
-      metrics: 'Seamless UX · Production Ready',
-      color: 0x4ade80
-      },
-      {
-        id: 'ecommerce',
-        title: 'E-Commerce Avanzati',
-        category: 'Digital Retail',
-        description: 'Piattaforme di vendita veloci, sicure e ottimizzate per la conversione.',
-        tech: ['Shopify', 'Stripe', 'Next.js'],
-        metrics: 'High Conversion · Secure',
-        color: 0xfacc15
-      },
-      {
-        id: 'ai-integration',
-        title: 'AI & Automazione',
-        category: 'Machine Learning',
-        description: 'Integrazione di intelligenza artificiale per automatizzare i processi aziendali.',
-        tech: ['OpenAI', 'Python', 'TensorFlow'],
-        metrics: 'Smart Operations · Scalable',
-        color: 0xec4899
-      }
-    ];
+  protected readonly projects = VAULT_PROJECTS;
 
   ngAfterViewInit(): void {
     this.initThreeVault();
@@ -172,37 +120,11 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       if (this.pointerUpListener) window.removeEventListener('pointerup', this.pointerUpListener);
       if (this.wheelListener) c.removeEventListener('wheel', this.wheelListener);
     }
+    if (this.keyDownListener) window.removeEventListener('keydown', this.keyDownListener);
+    if (this.keyUpListener) window.removeEventListener('keyup', this.keyUpListener);
+    this.audio.dispose();
+    gsap.killTweensOf(this.currentCameraPos);
     this.renderer?.dispose();
-  }
-
-  private playMechanicalClick(freq = 420, duration = 0.04, type: 'triangle' | 'square' | 'sawtooth' = 'triangle'): void {
-    if (typeof window === 'undefined') return;
-    try {
-      if (!this.audioCtx) {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioCtx) return;
-        this.audioCtx = new AudioCtx();
-      }
-      
-      // If the context is blocked (suspended) due to browser autoplay rules, 
-      // exit early to prevent console spam and warnings.
-      if (this.audioCtx.state === 'suspended') {
-        return;
-      }
-
-      const ctx = this.audioCtx;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.2, ctx.currentTime + duration);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
-    } catch {}
   }
 
   protected triggerUnlockVault(): void {
@@ -232,10 +154,10 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
       // Play subtle mechanical clicks every few percent
       if (rounded % 8 === 0 && rounded < 95) {
-        this.playMechanicalClick(300 + (rounded * 5), 0.05, 'square');
+        this.audio.click(300 + (rounded * 5), 0.05, 'square');
       }
       if (rounded % 15 === 0 && rounded < 95) {
-        this.playMechanicalClick(120, 0.08, 'sawtooth'); // heavier clunk
+        this.audio.click(120, 0.08, 'sawtooth'); // heavier clunk
       }
 
       // Progress phase messages
@@ -263,8 +185,8 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
       if (progress >= 100) {
         clearInterval(interval);
-        this.playMechanicalClick(120, 0.25, 'square'); // Solid deep thud
-        setTimeout(() => this.playMechanicalClick(80, 0.4, 'sawtooth'), 150); // Echo thud
+        this.audio.click(120, 0.25, 'square'); // Solid deep thud
+        setTimeout(() => this.audio.click(80, 0.4, 'sawtooth'), 150); // Echo thud
         
         this.vaultUnlocked.set(true);
         this.isUnlocking.set(false);
@@ -465,7 +387,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
           hit = hit.parent;
         }
         if (hit && hit.userData['project']) {
-          const proj = hit.userData['project'] as any; 
+          const proj = hit.userData['project'] as ProjectExhibit; 
             // window.open(proj.link || 'https://example.com/project-placeholder', '_blank');
             this.zoomToProject(hit, proj);
         }
@@ -669,7 +591,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
     }
 
   
-  private zoomToProject(hitObject: THREE.Object3D, proj: any): void {
+  private zoomToProject(hitObject: THREE.Object3D, proj: ProjectExhibit): void {
     if (!this.camera || !this.scene) return;
     
     let group = hitObject;
@@ -1367,7 +1289,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       roughness: 0.4
     });
 
-    const screenTexture = this.createWebsiteTexture(project.title, project.category, project.color);
+    const screenTexture = createWebsiteTexture(project.title, project.category, project.color);
     const screenMat = new THREE.MeshBasicMaterial({ map: screenTexture });
 
     if (typeIndex === 1) {
@@ -1481,7 +1403,7 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
       borderMesh.position.z = 0.15;
       frameGroup.add(borderMesh);
 
-      const screenTexture = this.createWallFrameTexture(cfg.project);
+      const screenTexture = createWallFrameTexture(cfg.project, this.projects.indexOf(cfg.project));
       const screenMat = new THREE.MeshBasicMaterial({ 
         map: screenTexture,
         side: THREE.FrontSide
@@ -1549,196 +1471,5 @@ export class HeroSectionComponent implements AfterViewInit, OnDestroy {
 
     this.dustParticles = new THREE.Points(geometry, material);
     this.scene.add(this.dustParticles);
-  }
-
-  private createWebsiteTexture(title: string, category: string, accentColor: number): THREE.CanvasTexture {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 640;
-    const ctx = canvas.getContext('2d')!;
-
-    const hexColor = '#' + accentColor.toString(16).padStart(6, '0');
-
-    const bgGrad = ctx.createLinearGradient(0, 0, 1024, 640);
-    bgGrad.addColorStop(0, '#0f172a');
-    bgGrad.addColorStop(1, '#020617');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, 1024, 640);
-
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(0, 0, 1024, 60);
-
-    const dots = ['#ef4444', '#eab308', '#22c55e'];
-    dots.forEach((dot, idx) => {
-      ctx.beginPath();
-      ctx.arc(35 + idx * 26, 30, 8, 0, Math.PI * 2);
-      ctx.fillStyle = dot;
-      ctx.fill();
-    });
-
-    ctx.fillStyle = '#0f172a';
-    ctx.beginPath();
-    ctx.roundRect(140, 14, 460, 32, 8);
-    ctx.fill();
-    ctx.fillStyle = '#64748b';
-    ctx.font = '14px DM Mono, monospace';
-    ctx.fillText('https://childhood-friendship.agency/' + category.toLowerCase().replace(/\s+/g, '-'), 155, 35);
-
-    ctx.fillStyle = hexColor;
-    ctx.font = 'bold 16px DM Mono, monospace';
-    ctx.fillText('EXHIBIT // ' + category.toUpperCase(), 70, 130);
-
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 44px DM Sans, sans-serif';
-    ctx.fillText(title, 70, 195);
-
-    for (let c = 0; c < 3; c++) {
-      const cardX = 70 + c * 295;
-      const cardY = 240;
-      ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
-      ctx.beginPath();
-      ctx.roundRect(cardX, cardY, 275, 330, 12);
-      ctx.fill();
-      ctx.strokeStyle = c === 0 ? hexColor : 'rgba(71, 85, 105, 0.4)';
-      ctx.lineWidth = c === 0 ? 2 : 1;
-      ctx.stroke();
-
-      ctx.fillStyle = hexColor;
-      ctx.fillRect(cardX + 25, cardY + 30, 40, 6);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(cardX + 25, cardY + 55, 180, 12);
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(cardX + 25, cardY + 80, 220, 8);
-      ctx.fillRect(cardX + 25, cardY + 98, 190, 8);
-      ctx.fillRect(cardX + 25, cardY + 116, 140, 8);
-
-      ctx.fillStyle = '#090d16';
-      ctx.fillRect(cardX + 25, cardY + 150, 225, 130);
-      ctx.strokeStyle = hexColor;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(cardX + 35, cardY + 240);
-      ctx.lineTo(cardX + 85, cardY + 210);
-      ctx.lineTo(cardX + 135, cardY + 225);
-      ctx.lineTo(cardX + 185, cardY + 175);
-      ctx.lineTo(cardX + 235, cardY + 185);
-      ctx.stroke();
-    }
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.generateMipmaps = true;
-    return texture;
-  }
-
-  private createWallFrameTexture(project: ProjectExhibit): THREE.CanvasTexture {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1280;
-    canvas.height = 760;
-    const ctx = canvas.getContext('2d')!;
-
-    const hexColor = '#' + project.color.toString(16).padStart(6, '0');
-
-    const grad = ctx.createLinearGradient(0, 0, 1280, 760);
-    grad.addColorStop(0, '#0a0d14');
-    grad.addColorStop(1, '#05070a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 1280, 760);
-
-    ctx.strokeStyle = 'rgba(139, 92, 246, 0.12)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < 1280; x += 80) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, 760);
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = 'rgba(18, 24, 38, 0.85)';
-    ctx.fillRect(0, 0, 1280, 75);
-
-    ctx.fillStyle = hexColor;
-    ctx.font = 'bold 22px DM Sans, sans-serif';
-    ctx.fillText('CF // DIGITAL', 60, 46);
-
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = '16px DM Sans, sans-serif';
-    ctx.fillText('Case Study', 300, 46);
-    ctx.fillText('Architecture', 420, 46);
-    ctx.fillText('Performance', 550, 46);
-
-    ctx.fillStyle = hexColor;
-    ctx.beginPath();
-    ctx.roundRect(1080, 20, 140, 36, 18);
-    ctx.fill();
-    ctx.fillStyle = '#0a0d14';
-    ctx.font = 'bold 13px DM Mono, monospace';
-    ctx.fillText('INTERACTIVE', 1105, 43);
-
-    ctx.fillStyle = '#64748b';
-    ctx.font = 'bold 16px DM Mono, monospace';
-    ctx.fillText('0' + (this.projects.indexOf(project) + 1) + ' — ' + project.category.toUpperCase(), 60, 150);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 54px DM Sans, sans-serif';
-    ctx.fillText(project.title, 60, 220);
-
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '22px DM Sans, sans-serif';
-    ctx.fillText(project.description.slice(0, 68) + '...', 60, 270);
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-    ctx.beginPath();
-    ctx.roundRect(60, 320, 380, 50, 10);
-    ctx.fill();
-    ctx.strokeStyle = hexColor;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    ctx.fillStyle = hexColor;
-    ctx.font = 'bold 16px DM Mono, monospace';
-    ctx.fillText('⚡ ' + project.metrics, 80, 352);
-
-    ctx.fillStyle = hexColor;
-    ctx.beginPath();
-    ctx.roundRect(60, 400, 220, 52, 26);
-    ctx.fill();
-    ctx.fillStyle = '#0a0d14';
-    ctx.font = 'bold 16px DM Sans, sans-serif';
-    ctx.fillText('Clicca per esplorare ↗', 85, 432);
-
-    const mockX = 540;
-    const mockY = 140;
-    const mockW = 680;
-    const mockH = 550;
-
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-    ctx.beginPath();
-    ctx.roundRect(mockX, mockY, mockW, mockH, 16);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 20px DM Sans, sans-serif';
-    ctx.fillText('Live Performance & Metrics Overview', mockX + 40, mockY + 50);
-
-    const barHeights = [180, 260, 220, 310, 280, 360, 340, 420];
-    barHeights.forEach((h, bi) => {
-      const bx = mockX + 40 + bi * 74;
-      const by = mockY + mockH - 60 - h * 0.7;
-      const bGrad = ctx.createLinearGradient(0, by, 0, mockY + mockH - 60);
-      bGrad.addColorStop(0, hexColor);
-      bGrad.addColorStop(1, 'rgba(124, 58, 237, 0.2)');
-      ctx.fillStyle = bGrad;
-      ctx.beginPath();
-      ctx.roundRect(bx, by, 50, h * 0.7, 6);
-      ctx.fill();
-    });
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.generateMipmaps = true;
-    return texture;
   }
 }

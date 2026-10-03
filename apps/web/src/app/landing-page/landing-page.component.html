@@ -1,7 +1,16 @@
 <cf-header />
 
 <main id="top">
-  <cf-hero-section />
+  @if (use3dHero) {
+    <!-- La scena Three.js (~550 kB) viene scaricata solo a browser inattivo: il testo è subito visibile -->
+    @defer (on idle) {
+      <cf-hero-section />
+    } @placeholder {
+      <cf-hero-static />
+    }
+  } @else {
+    <cf-hero-static />
+  }
   <cf-trust-bar />
   <cf-services-section />
   <cf-pricing-section />

@@ -6,8 +6,8 @@
 .contact-card h2 em { color: #ddd6fe; font-style: normal; }
 .contact-form { display: grid; gap: .55rem; }
 .contact-form label { color: rgba(255, 255, 255, .85); font-size: .72rem; font-weight: 700; }
-.contact-form input:not(.honeypot), .contact-form textarea { background: rgba(10, 10, 10, .22); border: 1px solid rgba(255, 255, 255, .45); color: white; font: inherit; padding: .8rem .9rem; resize: vertical; }
-.contact-form input:not(.honeypot):focus, .contact-form textarea:focus { border-color: white; outline: 2px solid rgba(255, 255, 255, .35); outline-offset: 2px; }
+.contact-form input:not(.honeypot):not([type=checkbox]), .contact-form textarea, .contact-form select { background: rgba(10, 10, 10, .22); border: 1px solid rgba(255, 255, 255, .45); color: white; font: inherit; padding: .8rem .9rem; resize: vertical; }
+.contact-form input:not(.honeypot):focus, .contact-form textarea:focus, .contact-form select:focus { border-color: white; outline: 2px solid rgba(255, 255, 255, .35); outline-offset: 2px; }
 .contact-form .button { border: 0; cursor: pointer; justify-self: start; margin-top: .8rem; }
 .contact-form .button:disabled { cursor: wait; opacity: .7; transform: none; }
 .button { align-items: center; border: 1px solid transparent; display: inline-flex; font-size: .78rem; font-weight: 700; gap: 1rem; justify-content: center; letter-spacing: .02em; padding: 1rem 1.2rem; text-decoration: none; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
@@ -17,6 +17,13 @@
 .form-status { min-height: 1.2rem; font-size: .75rem; margin: .4rem 0 0; }
 .form-status-success { color: #dcfce7; }
 .form-status-error { color: #fee2e2; }
+.contact-form select option { color: #111; }
+.contact-note { color: rgba(255, 255, 255, .8); margin: 1.6rem 0 0; max-width: 30ch; line-height: 1.6; }
+.pair { display: grid; gap: .9rem; grid-template-columns: 1fr 1fr; }
+.cell { display: grid; gap: .55rem; }
+.privacy { align-items: flex-start; display: flex; gap: .6rem; margin-top: .4rem; font-weight: 500 !important; line-height: 1.5; }
+.privacy input { accent-color: white; margin-top: .2rem; }
+@media (max-width: 560px) { .pair { grid-template-columns: 1fr; } }
 .honeypot { height: 1px; left: -10000px; overflow: hidden; position: absolute; top: auto; width: 1px; }
 
 @media (max-width: 800px) {
