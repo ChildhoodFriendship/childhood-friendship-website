@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 
 interface Step { readonly n: string; readonly title: string; readonly text: string; readonly proof: string; }
 
@@ -9,7 +9,7 @@ const STEPS: readonly Step[] = [
   { n: '04', title: 'Restiamo', text: 'Dopo il lancio misuriamo, correggiamo e miglioriamo. Il progetto cresce e noi restiamo a portata di messaggio.', proof: 'Canone chiaro o interventi a chiamata.' }
 ];
 
-/** Metodo: pannelli in scorrimento orizzontale guidato dallo scroll verticale (desktop). */
+/** Metodo: su desktop le card occupano tutta la larghezza e quella della fase raggiunta si allarga con lo scroll. */
 @Component({
   selector: 'cf-method',
   template: `
@@ -28,9 +28,9 @@ const STEPS: readonly Step[] = [
           <!-- palco della scena 3D: il Builder recita qui la fase corrente -->
           <div class="stage" id="method-stage" aria-hidden="true"></div>
         </div>
-        <ol #track class="track" [style.transform]="'translate3d(' + -shift() + 'px,0,0)'">
+        <ol class="track">
           @for (s of steps; track s.n; let i = $index) {
-            <li class="panel" [class.active]="i === active()">
+            <li class="panel" [class.active]="i === active()" [style.flex-grow]="grow()[i]" [style.--open]="open()[i]">
               <span class="n" aria-hidden="true">{{ s.n }}</span>
               <h3>{{ s.title }}</h3>
               <p>{{ s.text }}</p>
@@ -46,11 +46,22 @@ const STEPS: readonly Step[] = [
 })
 export class MethodComponent {
   protected readonly steps = STEPS;
-  protected readonly shift = signal(0);
+  /** Posizione continua nella sequenza (0 = prima fase, n-1 = ultima). */
+  protected readonly pos = signal(0);
+  /** Larghezza relativa di ogni card: quella raggiunta si allarga, le altre si stringono. */
+  protected readonly grow = computed(() => this.steps.map((_, i) => 1 + 3.2 * this.near(i)));
+  /** Quanto è "aperta" ogni card (0..1): pilota l'opacità del testo lungo. */
+  protected readonly open = computed(() => this.steps.map((_, i) => this.near(i)));
   protected readonly progress = signal(0);
   protected readonly active = signal(0);
   private readonly section = viewChild.required<ElementRef<HTMLElement>>('section');
-  private readonly track = viewChild.required<ElementRef<HTMLElement>>('track');
+
+  /** 1 sulla card raggiunta, 0 a una card di distanza (con curva morbida). */
+  private near(i: number): number {
+    const d = Math.min(1, Math.abs(this.pos() - i));
+    const k = 1 - d;
+    return k * k * (3 - 2 * k);
+  }
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -65,12 +76,8 @@ export class MethodComponent {
         const p = scrollable > 0 ? Math.min(1, Math.max(0, -r.top / scrollable)) : 0;
         this.progress.set(p);
         this.active.set(Math.min(this.steps.length - 1, Math.floor(p * this.steps.length)));
-        if (horizontal()) {
-          const t = this.track().nativeElement;
-          this.shift.set(p * Math.max(0, t.scrollWidth - t.clientWidth));
-        } else {
-          this.shift.set(0);
-        }
+        // ogni fase occupa la stessa porzione di scroll; al centro della sua porzione la card è tutta aperta
+        this.pos.set(horizontal() ? Math.min(this.steps.length - 1, Math.max(0, p * this.steps.length - 0.5)) : this.active());
       };
       const onScroll = () => { raf ||= requestAnimationFrame(update); };
       window.addEventListener('scroll', onScroll, { passive: true });

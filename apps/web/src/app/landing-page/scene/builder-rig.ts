@@ -85,7 +85,11 @@ export class BuilderRig {
   private readonly qa = new THREE.Quaternion();
   private readonly qb = new THREE.Quaternion();
 
-  constructor(private readonly model: THREE.Object3D, private readonly reduced = false) {
+  /**
+   * @param armRelax correzione (rad) per abbassare le braccia se l'A-pose del modello è più aperta di quella del Builder
+   * @param phase sfasamento dei movimenti ciclici, perché due personaggi non respirino all'unisono
+   */
+  constructor(private readonly model: THREE.Object3D, private readonly reduced = false, private readonly armRelax = 0, private readonly phase = 0) {
     model.traverse((o) => {
       if ((o as THREE.Bone).isBone) {
         this.bones.set(o.name, o as THREE.Bone);
@@ -132,6 +136,14 @@ export class BuilderRig {
       .to(this.w, { wave: 0, duration: 0.75, ease: 'power2.inOut' }, '+=1.5');
   }
 
+  /** Atterraggio dopo una caduta: accovacciata secca e rimbalzo elastico. */
+  land(): void {
+    if (this.reduced) return;
+    gsap.timeline()
+      .to(this.w, { crouch: 0.9, duration: 0.1, ease: 'power2.out' })
+      .to(this.w, { crouch: 0, duration: 0.65, ease: 'elastic.out(1, 0.45)' });
+  }
+
   private scheduleWave(delay: number): void {
     this.idleTimer = gsap.delayedCall(delay, () => {
       if (this.mode !== 'hero' && this.mode !== 'welcome') return;
@@ -171,7 +183,9 @@ export class BuilderRig {
     const add = (b: string, x: number, y: number, z: number) => addPose({ [b]: [x, y, z] }, 1);
 
     addPose(RELAX, 1);
+    if (this.armRelax) { add('RUpperArm', this.armRelax, 0, 0); add('LUpperArm', -this.armRelax, 0, 0); }
     for (const g of GESTURES) addPose(POSES[g], w[g]);
+    t += this.phase;
 
     const m = this.reduced ? 0 : 1;
     // respiro: petto e spalle si sollevano, peso che passa da un piede all'altro

@@ -28,8 +28,12 @@ interface Shot { cx: number; cy: number; cz: number; tx: number; ty: number; tz:
 // rings: 0 = hero, 1 = finale. Pilota anche la dissolvenza del laptop e la posizione del Builder.
 
 /** Una "recitazione" del Builder per ogni fase del metodo, con il suo orientamento verso la camera. */
-const METHOD_STEPS: readonly { mode: BuilderMode; yaw: number }[] = [
-  { mode: 'listen', yaw: 0.35 }, { mode: 'design', yaw: -0.3 }, { mode: 'build', yaw: 0.45 }, { mode: 'care', yaw: 0 }
+// Dalla seconda fase entra il socio (siamo in due): pose complementari, girati l'uno verso l'altro.
+const METHOD_STEPS: readonly { mode: BuilderMode; yaw: number; partner: BuilderMode | null; pYaw: number }[] = [
+  { mode: 'listen', yaw: 0.25, partner: null, pYaw: 0 },
+  { mode: 'design', yaw: 0.35, partner: 'care', pYaw: -0.4 },
+  { mode: 'build', yaw: 0.45, partner: 'build', pYaw: -0.45 },
+  { mode: 'care', yaw: 0.15, partner: 'welcome', pYaw: -0.2 }
 ];
 
 export interface SceneIds { hero: string; stage: string; manifesto: string; services: string; method: string; methodStage: string; contact: string; }
@@ -54,6 +58,16 @@ export class BuilderScene {
   private deviceAspect = 0;
   private builder?: THREE.Object3D;
   private rig?: BuilderRig;
+  /** Il socio: secondo personaggio, entra nel metodo e resta fino al finale. */
+  private readonly pRoot = new THREE.Group();
+  private readonly pSpin = new THREE.Group();
+  private partner?: THREE.Object3D;
+  private pRig?: BuilderRig;
+  private readonly pBody = { yaw: 0 };
+  private readonly partnerIn = { v: 0 };
+  private partnerWanted = false;
+  private partnerTarget = 0;
+  private partnerMode: BuilderMode = 'present';
   /** Orientamento del Builder, separato dalla camera: lo animano le fasi, non lo scrub. */
   private readonly body = { yaw: 0 };
   /** 0 = inquadratura normale, 1 = camera esattamente davanti allo schermo, che riempie la finestra. */
@@ -66,7 +80,7 @@ export class BuilderScene {
   private readonly fv = { a: new THREE.Vector3(), b: new THREE.Vector3(), ta: new THREE.Vector3(), tb: new THREE.Vector3() };
   private readonly anchor = { x: 0.6, y: 0, s: 1, ringX: 1.4, ringY: 0.5, ringS: 0.42 };
   /** Dove recita il Builder nel metodo: il palco a destra del titolo (stessa camera dell'hero). */
-  private readonly mAnchor = { x: 0.6, y: 0.2, s: 0.8, ringX: 1.2, ringY: 0.25, ringS: 0.5 };
+  private readonly mAnchor = { x: 0.6, y: 0.2, s: 0.8, px: 1.1, ringX: 1.2, ringY: 0.25, ringS: 0.5 };
   private readonly clock = new THREE.Clock();
   private readonly pointer = new THREE.Vector2();
   private readonly look = new THREE.Vector2();
@@ -112,7 +126,9 @@ export class BuilderScene {
     this.root.add(this.follow);
     this.follow.add(this.spin);
     this.spin.add(this.device);
-    this.scene.add(this.root, this.rings);
+    this.pRoot.add(this.pSpin);
+    this.pRoot.visible = false;
+    this.scene.add(this.root, this.rings, this.pRoot);
     this.resize();
     void this.loadBuilder();
     void document.fonts?.ready.then(() => { this.screenSig = ''; });
@@ -155,6 +171,45 @@ export class BuilderScene {
       console.warn('[cf-scene] modello non caricato', err);
     }
     this.opts.onReady?.();
+    void this.loadPartner(loader);
+  }
+
+  private async loadPartner(loader: GLTFLoader): Promise<void> {
+    try {
+      const gltf = await loader.loadAsync('/models/partner.glb');
+      if (this.disposed) return;
+      const model = gltf.scene;
+      model.rotation.y = -Math.PI / 2;
+      model.traverse((o) => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).frustumCulled = false; });
+      this.partner = model;
+      this.pSpin.add(model);
+      // A-pose più aperta del Builder: braccia un po' più giù; respiro sfasato
+      const rig = new BuilderRig(model, this.opts.reducedMotion, 0.18, 1.7);
+      if (rig.ok) { this.pRig = rig; rig.setMode(this.partnerMode); }
+      if (this.partnerWanted) this.setPartner(true);
+    } catch (err) {
+      console.warn('[cf-scene] socio non caricato', err);
+    }
+  }
+
+  /** Entrata (cade dall'alto e atterra ammortizzando, poi saluta) o uscita (risale) del socio. */
+  private setPartner(on: boolean, mode?: BuilderMode, yaw?: number): void {
+    this.partnerWanted = on;
+    if (mode) { this.partnerMode = mode; this.pRig?.setMode(mode); }
+    if (yaw !== undefined) gsap.to(this.pBody, { yaw, duration: 1.1, ease: 'power3.inOut', overwrite: true });
+    if (!this.partner) return;
+    const target = on ? 1 : 0;
+    if (this.partnerTarget === target) return;
+    this.partnerTarget = target;
+    if (on) {
+      if (this.opts.reducedMotion) { this.partnerIn.v = 1; return; }
+      gsap.to(this.partnerIn, {
+        v: 1, duration: 0.85, ease: 'power3.in', overwrite: true,
+        onComplete: () => { this.pRig?.land(); gsap.delayedCall(0.6, () => { if (this.partnerWanted) this.pRig?.wave(); }); }
+      });
+    } else {
+      gsap.to(this.partnerIn, { v: 0, duration: this.opts.reducedMotion ? 0 : 0.6, ease: 'power2.in', overwrite: true });
+    }
   }
 
   /**
@@ -370,10 +425,12 @@ export class BuilderScene {
           const k = Math.min(METHOD_STEPS.length - 1, Math.floor(st.progress * METHOD_STEPS.length));
           if (k === step) return;
           step = k;
-          this.act(METHOD_STEPS[k].mode);
-          gsap.to(this.body, { yaw: METHOD_STEPS[k].yaw, duration: 1.1, ease: 'power3.inOut', overwrite: true });
+          const ms = METHOD_STEPS[k];
+          this.act(ms.mode);
+          gsap.to(this.body, { yaw: ms.yaw, duration: 1.1, ease: 'power3.inOut', overwrite: true });
+          this.setPartner(!!ms.partner, ms.partner ?? undefined, ms.pYaw);
         },
-        onLeaveBack: () => { step = -1; this.act('present'); gsap.to(this.body, { yaw: 0, duration: 0.8, overwrite: true }); }
+        onLeaveBack: () => { step = -1; this.act('present'); gsap.to(this.body, { yaw: 0, duration: 0.8, overwrite: true }); this.setPartner(false); }
       }));
     }
     if (contact) {
@@ -381,8 +438,16 @@ export class BuilderScene {
       this.bindFinale(contact);
       this.triggers.push(ScrollTrigger.create({
         trigger: contact, start: 'top 55%',
-        onEnter: () => { this.act('welcome'); gsap.to(this.body, { yaw: 0, duration: 1.2, ease: 'power3.inOut', overwrite: true }); },
-        onLeaveBack: () => this.act(METHOD_STEPS[METHOD_STEPS.length - 1].mode)
+        onEnter: () => {
+          this.act('welcome');
+          gsap.to(this.body, { yaw: 0, duration: 1.2, ease: 'power3.inOut', overwrite: true });
+          this.setPartner(true, 'welcome', 0);
+        },
+        onLeaveBack: () => {
+          const last = METHOD_STEPS[METHOD_STEPS.length - 1];
+          this.act(last.mode);
+          this.setPartner(true, last.partner ?? 'welcome', last.pYaw);
+        }
       }));
     }
     ScrollTrigger.sort();
@@ -421,7 +486,14 @@ export class BuilderScene {
     const lerp = THREE.MathUtils.lerp;
     const k1 = ss(0, 0.45);
     // il Builder al centro, in basso, davanti al portale
-    this.root.position.x = lerp(this.root.position.x, 0, k1);
+    const duo = this.pRoot.visible ? 1 : 0;
+    this.root.position.x = lerp(this.root.position.x, -0.33 * duo, k1);
+    if (duo) {
+      this.pRoot.position.x = lerp(this.pRoot.position.x, 0.33, k1);
+      this.pRoot.position.y = lerp(this.pRoot.position.y, -0.42, k1);
+      this.pRoot.scale.setScalar(lerp(this.pRoot.scale.x, 1, k1));
+      this.pRoot.rotation.y = lerp(this.pRoot.rotation.y, -0.12, k1);
+    }
     this.root.position.y = lerp(this.root.position.y, -0.42, k1);
     this.root.scale.setScalar(lerp(this.root.scale.x, 1, k1));
     this.root.rotation.y = lerp(this.root.rotation.y, 0, k1);
@@ -478,6 +550,10 @@ export class BuilderScene {
   poke(nx: number, ny: number): boolean {
     if (!this.builder || this.opts.reducedMotion || this.zoom.v > 0.05) return false;
     this.raycaster.setFromCamera(new THREE.Vector2(nx, ny), this.camera);
+    if (this.partner && this.pRoot.visible && this.raycaster.intersectObject(this.partner, true).length) {
+      this.pRig?.jump(this.pSpin);
+      return true;
+    }
     if (!this.raycaster.intersectObjects([this.builder, this.device], true).length) return false;
     if (this.rig) { this.rig.jump(this.spin); return true; }
     gsap.timeline()
@@ -518,6 +594,16 @@ export class BuilderScene {
       this.root.position.x = lerp(lerp(a.x, ma.x, p1), 0, p2);
       this.root.position.y = lerp(lerp(a.y, ma.y, p1), this.opts.mobile ? -0.08 : 0, p2) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm);
       this.root.rotation.y = s.yaw + this.body.yaw;
+      // socio: accanto al Builder nel palco del metodo, poi nella scena larga; cade dall'alto quando entra
+      const pv = this.partnerIn.v;
+      this.pRoot.visible = !!this.partner && pv > 0.001;
+      if (this.pRoot.visible) {
+        const ps = lerp(ma.s, 1, p2);
+        this.pRoot.scale.setScalar(ps);
+        this.pRoot.position.set(lerp(ma.px, this.opts.mobile ? 0.32 : 0.38, p2), this.root.position.y + (1 - pv) * 1.9, 0.05);
+        this.pRoot.rotation.y = this.pBody.yaw;
+        this.pRig?.setLook(this.look.x, this.look.y);
+      }
 
       // il laptop serve solo nella prima parte: sparisce quando la storia va avanti
       const lap = Math.max(0, Math.min(1, 1 - (s.rings - 0.35) / 0.25));
@@ -531,7 +617,7 @@ export class BuilderScene {
       this.rings.position.set(
         lerp(lerp(a.ringX, ma.ringX, p1), this.opts.mobile ? 0 : 0.7, p2),
         lerp(lerp(a.ringY, ma.ringY, p1), 0.45, p2),
-        lerp(lerp(-1.3, -0.5, p1), -2, p2)
+        lerp(lerp(-1.3, -1.5, p1), -2, p2)
       );
 
       // mani sul dispositivo (IK), poi le pose
@@ -541,6 +627,7 @@ export class BuilderScene {
         this.rig.setGrip(this.device.localToWorld(this.tmp.p.copy(this.grips.R)).clone(), this.device.localToWorld(this.tmp.n.copy(this.grips.L)).clone(), gw);
         this.rig.update(t);
       }
+      if (this.pRoot.visible) this.pRig?.update(t);
 
       // camera: inquadratura della fase, poi (zoom) allineata allo schermo finché lo riempie esattamente
       this.camera.position.set(s.cx, s.cy + (this.opts.reducedMotion ? 0 : this.pointer.y * 0.04 * calm), s.cz);
@@ -587,14 +674,15 @@ export class BuilderScene {
     // metodo: palco largo a destra del titolo; Builder a sinistra del palco, logo grande accanto
     const met = this.fitStage(this.opts.ids.methodStage, 0.9);
     if (met) {
-      const side = Math.min(met.w * 0.22, 0.42 * met.s);
+      // Builder a sinistra, socio a destra, il logo sospeso dietro tra i due
+      const side = Math.min(met.w * 0.2, 0.36 * met.s);
       Object.assign(this.mAnchor, {
-        x: met.x - side, y: met.y - 0.02 * met.s, s: met.s,
-        ringX: met.x + side * 1.35, ringY: met.y + 0.05 * met.s, ringS: 0.62 * met.s
+        x: met.x - side, y: met.y - 0.02 * met.s, s: met.s, px: met.x + side,
+        ringX: met.x, ringY: met.y + 0.7 * met.s, ringS: 0.26 * met.s
       });
     } else {
-      // mobile (niente palco): Builder al centro, dietro alle card
-      Object.assign(this.mAnchor, { x: 0, y: 0.18, s: 0.75, ringX: 0.45, ringY: 0.55, ringS: 0.4 });
+      // mobile (niente palco): i due al centro, dietro alle card
+      Object.assign(this.mAnchor, { x: -0.2, y: 0.18, s: 0.7, px: 0.2, ringX: 0, ringY: 0.6, ringS: 0.35 });
     }
     this.screenSig = '';
   }
@@ -628,7 +716,8 @@ export class BuilderScene {
     cancelAnimationFrame(this.raf);
     this.triggers.forEach((t) => t.kill());
     this.offRefresh?.();
-    gsap.killTweensOf([this.shot, this.body, this.zoom, this.finale]);
+    gsap.killTweensOf([this.shot, this.body, this.zoom, this.finale, this.pBody, this.partnerIn]);
+    this.pRig?.dispose();
     this.rig?.dispose();
     if (this.manifestoEl) {
       this.manifestoEl.style.visibility = '';
