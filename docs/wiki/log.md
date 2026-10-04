@@ -39,3 +39,4 @@
 - Finale cinematografico: logo-portale 3D, volo attraverso l anello, velo viola che diventa la card contatti (arrotondata). Contatti a quiz in 6 step con barra di avanzamento; il 3D si ferma prima dei contatti.
 - Metodo: titolo a sinistra con fase corrente, palco 3D a destra (Builder più grande + logo), card più piccole in scorrimento.
 - Socio 3D (Tripo, decimato 1,9M→30k tri, rig con scripts/rig-partner.mjs): entra nel metodo a "Progettiamo", pose complementari, finale in due davanti al portale. Card del metodo a larghezza piena: quella raggiunta si allarga con lo scroll.
+- Movimenti: molle smorzate per osso (follow-through), camminata procedurale automatica, vita da fermo. Finale: entrate dai lati, logo dal fondo al centro, salto + batti cinque (IK, lampo, scintille, scossa), dissolvenza in particelle verso la camera.

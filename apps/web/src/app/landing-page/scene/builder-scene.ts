@@ -78,6 +78,23 @@ export class BuilderScene {
   private readonly portalLight = new THREE.PointLight(VIOLET, 0, 5, 1.5);
   private ringMat?: THREE.MeshPhysicalMaterial;
   private readonly fv = { a: new THREE.Vector3(), b: new THREE.Vector3(), ta: new THREE.Vector3(), tb: new THREE.Vector3() };
+  /** Batti cinque: altezza del salto (mondo) e quanto le mani cercano il punto d'incontro. */
+  private readonly five = { j: 0, r: 0, shake: 0, flash: 0 };
+  private fiveTl?: gsap.core.Timeline;
+  private fiveOn = false;
+  private inFinale = false;
+  /** Scintille del batti cinque. */
+  private burst?: THREE.Points;
+  private readonly burstState = { p: 1, at: new THREE.Vector3() };
+  /** Dissolvenza in particelle dei due personaggi. */
+  private dust?: THREE.Points;
+  private dustMat?: THREE.ShaderMaterial;
+  /** Camminata automatica: nasce dallo spostamento reale dei personaggi sulla scena. */
+  private readonly walkB = { x: NaN, phase: 0, amt: 0, face: 1 };
+  private readonly walkP = { x: NaN, phase: 0, amt: 0, face: -1 };
+  private lastTick = -1;
+  /** Distanza (mondo) oltre la quale un personaggio è fuori inquadratura nella scena larga. */
+  private offX = 3;
   private readonly anchor = { x: 0.6, y: 0, s: 1, ringX: 1.4, ringY: 0.5, ringS: 0.42 };
   /** Dove recita il Builder nel metodo: il palco a destra del titolo (stessa camera dell'hero). */
   private readonly mAnchor = { x: 0.6, y: 0.2, s: 0.8, px: 1.1, ringX: 1.2, ringY: 0.25, ringS: 0.5 };
@@ -113,7 +130,7 @@ export class BuilderScene {
     this.shots = {
       hero: { cx: 0, cy: 0, cz: 3.4, tx: 0, ty: 0, tz: 0, yaw: 0, rings: 0 },
       method: { cx: 0, cy: 0, cz: 3.4, tx: 0, ty: 0, tz: 0, yaw: 0, rings: 0.6 },
-      far: { cx: m ? 0 : -0.9, cy: 0.35, cz: m ? 6.5 : 5.2, tx: m ? 0 : -0.9, ty: 0.25, tz: 0, yaw: 0, rings: 1 }
+      far: { cx: 0, cy: 0.2, cz: m ? 6.5 : 5.2, tx: 0, ty: 0.1, tz: 0, yaw: 0, rings: 1 }
     };
     this.shot = { ...this.shots.hero };
 
@@ -480,39 +497,55 @@ export class BuilderScene {
     if (tl.scrollTrigger) this.triggers.push(tl.scrollTrigger);
   }
 
-  /** Applica la sequenza finale (camera, portale, Builder) sopra lo stato normale della scena. */
-  private applyFinale(f: number, t: number): void {
+  /**
+   * Sequenza finale sul mondo (guidata dallo scroll, f 0..1):
+   * 0.02–0.40 il logo arriva dal fondo al centro e diventa un portale · 0.04–0.30 i due entrano camminando dai lati
+   * 0.30–0.38 si girano l'uno verso l'altro · 0.42 batti cinque (animazione a tempo) · 0.56–0.70 si dissolvono in particelle.
+   */
+  private finaleWorld(f: number, t: number): void {
     const ss = (a: number, b: number) => THREE.MathUtils.smoothstep(f, a, b);
     const lerp = THREE.MathUtils.lerp;
-    const k1 = ss(0, 0.45);
-    // il Builder al centro, in basso, davanti al portale
-    const duo = this.pRoot.visible ? 1 : 0;
-    this.root.position.x = lerp(this.root.position.x, -0.33 * duo, k1);
+    const walkIn = ss(0.04, 0.3), face = ss(0.3, 0.38);
+    const duo = !!this.partner;
+    const gap = this.opts.mobile ? 0.26 : 0.31;
+    // durante il salto si avvicinano per incontrarsi in aria
+    const g2 = gap * (1 - 0.32 * this.five.r);
+    this.root.position.set(lerp(-this.offX, duo ? -g2 : 0, walkIn), -0.3, 0);
+    this.root.scale.setScalar(1);
+    this.root.rotation.y = face * 0.6;
+    this.spin.position.y = this.five.j;
     if (duo) {
-      this.pRoot.position.x = lerp(this.pRoot.position.x, 0.33, k1);
-      this.pRoot.position.y = lerp(this.pRoot.position.y, -0.42, k1);
-      this.pRoot.scale.setScalar(lerp(this.pRoot.scale.x, 1, k1));
-      this.pRoot.rotation.y = lerp(this.pRoot.rotation.y, -0.12, k1);
+      this.pRoot.visible = true;
+      this.pRoot.position.set(lerp(this.offX, g2, walkIn), -0.3, 0.05);
+      this.pRoot.scale.setScalar(1);
+      this.pRoot.rotation.y = -face * 0.6;
+      this.pSpin.position.y = this.five.j;
     }
-    this.root.position.y = lerp(this.root.position.y, -0.42, k1);
-    this.root.scale.setScalar(lerp(this.root.scale.x, 1, k1));
-    this.root.rotation.y = lerp(this.root.rotation.y, 0, k1);
-    // gli anelli smettono di girare e si mettono in posa: il logo, enorme, frontale
-    const spin = ((t * 0.25) % (Math.PI * 2));
-    this.rings.rotation.y = lerp(spin, spin > Math.PI ? Math.PI * 2 : 0, k1);
-    this.rings.rotation.x = lerp(this.rings.rotation.x, 0, k1);
-    this.rings.position.lerp(this.fv.a.set(0, 0.3, -0.7), k1);
-    this.rings.scale.setScalar(lerp(this.rings.scale.x, 1.7, k1));
-    const burst = ss(0.7, 1);
-    if (this.ringMat) this.ringMat.emissiveIntensity = 0.25 + k1 * 0.9 + burst * 2.5;
-    this.portalLight.position.copy(this.rings.position);
-    this.portalLight.intensity = k1 * 6 + burst * 30;
+    // batti cinque: parte a tempo quando lo scroll arriva al momento giusto, si azzera tornando indietro
+    if (f >= 0.42 && !this.fiveOn) this.playFive();
+    else if (f < 0.36 && this.fiveOn) this.resetFive();
 
-    // camera: dall'inquadratura larga a frontale sul portale, lenta spinta, poi lo attraversa
+    // il logo: dal fondo al centro fino al portale, smette di girare e si mette frontale
+    const kr = ss(0.02, 0.4);
+    const spin = (t * 0.25) % (Math.PI * 2);
+    this.rings.rotation.y = lerp(spin, spin > Math.PI ? Math.PI * 2 : 0, ss(0.15, 0.4));
+    this.rings.rotation.x = lerp(this.rings.rotation.x, 0, kr);
+    this.rings.position.set(0, 0.3, lerp(-9, -0.7, kr * kr * (3 - 2 * kr)));
+    this.rings.scale.setScalar(lerp(0.7, 1.7, kr));
+    const burst = ss(0.7, 1);
+    if (this.ringMat) this.ringMat.emissiveIntensity = 0.25 + kr * 0.9 + burst * 2.5 + this.five.flash * 1.5;
+    this.portalLight.position.copy(this.rings.position);
+    this.portalLight.intensity = kr * 6 + burst * 30 + this.five.flash * 18;
+  }
+
+  /** Camera del finale: dalla scena larga a frontale sul portale, lenta spinta, poi lo attraversa. */
+  private finaleCamera(f: number): void {
+    const ss = (a: number, b: number) => THREE.MathUtils.smoothstep(f, a, b);
+    const lerp = THREE.MathUtils.lerp;
     const cam = this.camera.position, tgt = this.fv.tb;
     this.camera.getWorldDirection(tgt).multiplyScalar(5).add(cam); // target corrente approssimato
     const K = [
-      { f: 0.45, p: [-0.35, 0.02, 3.3], t: [0, 0.18, -0.7] },
+      { f: 0.42, p: [0, 0.08, 3.6], t: [0, 0.3, -0.7] },
       { f: 0.72, p: [0, 0.26, 2.3], t: [0, 0.3, -0.7] },
       { f: 1, p: [0, 0.3, -1.7], t: [0, 0.3, -4] }
     ];
@@ -525,10 +558,205 @@ export class BuilderScene {
       look.lerp(this.fv.b.set(k.t[0], k.t[1], k.t[2]), e);
       prev = k.f;
     }
+    // scossa breve al momento dello schiocco
+    const sh = this.five.shake * 0.012;
+    if (sh) pos.add(this.fv.b.set((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh, 0));
     this.camera.position.copy(pos);
     this.camera.lookAt(look);
     const fov = lerp(this.baseFov, 72, Math.pow(ss(0.72, 1), 2));
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
+  }
+
+  /** Entrata/uscita dalla zona del finale: posa neutra (cammina e salta), all'indietro torna il benvenuto. */
+  private toggleFinale(on: boolean): void {
+    this.inFinale = on;
+    this.act(on ? 'present' : 'welcome');
+    if (this.partner) this.setPartner(true, on ? 'present' : 'welcome');
+    if (!on) {
+      this.resetFive();
+      this.spin.position.y = 0;
+      this.pSpin.position.y = 0;
+      this.updateDust(0);
+    }
+  }
+
+  /** Batti cinque: anticipo, salto, mani che si cercano, schiocco (lampo, scintille, scossa), atterraggio. */
+  private playFive(): void {
+    this.fiveOn = true;
+    this.fiveTl?.kill();
+    const rigs = [this.rig?.w, this.pRig?.w].filter((x): x is NonNullable<typeof x> => !!x);
+    const tl = gsap.timeline();
+    if (rigs.length) tl.to(rigs, { crouch: 1, duration: 0.2, ease: 'power2.out' }, 0).to(rigs, { crouch: 0, duration: 0.18, ease: 'power2.in' }, 0.2);
+    tl.to(this.five, { j: 0.26, duration: 0.36, ease: 'power2.out' }, 0.2)
+      .to(this.five, { r: 1, duration: 0.3, ease: 'power3.out' }, 0.24)
+      .add(() => this.clap(), 0.56)
+      .to(this.five, { j: 0, duration: 0.32, ease: 'power2.in' }, 0.58)
+      .to(this.five, { r: 0, duration: 0.5, ease: 'power2.inOut' }, 0.78);
+    if (this.rig) tl.to(this.rig.w, { fiveL: 1, duration: 0.3, ease: 'power2.out' }, 0.2).to(this.rig.w, { fiveL: 0, duration: 0.5, ease: 'power2.inOut' }, 0.78);
+    if (this.pRig) tl.to(this.pRig.w, { fiveR: 1, duration: 0.3, ease: 'power2.out' }, 0.2).to(this.pRig.w, { fiveR: 0, duration: 0.5, ease: 'power2.inOut' }, 0.78);
+    if (rigs.length) tl.to(rigs, { crouch: 0.9, duration: 0.1, ease: 'power2.out' }, 0.9).to(rigs, { crouch: 0, duration: 0.7, ease: 'elastic.out(1, 0.45)' }, 1.0);
+    this.fiveTl = tl;
+  }
+
+  private resetFive(): void {
+    this.fiveOn = false;
+    this.fiveTl?.kill();
+    Object.assign(this.five, { j: 0, r: 0, shake: 0, flash: 0 });
+    for (const w of [this.rig?.w, this.pRig?.w]) if (w) Object.assign(w, { fiveR: 0, fiveL: 0, crouch: 0 });
+  }
+
+  /** Le mani rivolte l'una all'altra (sinistra del Builder, destra del socio) puntano allo stesso punto, sopra e tra le spalle. */
+  private aimFive(): void {
+    const r = this.five.r;
+    if (!this.rig || !this.pRig || r <= 0.001) { this.pRig?.setHand('R', this.fv.a, 0); return; }
+    const sb = this.rig.shoulder('L', this.fv.a), sp = this.pRig.shoulder('R', this.fv.b);
+    const mid = this.fv.ta.copy(sb).add(sp).multiplyScalar(0.5);
+    mid.y = Math.max(sb.y, sp.y) + 0.3; // sopra le teste
+    mid.z += 0.08;
+    this.burstState.at.copy(mid);
+    this.rig.setHand('L', this.fv.tb.copy(mid).add(this.fv.a.set(-0.018, 0, 0)), r);
+    this.pRig.setHand('R', this.fv.tb.copy(mid).add(this.fv.a.set(0.018, 0, 0)), r);
+  }
+
+  /** Lo schiocco: lampo sul portale, scossa di camera, scintille dal punto d'incontro. */
+  private clap(): void {
+    gsap.fromTo(this.five, { flash: 1, shake: 1 }, { flash: 0, shake: 0, duration: 0.6, ease: 'power3.out' });
+    if (!this.burst) {
+      const n = 90, pos = new Float32Array(n * 3), dir = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const v = new THREE.Vector3().randomDirection();
+        v.y = Math.abs(v.y) * 0.8 + 0.2;
+        dir.set([v.x, v.y, v.z * 0.6], i * 3);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.userData['dir'] = dir;
+      this.burst = new THREE.Points(g, new THREE.PointsMaterial({ color: '#C4B5FD', size: 0.022, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      this.burst.frustumCulled = false;
+      this.scene.add(this.burst);
+    }
+    gsap.fromTo(this.burstState, { p: 0 }, { p: 1, duration: 0.9, ease: 'power2.out' });
+  }
+
+  private updateBurst(): void {
+    const b = this.burst;
+    if (!b) return;
+    const p = this.burstState.p;
+    b.visible = p < 1;
+    if (!b.visible) return;
+    const pos = b.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const dir = b.geometry.userData['dir'] as Float32Array;
+    const at = this.burstState.at, d = p * 0.32;
+    for (let i = 0; i < pos.count; i++) {
+      pos.setXYZ(i, at.x + dir[i * 3] * d, at.y + dir[i * 3 + 1] * d - p * p * 0.08, at.z + dir[i * 3 + 2] * d);
+    }
+    pos.needsUpdate = true;
+    (b.material as THREE.PointsMaterial).opacity = 1 - p;
+  }
+
+  /**
+   * Dissolvenza: i vertici dei due personaggi (già deformati dallo scheletro, col colore della texture) diventano
+   * particelle che volano verso la camera e oltre, dall'alto verso il basso, mentre i modelli svaniscono.
+   */
+  private updateDust(f: number): void {
+    const d = THREE.MathUtils.smoothstep(f, 0.56, 0.7);
+    const models = [this.builder, this.partner].filter((m): m is THREE.Object3D => !!m);
+    if (d <= 0) {
+      if (this.dust) { this.scene.remove(this.dust); this.dust.geometry.dispose(); this.dust = undefined; }
+      for (const m of models) { m.visible = true; setOpacity(m, 1); }
+      return;
+    }
+    if (!this.dust) this.buildDust(models);
+    if (this.dustMat) this.dustMat.uniforms['uP'].value = d;
+    const fade = 1 - THREE.MathUtils.smoothstep(d, 0, 0.22);
+    for (const m of models) { m.visible = fade > 0.01; setOpacity(m, fade); }
+  }
+
+  private buildDust(models: THREE.Object3D[]): void {
+    const pos: number[] = [], col: number[] = [], dir: number[] = [], rnd: number[] = [];
+    const v = new THREE.Vector3(), c = new THREE.Vector3(), cam = this.camera.position;
+    this.scene.updateMatrixWorld();
+    for (const model of models) {
+      model.traverse((o) => {
+        const mesh = o as THREE.SkinnedMesh;
+        if (!mesh.isSkinnedMesh) return;
+        mesh.skeleton.update();
+        const geo = mesh.geometry, P = geo.getAttribute('position'), UV = geo.getAttribute('uv');
+        const tex = sampleTexture((mesh.material as THREE.MeshStandardMaterial).map);
+        geo.computeBoundingBox();
+        const bb = geo.boundingBox!;
+        for (let i = 0; i < P.count; i++) {
+          v.fromBufferAttribute(P, i);
+          const h = (v.y - bb.min.y) / (bb.max.y - bb.min.y || 1);
+          mesh.applyBoneTransform(i, v);
+          v.applyMatrix4(mesh.matrixWorld);
+          pos.push(v.x, v.y, v.z);
+          if (tex && UV) {
+            const px = Math.min(tex.w - 1, Math.max(0, Math.floor(UV.getX(i) * tex.w)));
+            const py = Math.min(tex.h - 1, Math.max(0, Math.floor(UV.getY(i) * tex.h)));
+            const k = (py * tex.w + px) * 4;
+            col.push(tex.data[k] / 255, tex.data[k + 1] / 255, tex.data[k + 2] / 255);
+          } else col.push(0.7, 0.6, 1);
+          // verso la camera (e oltre), con dispersione e una spinta verso l'alto
+          c.copy(cam).sub(v).normalize().multiplyScalar(1 + Math.random() * 0.8);
+          c.add(this.fv.b.randomDirection().multiplyScalar(0.55)).add(this.fv.b.set(0, 0.25, 0));
+          dir.push(c.x, c.y, c.z);
+          rnd.push((1 - h) * 0.32 + Math.random() * 0.12); // dalla testa ai piedi
+        }
+      });
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('aColor', new THREE.Float32BufferAttribute(col, 3));
+    g.setAttribute('aDir', new THREE.Float32BufferAttribute(dir, 3));
+    g.setAttribute('aDelay', new THREE.Float32BufferAttribute(rnd, 1));
+    this.dustMat ??= new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false,
+      uniforms: { uP: { value: 0 }, uSize: { value: 9 * Math.min(window.devicePixelRatio || 1, 2) } },
+      vertexShader: `
+        attribute vec3 aColor; attribute vec3 aDir; attribute float aDelay;
+        uniform float uP; uniform float uSize;
+        varying vec3 vColor; varying float vA;
+        void main() {
+          float p = clamp((uP - aDelay) / (1.0 - 0.44), 0.0, 1.0);
+          float e = p * p * (3.0 - 2.0 * p);
+          vec3 pos = position + aDir * (e * e * 4.0);
+          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = min(uSize * (1.0 + e * 2.5) / max(0.05, -mv.z), 48.0);
+          vColor = mix(aColor * 1.35, vec3(0.78, 0.66, 1.0), e * 0.75);
+          vA = (1.0 - smoothstep(0.55, 1.0, p)) * smoothstep(0.0, 0.08, uP);
+        }`,
+      fragmentShader: `
+        varying vec3 vColor; varying float vA;
+        void main() {
+          float d = length(gl_PointCoord - 0.5);
+          if (d > 0.5) discard;
+          gl_FragColor = vec4(vColor, vA * smoothstep(0.5, 0.15, d));
+        }`
+    });
+    this.dust = new THREE.Points(g, this.dustMat);
+    this.dust.frustumCulled = false;
+    this.scene.add(this.dust);
+  }
+
+  /** Avanza la camminata in base alla strada fatta; gira il corpo nella direzione di marcia. */
+  private stepWalk(obj: THREE.Object3D, st: { x: number; phase: number; amt: number; face: number }, dt: number, rig?: BuilderRig, allowed = true): void {
+    const x = obj.position.x;
+    if (Number.isNaN(st.x)) st.x = x;
+    const dx = x - st.x;
+    st.x = x;
+    const sc = obj.scale.x || 1;
+    const dist = Math.abs(dx) / sc;
+    const speed = dist / dt;
+    // salti di posizione (resize, primo frame) non sono passi
+    const target = !allowed || speed > 12 || this.opts.reducedMotion ? 0 : THREE.MathUtils.clamp((speed - 0.04) / 0.45, 0, 1);
+    st.amt += (target - st.amt) * Math.min(1, dt * 7);
+    if (dist > 1e-5 && speed <= 12) st.face = Math.sign(dx);
+    st.phase += (dist / 0.3) * Math.PI * 2 * (speed > 12 || !allowed ? 0 : 1);
+    const turn = st.amt * st.amt * (3 - 2 * st.amt);
+    obj.rotation.y = THREE.MathUtils.lerp(obj.rotation.y, st.face * Math.PI / 2, turn * 0.9);
+    rig?.setWalk(st.phase, st.amt);
   }
 
   private setManifestoHidden(hidden: boolean): void {
@@ -548,7 +776,7 @@ export class BuilderScene {
 
   /** Click sulla tela: se colpisce il Builder, saltello con giro completo. */
   poke(nx: number, ny: number): boolean {
-    if (!this.builder || this.opts.reducedMotion || this.zoom.v > 0.05) return false;
+    if (!this.builder || this.opts.reducedMotion || this.zoom.v > 0.05 || this.finale.f > 0) return false;
     this.raycaster.setFromCamera(new THREE.Vector2(nx, ny), this.camera);
     if (this.partner && this.pRoot.visible && this.raycaster.intersectObject(this.partner, true).length) {
       this.pRig?.jump(this.pSpin);
@@ -591,8 +819,9 @@ export class BuilderScene {
       const a = this.anchor, ma = this.mAnchor, lerp = THREE.MathUtils.lerp;
       const p1 = THREE.MathUtils.clamp(s.rings / 0.6, 0, 1), p2 = THREE.MathUtils.clamp((s.rings - 0.6) / 0.4, 0, 1);
       this.root.scale.setScalar(lerp(lerp(a.s, ma.s, p1), 1, p2));
-      this.root.position.x = lerp(lerp(a.x, ma.x, p1), 0, p2);
-      this.root.position.y = lerp(lerp(a.y, ma.y, p1), this.opts.mobile ? -0.08 : 0, p2) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm);
+      // nella scena larga i due escono ai lati (camminando): rientreranno nel finale
+      this.root.position.x = lerp(lerp(a.x, ma.x, p1), -this.offX, p2);
+      this.root.position.y = lerp(lerp(a.y, ma.y, p1), -0.3, p2) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm * (1 - p2));
       this.root.rotation.y = s.yaw + this.body.yaw;
       // socio: accanto al Builder nel palco del metodo, poi nella scena larga; cade dall'alto quando entra
       const pv = this.partnerIn.v;
@@ -600,7 +829,7 @@ export class BuilderScene {
       if (this.pRoot.visible) {
         const ps = lerp(ma.s, 1, p2);
         this.pRoot.scale.setScalar(ps);
-        this.pRoot.position.set(lerp(ma.px, this.opts.mobile ? 0.32 : 0.38, p2), this.root.position.y + (1 - pv) * 1.9, 0.05);
+        this.pRoot.position.set(lerp(ma.px, this.offX, p2), this.root.position.y + (1 - pv) * 1.9, 0.05);
         this.pRoot.rotation.y = this.pBody.yaw;
         this.pRig?.setLook(this.look.x, this.look.y);
       }
@@ -613,26 +842,42 @@ export class BuilderScene {
       // anelli: piccoli dietro il Builder all'inizio, protagonisti alla fine
       this.rings.rotation.y = t * 0.25;
       this.rings.rotation.x = Math.sin(t * 0.4) * 0.2;
-      this.rings.scale.setScalar(lerp(lerp(a.ringS, ma.ringS, p1), 1.5, p2));
+      // nella scena larga il logo si allontana al centro, lontanissimo: da lì partirà verso il pubblico
+      this.rings.scale.setScalar(lerp(lerp(a.ringS, ma.ringS, p1), 0.7, p2));
       this.rings.position.set(
-        lerp(lerp(a.ringX, ma.ringX, p1), this.opts.mobile ? 0 : 0.7, p2),
-        lerp(lerp(a.ringY, ma.ringY, p1), 0.45, p2),
-        lerp(lerp(-1.3, -1.5, p1), -2, p2)
+        lerp(lerp(a.ringX, ma.ringX, p1), 0, p2),
+        lerp(lerp(a.ringY, ma.ringY, p1), 0.3, p2),
+        lerp(lerp(-1.3, -1.5, p1), -9, p2)
       );
+
+      // finale: entrate dai lati, logo che arriva, batti cinque, dissolvenza
+      if (fin > 0.001 !== this.inFinale) this.toggleFinale(fin > 0.001);
+      if (fin > 0) this.finaleWorld(fin, t);
+
+      // camminata: nasce dallo spostamento reale (scroll) e orienta il corpo verso dove va
+      const dt = this.lastTick < 0 ? 1 / 60 : THREE.MathUtils.clamp(t - this.lastTick, 1 / 240, 1 / 15);
+      this.lastTick = t;
+      // nel finale si cammina solo durante l'entrata (dopo, gli spostamenti sono salti e passi sul posto)
+      const canWalk = fin <= 0 || fin < 0.32;
+      this.stepWalk(this.root, this.walkB, dt, this.rig, canWalk);
+      if (this.pRoot.visible) this.stepWalk(this.pRoot, this.walkP, dt, this.pRig, canWalk);
 
       // mani sul dispositivo (IK), poi le pose
       this.scene.updateMatrixWorld();
       if (this.rig) {
         const gw = THREE.MathUtils.smoothstep(lap, 0.6, 1);
         this.rig.setGrip(this.device.localToWorld(this.tmp.p.copy(this.grips.R)).clone(), this.device.localToWorld(this.tmp.n.copy(this.grips.L)).clone(), gw);
-        this.rig.update(t);
       }
+      this.aimFive();
+      this.rig?.update(t);
       if (this.pRoot.visible) this.pRig?.update(t);
+      this.updateBurst();
+      if (fin > 0) this.updateDust(fin);
 
       // camera: inquadratura della fase, poi (zoom) allineata allo schermo finché lo riempie esattamente
       this.camera.position.set(s.cx, s.cy + (this.opts.reducedMotion ? 0 : this.pointer.y * 0.04 * calm), s.cz);
       this.camera.lookAt(s.tx, s.ty, s.tz);
-      if (fin > 0) this.applyFinale(fin, t);
+      if (fin > 0) this.finaleCamera(fin);
       else if (Math.abs(this.camera.fov - this.baseFov) > 0.01) { this.camera.fov = this.baseFov; this.camera.updateProjectionMatrix(); }
       if (this.device.visible) this.paintScreen();
       if (z > 0 && this.screen && this.device.visible) {
@@ -662,6 +907,8 @@ export class BuilderScene {
     this.camera.fov = this.baseFov;
     this.camera.updateProjectionMatrix();
     this.buildDevice(window.innerWidth / window.innerHeight);
+    // fuori inquadratura nella scena larga (camera far): metà larghezza visibile + margine
+    this.offX = Math.tan(THREE.MathUtils.degToRad(this.baseFov / 2)) * this.shots.far.cz * (w / h) + 0.6;
 
     // hero: il Builder occupa ~84% dello stage, anelli piccoli di lato
     const hero = this.fitStage(this.opts.ids.stage, 0.84);
@@ -716,7 +963,8 @@ export class BuilderScene {
     cancelAnimationFrame(this.raf);
     this.triggers.forEach((t) => t.kill());
     this.offRefresh?.();
-    gsap.killTweensOf([this.shot, this.body, this.zoom, this.finale, this.pBody, this.partnerIn]);
+    gsap.killTweensOf([this.shot, this.body, this.zoom, this.finale, this.pBody, this.partnerIn, this.five, this.burstState]);
+    this.fiveTl?.kill();
     this.pRig?.dispose();
     this.rig?.dispose();
     if (this.manifestoEl) {
@@ -746,4 +994,37 @@ function roundedRect(w: number, h: number, r: number): THREE.Shape {
   s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
   s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
   return s;
+}
+
+/** Opacità di tutti i materiali di un modello (la dissolvenza in particelle li fa svanire). */
+function setOpacity(model: THREE.Object3D, o: number): void {
+  model.traverse((x) => {
+    const mesh = x as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    for (const m of (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) as THREE.Material[]) {
+      const transparent = o < 0.999;
+      if (m.transparent !== transparent) { m.transparent = transparent; m.needsUpdate = true; }
+      m.opacity = o;
+    }
+  });
+}
+
+const texCache = new WeakMap<object, { data: Uint8ClampedArray; w: number; h: number }>();
+/** Legge i pixel (ridotti a 256px) di una texture per colorare le particelle. */
+function sampleTexture(tex: THREE.Texture | null | undefined): { data: Uint8ClampedArray; w: number; h: number } | null {
+  const img = tex?.image as CanvasImageSource | undefined;
+  if (!tex || !img) return null;
+  const hit = texCache.get(tex);
+  if (hit) return hit;
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 256;
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    g.drawImage(img, 0, 0, 256, 256);
+    const out = { data: g.getImageData(0, 0, 256, 256).data, w: 256, h: 256 };
+    texCache.set(tex, out);
+    return out;
+  } catch {
+    return null;
+  }
 }

@@ -8,7 +8,8 @@
  *  - rot Y: gira busto e testa (+ verso la destra del personaggio)
  *
  * Le pose sono strati additivi pesati (GSAP anima i pesi): riposo + gesto + sguardo + respiro.
- * Sopra le pose, una IK a due ossa tiene le mani agganciate al dispositivo che il Builder regge.
+ * Ogni osso insegue la sua posa con una molla smorzata (follow-through: le braccia arrivano dopo il busto),
+ * c'è un ciclo di camminata procedurale e, sopra tutto, una IK a due ossa per mano (laptop, batti cinque).
  */
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -38,7 +39,7 @@ const RELAX: Pose = sym({
   RHand: [0.05, 0, 0.05]
 });
 
-type Gesture = 'wave' | 'present' | 'listen' | 'design' | 'build' | 'care' | 'welcome' | 'crouch' | 'cheer';
+type Gesture = 'wave' | 'present' | 'listen' | 'design' | 'build' | 'care' | 'welcome' | 'crouch' | 'cheer' | 'fiveR' | 'fiveL';
 type Weights = Record<Gesture, number>;
 
 // Gesti: delta rispetto al riposo
@@ -59,6 +60,9 @@ const POSES: Record<Gesture, Pose> = {
   welcome: { ...sym({ RShoulder: [-0.12, 0, 0], RUpperArm: [-1.05, 0, 0.45], RLowerArm: [-0.2, 0, 0.35], RHand: [0, 0, 0.2] }), Chest: [0, 0, 0.08], Head: [0, 0, 0.1] },
   // accovacciato (anticipo del salto e atterraggio)
   crouch: { ...sym({ RUpperLeg: [0, 0, 0.7], RLowerLeg: [0, 0, -1.3], RFoot: [0, 0, 0.6], RUpperArm: [-0.15, 0, -0.35] }), Spine: [0, 0, -0.18], Head: [0, 0, 0.12] },
+  // batti cinque: braccio destro (o sinistro) alto e in avanti, petto aperto; la IK porta la mano al punto d'incontro
+  fiveR: { RShoulder: [-0.35, 0, 0], RUpperArm: [-2.05, 0, 0.55], RLowerArm: [-0.35, 0, 0.25], RHand: [0, 0, -0.2], Chest: [0.08, 0, 0.06], Head: [0, 0, 0.12] },
+  fiveL: { LShoulder: [0.35, 0, 0], LUpperArm: [2.05, 0, 0.55], LLowerArm: [0.35, 0, 0.25], LHand: [0, 0, -0.2], Chest: [-0.08, 0, 0.06], Head: [0, 0, 0.12] },
   // in aria: braccia su, gambe raccolte
   cheer: { ...sym({ RShoulder: [-0.25, 0, 0], RUpperArm: [-2.0, 0, 0.3], RLowerArm: [-0.3, 0, 0.1], RUpperLeg: [0, 0, 0.35], RLowerLeg: [0, 0, -0.6] }), Head: [0, 0, 0.12] }
 };
@@ -66,13 +70,26 @@ const POSES: Record<Gesture, Pose> = {
 const GESTURES = Object.keys(POSES) as Gesture[];
 const MODES = ['present', 'listen', 'design', 'build', 'care', 'welcome'] as const;
 const HIPS_DROP = 0.058; // quanto scendono le anche nell'accovacciata
+const ZERO: Rot = [0, 0, 0];
+
+/** Rigidità della molla per osso: busto e gambe pronti, braccia e mani più morbide (arrivano dopo). */
+function stiffness(name: string): number {
+  if (/Leg|Foot|Toe/.test(name)) return 420;
+  if (/Hips|Spine/.test(name)) return 240;
+  if (/Chest|Shoulder/.test(name)) return 190;
+  if (/Neck/.test(name)) return 160;
+  if (/Head/.test(name)) return 120;
+  if (/UpperArm/.test(name)) return 130;
+  if (/LowerArm/.test(name)) return 150;
+  return 110; // mani
+}
 
 export class BuilderRig {
   private readonly bones = new Map<string, THREE.Bone>();
   private readonly rest = new Map<string, THREE.Quaternion>();
   private hipsRestY = 0;
   /** Pesi animati da GSAP. */
-  readonly w: Weights = { wave: 0, present: 0, listen: 0, design: 0, build: 0, care: 0, welcome: 0, crouch: 0, cheer: 0 };
+  readonly w: Weights = { wave: 0, present: 0, listen: 0, design: 0, build: 0, care: 0, welcome: 0, crouch: 0, cheer: 0, fiveR: 0, fiveL: 0 };
   private mode: BuilderMode | null = null;
   private readonly look = new THREE.Vector2();
   private idleTimer?: gsap.core.Tween;
@@ -80,7 +97,11 @@ export class BuilderRig {
   private readonly q = new THREE.Quaternion();
   private busy = false;
   /** Prese delle mani sul dispositivo (spazio mondo) e quanto pesano. */
-  private readonly grip = { R: new THREE.Vector3(), L: new THREE.Vector3(), weight: 0 };
+  private readonly grip = { R: new THREE.Vector3(), L: new THREE.Vector3(), wR: 0, wL: 0 };
+  /** Stato delle molle per osso (angoli e velocità). */
+  private readonly springs = new Map<string, { x: Rot; v: Rot }>();
+  private lastT = -1;
+  private readonly walk = { phase: 0, amount: 0 };
   private readonly v = Array.from({ length: 8 }, () => new THREE.Vector3());
   private readonly qa = new THREE.Quaternion();
   private readonly qb = new THREE.Quaternion();
@@ -108,7 +129,25 @@ export class BuilderRig {
   setGrip(right: THREE.Vector3, left: THREE.Vector3, weight: number): void {
     this.grip.R.copy(right);
     this.grip.L.copy(left);
-    this.grip.weight = weight;
+    this.grip.wR = this.grip.wL = weight;
+  }
+
+  /** Porta una sola mano (polso) su un punto del mondo: es. il batti cinque. */
+  setHand(side: 'R' | 'L', target: THREE.Vector3, weight: number): void {
+    this.grip[side].copy(target);
+    if (side === 'R') this.grip.wR = weight; else this.grip.wL = weight;
+  }
+
+  /** Ciclo di camminata: fase (radianti, avanza con la strada fatta) e intensità 0..1. */
+  setWalk(phase: number, amount: number): void {
+    this.walk.phase = phase;
+    this.walk.amount = amount;
+  }
+
+  /** Posizione mondo della spalla (per calcolare dove si incontrano le mani). */
+  shoulder(side: 'R' | 'L', out: THREE.Vector3): THREE.Vector3 {
+    const b = this.bones.get(side + 'UpperArm');
+    return b ? b.getWorldPosition(out) : out;
   }
 
   /** Cambia "recitazione" con una transizione morbida (blend dei pesi). */
@@ -208,8 +247,36 @@ export class BuilderRig {
       add('Spine', 0, 0, -0.05 * hit * w.build);
     }
     if (w.care) add('Head', 0, 0, -Math.max(0, Math.sin(t * 2.4)) * 0.12 * w.care);
+    if (w.care) add('RLowerArm', Math.sin(t * 3.1) * 0.12 * w.care, 0, Math.sin(t * 1.7) * 0.15 * w.care); // gesticola mentre spiega
+    if (w.welcome) { add('Spine', 0, Math.sin(t * 0.9) * 0.08 * w.welcome, 0); add('Head', 0, -Math.sin(t * 0.9) * 0.1 * w.welcome, 0); }
     if (w.listen) add('Head', Math.sin(t * 0.8) * 0.05 * w.listen, 0, 0);
     if (w.design) add('Head', 0, Math.sin(t * 0.6) * 0.08 * w.design, 0);
+
+    // vita da fermo: piccoli spostamenti di sguardo e un ginocchio che cede quando il peso va da un lato
+    const idle = m * (1 - Math.min(1, this.walk.amount * 2));
+    add('Head', Math.sin(t * 0.37) * 0.03 * idle, (Math.sin(t * 0.23) * 0.08 + Math.sin(t * 1.1) * 0.02) * idle, Math.sin(t * 0.31) * 0.03 * idle);
+    add('RLowerLeg', 0, 0, -Math.max(0, sway) * 0.09 * idle);
+    add('LLowerLeg', 0, 0, -Math.max(0, -sway) * 0.09 * idle);
+    add('RUpperLeg', 0, 0, Math.max(0, sway) * 0.05 * idle);
+    add('LUpperLeg', 0, 0, Math.max(0, -sway) * 0.05 * idle);
+
+    // camminata: gambe alternate, ginocchio che si piega in fase di volo, braccia in controfase, busto che torce
+    const wa = this.walk.amount;
+    if (wa > 0.01) {
+      const ph = this.walk.phase;
+      for (const sd of SIDES) {
+        const p = ph + (sd === 'R' ? 0 : Math.PI), sn = Math.sin(p), cs = Math.cos(p), k = sd === 'R' ? 1 : -1;
+        add(sd + 'UpperLeg', 0, 0, 0.45 * sn * wa);
+        add(sd + 'LowerLeg', 0, 0, -0.8 * Math.max(0, cs) * wa);
+        add(sd + 'Foot', 0, 0, (0.3 * Math.max(0, -sn) - 0.15 * Math.max(0, cs)) * wa);
+        add(sd + 'UpperArm', 0.1 * k * wa, 0, -0.4 * sn * wa);
+        add(sd + 'LowerArm', 0, 0, (0.3 + 0.2 * Math.max(0, -sn)) * wa);
+      }
+      add('Spine', 0, 0.1 * Math.sin(ph) * wa, -0.06 * wa);
+      add('Chest', 0, -0.14 * Math.sin(ph) * wa, 0);
+      add('Head', 0, 0.06 * Math.sin(ph) * wa, 0.04 * wa);
+      add('Hips', 0.04 * Math.cos(ph) * wa, 0, 0);
+    }
 
     // sguardo verso il cursore (meno quando pensa)
     const focus = 1 - 0.7 * w.design;
@@ -217,23 +284,43 @@ export class BuilderRig {
     add('Head', 0, this.look.x * 0.32 * focus, -this.look.y * 0.16 * focus);
     add('Chest', 0, this.look.x * 0.08 * focus, 0);
 
+    // molle smorzate: ogni osso insegue la sua posa; estremità più morbide del busto (overlap naturale)
+    const dt = this.lastT < 0 ? 1 / 60 : THREE.MathUtils.clamp(t - this.lastT, 1 / 240, 1 / 20);
+    this.lastT = t;
     for (const [name, bone] of this.bones) {
-      const r = acc.get(name);
+      const r = acc.get(name) ?? ZERO;
+      let x: Rot = r;
+      if (!this.reduced) {
+        let sp = this.springs.get(name);
+        if (!sp) { sp = { x: [r[0], r[1], r[2]], v: [0, 0, 0] }; this.springs.set(name, sp); }
+        const k = stiffness(name), c = 2 * Math.sqrt(k) * 0.78; // leggermente sottosmorzata
+        // sotto-passi da max 1/120 s: la molla resta stabile anche se i frame rallentano
+        const n = Math.ceil(dt * 120), h = dt / n;
+        for (let j = 0; j < n; j++) {
+          for (let i = 0; i < 3; i++) {
+            sp.v[i] += ((r[i] - sp.x[i]) * k - sp.v[i] * c) * h;
+            sp.x[i] += sp.v[i] * h;
+          }
+        }
+        x = sp.x;
+      }
       const rest = this.rest.get(name)!;
-      if (!r) { bone.quaternion.copy(rest); continue; }
-      this.e.set(r[0], r[1], r[2], 'YZX');
+      if (x === ZERO) { bone.quaternion.copy(rest); continue; }
+      this.e.set(x[0], x[1], x[2], 'YZX');
       bone.quaternion.copy(rest).multiply(this.q.setFromEuler(this.e));
     }
     const hips = this.bones.get('Hips');
-    if (hips) hips.position.y = this.hipsRestY - HIPS_DROP * (w.crouch + w.build * 0.05) + br * 0.002;
+    // anche: accovacciata, piccolo rimbalzo a ogni passo, respiro
+    const bob = wa > 0.01 ? -0.014 * wa * (1 - Math.abs(Math.cos(this.walk.phase))) : 0;
+    if (hips) hips.position.y = this.hipsRestY - HIPS_DROP * (w.crouch + w.build * 0.05) + br * 0.002 + bob;
 
     // IK: le mani restano sul dispositivo (la destra lo lascia per salutare o saltare)
     const free = Math.max(w.crouch, w.cheer);
-    const gw = this.grip.weight * (1 - free);
-    if (gw > 0.001) {
+    const wl = this.grip.wL * (1 - free), wr = this.grip.wR * (1 - free) * (1 - w.wave);
+    if (wl > 0.001 || wr > 0.001) {
       this.model.updateMatrixWorld(true);
-      this.reach('L', this.grip.L, gw);
-      this.reach('R', this.grip.R, gw * (1 - w.wave));
+      this.reach('L', this.grip.L, wl);
+      this.reach('R', this.grip.R, wr);
     }
   }
 
