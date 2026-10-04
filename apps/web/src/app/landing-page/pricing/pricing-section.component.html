@@ -1,70 +1,56 @@
-<section class="pricing-section section-shell" id="prezzi" aria-labelledby="pricing-title">
-  <div class="pricing-heading">
+<section class="pricing" id="prezzi" aria-labelledby="pricing-title">
+  <header class="head">
     <div>
-      <p class="eyebrow">Listino trasparente</p>
+      <p class="eyebrow"><span aria-hidden="true"></span>Listino trasparente</p>
       <h2 id="pricing-title">Parti da un’idea.<br><em>Investi nel possibile.</em></h2>
     </div>
-    <p class="pricing-intro">Prezzi estremamente competitivi per prodotti custom, costruiti con l’efficienza di Angular 22 e senza pacchetti superflui.</p>
-  </div>
-
-  <div class="pricing-tabs" role="tablist" aria-label="Listino Childhood Friendship">
-    <button
-      id="development-tab"
-      class="pricing-tab"
-      [class.pricing-tab-active]="activeView() === 'development'"
-      type="button"
-      role="tab"
-      [attr.aria-selected]="activeView() === 'development'"
-      aria-controls="development-panel"
-      (click)="selectView('development')"
-    >Sviluppo iniziale</button>
-    <button
-      id="maintenance-tab"
-      class="pricing-tab"
-      [class.pricing-tab-active]="activeView() === 'maintenance'"
-      type="button"
-      role="tab"
-      [attr.aria-selected]="activeView() === 'maintenance'"
-      aria-controls="maintenance-panel"
-      (click)="selectView('maintenance')"
-    >Gestione post-lancio</button>
-  </div>
-
-  @if (activeView() === 'development') {
-    <div id="development-panel" class="pricing-grid" role="tabpanel" aria-labelledby="development-tab">
-      @for (plan of developmentPlans; track plan.name) {
-        <article class="pricing-card">
-          <p class="plan-type">Sviluppo iniziale</p>
-          <h3>{{ plan.name }}</h3>
-          <div class="price-line"><strong>{{ plan.price }}</strong><span>{{ plan.cadence }}</span></div>
-          <p class="plan-description">{{ plan.description }}</p>
-          <ul>
-            @for (feature of plan.features; track feature) {
-              <li><span aria-hidden="true">✦</span>{{ feature }}</li>
-            }
-          </ul>
-          <a class="pricing-link" href="#contatti">Parliamone <span aria-hidden="true">↗</span></a>
-        </article>
-      }
+    <div class="aside">
+      <p>Prezzi chiari per prodotti su misura. Nessun pacchetto superfluo: paghi quello che costruiamo.</p>
+      <div class="switch" role="tablist" aria-label="Tipo di listino" [class.right]="view() === 'maintenance'">
+        <span class="thumb" aria-hidden="true"></span>
+        <button type="button" role="tab" id="tab-dev" aria-controls="pricing-panel"
+          [attr.aria-selected]="view() === 'development'" (click)="select('development')">Sviluppo</button>
+        <button type="button" role="tab" id="tab-care" aria-controls="pricing-panel"
+          [attr.aria-selected]="view() === 'maintenance'" (click)="select('maintenance')">Dopo il lancio</button>
+      </div>
     </div>
-  } @else {
-    <div id="maintenance-panel" class="pricing-grid pricing-grid-maintenance" role="tabpanel" aria-labelledby="maintenance-tab">
-      @for (plan of maintenancePlans; track plan.name) {
-        <article class="pricing-card">
-          <p class="plan-type">Gestione post-lancio</p>
-          <h3>{{ plan.name }}</h3>
-          <div class="price-line"><strong>{{ plan.price }}</strong><span>{{ plan.cadence }}</span></div>
-          <p class="plan-description">{{ plan.description }}</p>
-          <ul>
-            @for (feature of plan.features; track feature) {
-              <li><span aria-hidden="true">✦</span>{{ feature }}</li>
-            }
-          </ul>
-          <a class="pricing-link" href="#contatti">Parliamone <span aria-hidden="true">↗</span></a>
-        </article>
-      }
-    </div>
-  }
+  </header>
 
-  <p class="pricing-note"><strong>Nota:</strong> i costi di hosting, dominio, servizi cloud e infrastruttura sono completamente esclusi dall’offerta tecnica.</p>
+  <ol class="plans" id="pricing-panel" role="tabpanel" [attr.aria-labelledby]="view() === 'development' ? 'tab-dev' : 'tab-care'">
+    @for (plan of plans(); track plan.id; let i = $index) {
+      @let isOpen = open() === plan.id;
+      <li class="plan" [class.open]="isOpen" [style.--i]="i">
+        <button type="button" class="summary" (click)="toggle(plan.id)"
+          [attr.aria-expanded]="isOpen" [attr.aria-controls]="'plan-' + plan.id" [attr.data-cursor]="isOpen ? 'chiudi' : 'dettagli'">
+          <span class="num">{{ (i + 1).toString().padStart(2, '0') }}</span>
+          <span class="name">
+            <span class="title">{{ plan.name }}</span>
+            <span class="tagline">{{ plan.tagline }}</span>
+          </span>
+          <span class="price">
+            <small>da</small><strong>{{ plan.price }}</strong><span class="eur">€</span>
+            <span class="cadence">{{ plan.cadence }}</span>
+          </span>
+          <span class="plus" aria-hidden="true"></span>
+        </button>
+        <div class="detail" [id]="'plan-' + plan.id" role="region" [attr.aria-label]="plan.name">
+          <div class="detail-inner">
+            <div class="col">
+              <p class="desc">{{ plan.description }}</p>
+              <p class="ideal"><span>Ideale per</span>{{ plan.idealFor }}</p>
+            </div>
+            <div class="col">
+              <p class="label">Cosa include</p>
+              <ul class="features">
+                @for (f of plan.features; track f) { <li>{{ f }}</li> }
+              </ul>
+            </div>
+            <a class="cta" href="#contatti" data-cursor="scrivici">Parliamone <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </li>
+    }
+  </ol>
+
+  <p class="note"><strong>Nota</strong> Hosting, dominio, servizi cloud e infrastruttura sono esclusi dall’offerta: li scegliamo insieme e restano intestati a te.</p>
 </section>

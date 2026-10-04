@@ -31,3 +31,7 @@
 ## [2026-10-03] verify | Piattaforma v0.2
 - `npm run check`, `npm test` (26/26), `npm run build`: passati.
 - Smoke test Playwright end-to-end admin + cliente + landing desktop/mobile: passato.
+
+## [2026-10-04] feat | Builder animato + listino
+- Builder: rig umanoide generato in codice (`apps/web/scripts/rig-builder.mjs`, 24 ossa), animazioni procedurali in `scene/builder-rig.ts` (respiro, sguardo sul cursore, saluto, laptop, 4 pose del metodo, benvenuto finale, salto al click).
+- Listino: righe espandibili con dettagli, switch Sviluppo/Dopo il lancio, font display.

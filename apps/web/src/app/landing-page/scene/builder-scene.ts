@@ -1,7 +1,8 @@
 /**
  * Scena 3D della landing: il Builder (modello Tripo), il laptop in cui la camera "entra"
  * e il logo Legame in 3D. Lo scroll guida la camera con GSAP ScrollTrigger:
- * hero → zoom dentro lo schermo (manifesto) → orbita nel metodo → dezoom finale sui contatti.
+ * hero → zoom dentro lo schermo (manifesto) → una posa per fase del metodo → dezoom finale sui contatti.
+ * Il Builder è animato sulle ossa da `BuilderRig` (respiro, sguardo, gesti, salto).
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -10,6 +11,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { BuilderRig, type BuilderMode } from './builder-rig';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,6 +21,11 @@ const CHALK = '#F4F0FF';
 
 /** Stato animabile da GSAP: la camera interpola tra queste grandezze. */
 interface Shot { cx: number; cy: number; cz: number; tx: number; ty: number; tz: number; yaw: number; rings: number; }
+
+/** Una "recitazione" del Builder per ogni fase del metodo, con il suo orientamento verso la camera. */
+const METHOD_STEPS: readonly { mode: BuilderMode; yaw: number }[] = [
+  { mode: 'listen', yaw: 0.35 }, { mode: 'design', yaw: -0.3 }, { mode: 'build', yaw: 0.45 }, { mode: 'care', yaw: 0 }
+];
 // rings: 0 = hero, 1 = finale. Pilota anche la dissolvenza del laptop e la posizione del logo.
 
 export interface SceneOptions { reducedMotion: boolean; mobile: boolean; onReady?: () => void; }
@@ -34,8 +41,12 @@ export class BuilderScene {
   private readonly laptop = new THREE.Group();
   private screenCenter = new THREE.Vector3();
   private builder?: THREE.Object3D;
+  private rig?: BuilderRig;
+  /** Orientamento del Builder, separato dalla camera: lo animano le fasi, non lo scrub. */
+  private readonly body = { yaw: 0 };
   private readonly clock = new THREE.Clock();
   private readonly pointer = new THREE.Vector2();
+  private readonly look = new THREE.Vector2();
   private readonly raycaster = new THREE.Raycaster();
   private raf = 0;
   private visible = true;
@@ -43,6 +54,7 @@ export class BuilderScene {
   private readonly shot: Shot;
   private readonly shots: Record<'hero' | 'screen' | 'method' | 'far', Shot>;
   private disposed = false;
+  private pendingMode: BuilderMode = 'hero';
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly opts: SceneOptions) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: false, powerPreference: 'high-performance' });
@@ -99,8 +111,16 @@ export class BuilderScene {
       model.traverse((o) => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).frustumCulled = false; });
       this.builder = model;
       this.spin.add(model);
-      // ingresso: sale dal basso
-      if (!this.opts.reducedMotion) gsap.from(this.spin.position, { y: -1.4, duration: 1.6, ease: 'expo.out', delay: 0.2 });
+      const rig = new BuilderRig(model, this.opts.reducedMotion);
+      if (rig.ok) {
+        this.rig = rig;
+        rig.setMode(this.pendingMode);
+      }
+      // ingresso: sale dal basso, atterra ammortizzando e saluta
+      if (!this.opts.reducedMotion) {
+        gsap.from(this.spin.position, { y: -1.4, duration: 1.6, ease: 'expo.out', delay: 0.2 });
+        if (this.rig) gsap.delayedCall(1.5, () => this.rig?.wave());
+      }
     } catch (err) {
       console.warn('[cf-scene] modello non caricato', err);
     }
@@ -211,6 +231,8 @@ export class BuilderScene {
       const pin = ScrollTrigger.create({ trigger: hero, start: 'top top', end: '+=120%', pin: true, pinSpacing: true });
       this.triggers.push(pin);
       toShot(this.shots.hero, this.shots.screen, hero, 'top top', '+=120%', 'power3.in');
+      // appena la camera parte, il Builder si gira verso il laptop e comincia a scrivere
+      this.triggers.push(ScrollTrigger.create({ trigger: hero, start: 'top top', end: '+=120%', onUpdate: (st) => this.act(st.progress > 0.12 ? 'type' : 'hero') }));
       const copy = hero.querySelectorAll('.inner, .glow, .scroll');
       if (copy.length) {
         const fade = gsap.to(copy, { opacity: 0, y: -80, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: '+=45%', scrub: true } });
@@ -220,11 +242,29 @@ export class BuilderScene {
     void manifesto;
     if (method) {
       toShot(this.shots.screen, this.shots.method, method, 'top bottom', 'top top', 'power2.out');
-      // dentro il metodo: la camera gira attorno al Builder (un quarto di giro per fase)
-      const tw = gsap.to(this.shot, { yaw: Math.PI * 1.5, ease: 'none', immediateRender: false, scrollTrigger: { trigger: method, start: 'top top', end: 'bottom bottom', scrub: 1 } });
-      if (tw.scrollTrigger) this.triggers.push(tw.scrollTrigger);
+      // dentro il metodo: una posa per fase (ascolta, progetta, costruisce, resta) con un mezzo giro verso la camera
+      let step = -1;
+      this.triggers.push(ScrollTrigger.create({
+        trigger: method, start: 'top 60%', end: 'bottom bottom',
+        onUpdate: (st) => {
+          const k = Math.min(METHOD_STEPS.length - 1, Math.floor(st.progress * METHOD_STEPS.length));
+          if (k === step) return;
+          step = k;
+          this.act(METHOD_STEPS[k].mode);
+          gsap.to(this.body, { yaw: METHOD_STEPS[k].yaw, duration: 1.1, ease: 'power3.inOut', overwrite: true });
+        },
+        onLeaveBack: () => { step = -1; this.act('type'); gsap.to(this.body, { yaw: 0, duration: 0.8, overwrite: true }); }
+      }));
     }
-    if (contact) toShot({ ...this.shots.method, yaw: Math.PI * 1.5 }, { ...this.shots.far, yaw: Math.PI * 2 }, contact, 'top bottom', 'bottom bottom', 'power2.out');
+    if (contact) {
+      toShot(this.shots.method, this.shots.far, contact, 'top bottom', 'bottom bottom', 'power2.out');
+      // finale: si volta verso chi guarda e apre le braccia
+      this.triggers.push(ScrollTrigger.create({
+        trigger: contact, start: 'top 55%',
+        onEnter: () => { this.act('welcome'); gsap.to(this.body, { yaw: 0, duration: 1.2, ease: 'power3.inOut', overwrite: true }); },
+        onLeaveBack: () => this.act(METHOD_STEPS[METHOD_STEPS.length - 1].mode)
+      }));
+    }
     // render solo quando una sezione "3D" è a schermo
     const watch = [hero, method, contact].filter((e): e is HTMLElement => !!e);
     const update = () => { this.visible = watch.some((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }); };
@@ -236,11 +276,17 @@ export class BuilderScene {
 
   setPointer(nx: number, ny: number): void { this.pointer.set(nx, ny); }
 
+  private act(mode: BuilderMode): void {
+    this.pendingMode = mode;
+    this.rig?.setMode(mode);
+  }
+
   /** Click sulla tela: se colpisce il Builder, saltello con giro completo. */
   poke(nx: number, ny: number): boolean {
     if (!this.builder || this.opts.reducedMotion) return false;
     this.raycaster.setFromCamera(new THREE.Vector2(nx, ny), this.camera);
     if (!this.raycaster.intersectObject(this.builder, true).length) return false;
+    if (this.rig) { this.rig.jump(this.spin); return true; }
     gsap.timeline()
       .to(this.spin.position, { y: 0.18, duration: 0.28, ease: 'power2.out' })
       .to(this.spin.rotation, { y: `+=${Math.PI * 2}`, duration: 0.7, ease: 'power3.inOut' }, 0)
@@ -257,8 +303,14 @@ export class BuilderScene {
       const t = this.clock.getElapsedTime();
       const s = this.shot;
       // cursore: il Builder si gira verso il puntatore (morbido)
-      this.follow.rotation.y += ((this.pointer.x * 0.45) - this.follow.rotation.y) * 0.06;
-      this.follow.rotation.x += ((-this.pointer.y * 0.08) - this.follow.rotation.x) * 0.06;
+      // con lo scheletro guarda il cursore con testa e busto: il corpo segue solo un poco
+      const bodyFollow = this.rig ? 0.18 : 0.45;
+      this.follow.rotation.y += ((this.pointer.x * bodyFollow) - this.follow.rotation.y) * 0.06;
+      this.follow.rotation.x += ((-this.pointer.y * (this.rig ? 0.03 : 0.08)) - this.follow.rotation.x) * 0.06;
+      this.look.x += (this.pointer.x - this.look.x) * 0.12;
+      this.look.y += (this.pointer.y - this.look.y) * 0.12;
+      this.rig?.setLook(this.look.x, this.look.y);
+      this.rig?.update(t);
       if (!this.opts.reducedMotion) this.root.position.y = (this.opts.mobile ? -0.08 : 0) + Math.sin(t * 1.2) * 0.012;
       this.rings.rotation.y = t * 0.25;
       this.rings.rotation.x = Math.sin(t * 0.4) * 0.2;
@@ -276,7 +328,7 @@ export class BuilderScene {
       this.rings.position.y = THREE.MathUtils.lerp(0.5, 0.45, s.rings);
       // camera: posizione base + orbita (yaw) attorno al target
       // yaw fa girare il Builder su se stesso (la camera resta composta con il layout)
-      this.root.rotation.y = s.yaw;
+      this.root.rotation.y = s.yaw + this.body.yaw;
       this.camera.position.set(s.cx, s.cy + (this.opts.reducedMotion ? 0 : this.pointer.y * 0.04), s.cz);
       this.camera.lookAt(s.tx, s.ty, s.tz);
       this.renderer.render(this.scene, this.camera);
@@ -299,6 +351,8 @@ export class BuilderScene {
     cancelAnimationFrame(this.raf);
     this.triggers.forEach((t) => t.kill());
     gsap.killTweensOf(this.shot);
+    gsap.killTweensOf(this.body);
+    this.rig?.dispose();
     this.scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
       mesh.geometry?.dispose();
