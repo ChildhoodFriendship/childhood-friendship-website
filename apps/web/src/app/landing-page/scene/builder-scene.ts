@@ -3,7 +3,8 @@
  * Lo scroll guida la camera con GSAP ScrollTrigger:
  * hero → la camera entra nello schermo del laptop, che mostra il manifesto esattamente come apparirà
  * nella pagina (stesso font, stessa impaginazione, stesse parole accese): a zoom finito lo schermo
- * riempie la finestra e cede il posto alla sezione vera senza stacco → una posa per fase del metodo → dezoom finale.
+ * riempie la finestra e cede il posto alla sezione vera senza stacco → una posa per fase del metodo →
+ * finale cinematografico: il logo diventa un portale luminoso dietro il Builder e la camera ci vola dentro, nel viola dei contatti.
  * Il Builder è animato sulle ossa da `BuilderRig` (respiro, sguardo, gesti, salto, mani sul laptop).
  */
 import * as THREE from 'three';
@@ -57,6 +58,12 @@ export class BuilderScene {
   private readonly body = { yaw: 0 };
   /** 0 = inquadratura normale, 1 = camera esattamente davanti allo schermo, che riempie la finestra. */
   private readonly zoom = { v: 0 };
+  /** Avanzamento della sequenza finale (0..1), guidato dallo scroll sul pin del finale. */
+  private readonly finale = { f: 0 };
+  private baseFov = 30;
+  private readonly portalLight = new THREE.PointLight(VIOLET, 0, 5, 1.5);
+  private ringMat?: THREE.MeshPhysicalMaterial;
+  private readonly fv = { a: new THREE.Vector3(), b: new THREE.Vector3(), ta: new THREE.Vector3(), tb: new THREE.Vector3() };
   private readonly anchor = { x: 0.6, y: 0, s: 1, ringX: 1.4, ringY: 0.5 };
   private readonly clock = new THREE.Clock();
   private readonly pointer = new THREE.Vector2();
@@ -216,11 +223,13 @@ export class BuilderScene {
       return geo;
     };
     const geo = ring(0.6, 0.11, 0.18);
-    const a = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: VIOLET, metalness: 0.1, roughness: 0.15, transmission: 0.35, thickness: 0.3, clearcoat: 1, emissive: VIOLET, emissiveIntensity: 0.25 }));
+    this.ringMat = new THREE.MeshPhysicalMaterial({ color: VIOLET, metalness: 0.1, roughness: 0.15, transmission: 0.35, thickness: 0.3, clearcoat: 1, emissive: VIOLET, emissiveIntensity: 0.25 });
+    const a = new THREE.Mesh(geo, this.ringMat);
     const b = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: CHALK, metalness: 0.2, roughness: 0.25, clearcoat: 1 }));
     b.rotation.y = Math.PI / 2;
     b.position.set(0.245, -0.245, 0);
     this.rings.add(a, b);
+    this.scene.add(this.portalLight);
   }
 
   /* ---------- schermo = manifesto ---------- */
@@ -365,19 +374,81 @@ export class BuilderScene {
       }));
     }
     if (contact) {
-      toShot(this.shots.method, this.shots.far, contact, 'top bottom', 'bottom bottom', 'power2.out');
+      toShot(this.shots.method, this.shots.far, contact, 'top bottom', 'top top', 'power2.out');
+      this.bindFinale(contact);
       this.triggers.push(ScrollTrigger.create({
         trigger: contact, start: 'top 55%',
         onEnter: () => { this.act('welcome'); gsap.to(this.body, { yaw: 0, duration: 1.2, ease: 'power3.inOut', overwrite: true }); },
         onLeaveBack: () => this.act(METHOD_STEPS[METHOD_STEPS.length - 1].mode)
       }));
     }
+    ScrollTrigger.sort();
     // render solo quando una sezione "3D" è a schermo
     const watch = [hero, method, contact].filter((e): e is HTMLElement => !!e);
     const update = () => { this.visible = watch.some((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }); };
     this.triggers.push(ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update }));
     ScrollTrigger.refresh();
     update();
+  }
+
+  /**
+   * Finale pinnato: titolo parola per parola sopra il portale, poi tutto vola verso la camera,
+   * la camera attraversa l'anello e il velo viola chiude la scena (la card dei contatti continua quel viola).
+   */
+  private bindFinale(outro: HTMLElement): void {
+    const q = (sel: string) => outro.querySelectorAll(sel);
+    const tl = gsap.timeline({ scrollTrigger: { trigger: outro, start: 'top top', end: '+=230%', pin: true, scrub: 0.8 } });
+    tl.to(this.finale, { f: 1, duration: 1, ease: 'none' }, 0)
+      .fromTo(q('.kicker'), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, 0.05)
+      .fromTo(q('.w'), { opacity: 0, yPercent: 70, filter: 'blur(14px)' }, { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.14, stagger: 0.035, ease: 'power3.out' }, 0.09)
+      .fromTo(q('.cta'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, 0.38)
+      .to(q('.stage'), { scale: 1.9, opacity: 0, filter: 'blur(16px)', duration: 0.16, ease: 'power2.in' }, 0.64)
+      .fromTo(q('.veil'), { opacity: 0 }, { opacity: 1, duration: 0.1, ease: 'power1.in' }, 0.88);
+    if (tl.scrollTrigger) this.triggers.push(tl.scrollTrigger);
+  }
+
+  /** Applica la sequenza finale (camera, portale, Builder) sopra lo stato normale della scena. */
+  private applyFinale(f: number, t: number): void {
+    const ss = (a: number, b: number) => THREE.MathUtils.smoothstep(f, a, b);
+    const lerp = THREE.MathUtils.lerp;
+    const k1 = ss(0, 0.45);
+    // il Builder al centro, in basso, davanti al portale
+    this.root.position.x = lerp(this.root.position.x, 0, k1);
+    this.root.position.y = lerp(this.root.position.y, -0.42, k1);
+    this.root.scale.setScalar(lerp(this.root.scale.x, 1, k1));
+    this.root.rotation.y = lerp(this.root.rotation.y, 0, k1);
+    // gli anelli smettono di girare e si mettono in posa: il logo, enorme, frontale
+    const spin = ((t * 0.25) % (Math.PI * 2));
+    this.rings.rotation.y = lerp(spin, spin > Math.PI ? Math.PI * 2 : 0, k1);
+    this.rings.rotation.x = lerp(this.rings.rotation.x, 0, k1);
+    this.rings.position.lerp(this.fv.a.set(0, 0.3, -0.7), k1);
+    this.rings.scale.setScalar(lerp(this.rings.scale.x, 1.7, k1));
+    const burst = ss(0.7, 1);
+    if (this.ringMat) this.ringMat.emissiveIntensity = 0.25 + k1 * 0.9 + burst * 2.5;
+    this.portalLight.position.copy(this.rings.position);
+    this.portalLight.intensity = k1 * 6 + burst * 30;
+
+    // camera: dall'inquadratura larga a frontale sul portale, lenta spinta, poi lo attraversa
+    const cam = this.camera.position, tgt = this.fv.tb;
+    this.camera.getWorldDirection(tgt).multiplyScalar(5).add(cam); // target corrente approssimato
+    const K = [
+      { f: 0.45, p: [-0.35, 0.02, 3.3], t: [0, 0.18, -0.7] },
+      { f: 0.72, p: [0, 0.26, 2.3], t: [0, 0.3, -0.7] },
+      { f: 1, p: [0, 0.3, -1.7], t: [0, 0.3, -4] }
+    ];
+    const pos = this.fv.a.copy(cam), look = this.fv.ta.copy(tgt);
+    let prev = 0;
+    for (const k of K) {
+      const raw = THREE.MathUtils.clamp((f - prev) / (k.f - prev), 0, 1);
+      const e = k.f === 1 ? raw * raw * raw : raw * raw * (3 - 2 * raw); // l'ultimo tratto accelera
+      pos.lerp(this.fv.b.set(k.p[0], k.p[1], k.p[2]), e);
+      look.lerp(this.fv.b.set(k.t[0], k.t[1], k.t[2]), e);
+      prev = k.f;
+    }
+    this.camera.position.copy(pos);
+    this.camera.lookAt(look);
+    const fov = lerp(this.baseFov, 72, Math.pow(ss(0.72, 1), 2));
+    if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
   }
 
   private setManifestoHidden(hidden: boolean): void {
@@ -424,8 +495,11 @@ export class BuilderScene {
       const calm = 1 - Math.min(1, z * 1.5);
       this.follow.rotation.y += ((this.pointer.x * 0.18 * calm) - this.follow.rotation.y) * 0.06;
       this.follow.rotation.x += ((-this.pointer.y * 0.03 * calm) - this.follow.rotation.x) * 0.06;
-      this.look.x += (this.pointer.x * calm - this.look.x) * 0.12;
-      this.look.y += (this.pointer.y * calm - this.look.y) * 0.12;
+      const fin = this.finale.f;
+      // nel finale il Builder alza lo sguardo verso il portale
+      const lookUp = THREE.MathUtils.smoothstep(fin, 0.2, 0.5);
+      this.look.x += (THREE.MathUtils.lerp(this.pointer.x * calm, 0, lookUp) - this.look.x) * 0.12;
+      this.look.y += (THREE.MathUtils.lerp(this.pointer.y * calm, 0.75, lookUp) - this.look.y) * 0.12;
       this.rig?.setLook(this.look.x, this.look.y);
 
       // fluttuazione leggera (spenta durante lo zoom)
@@ -463,6 +537,8 @@ export class BuilderScene {
       // camera: inquadratura della fase, poi (zoom) allineata allo schermo finché lo riempie esattamente
       this.camera.position.set(s.cx, s.cy + (this.opts.reducedMotion ? 0 : this.pointer.y * 0.04 * calm), s.cz);
       this.camera.lookAt(s.tx, s.ty, s.tz);
+      if (fin > 0) this.applyFinale(fin, t);
+      else if (Math.abs(this.camera.fov - this.baseFov) > 0.01) { this.camera.fov = this.baseFov; this.camera.updateProjectionMatrix(); }
       if (this.device.visible) this.paintScreen();
       if (z > 0 && this.screen && this.device.visible) {
         this.screen.updateWorldMatrix(true, false);
@@ -487,7 +563,8 @@ export class BuilderScene {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     // su schermi stretti allarga il campo per non tagliare il personaggio
-    this.camera.fov = w / h < 0.8 ? 42 : 30;
+    this.baseFov = w / h < 0.8 ? 42 : 30;
+    this.camera.fov = this.baseFov;
     this.camera.updateProjectionMatrix();
     this.buildDevice(window.innerWidth / window.innerHeight);
 
@@ -516,7 +593,7 @@ export class BuilderScene {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
     this.triggers.forEach((t) => t.kill());
-    gsap.killTweensOf([this.shot, this.body, this.zoom]);
+    gsap.killTweensOf([this.shot, this.body, this.zoom, this.finale]);
     this.rig?.dispose();
     if (this.manifestoEl) {
       this.manifestoEl.style.visibility = '';

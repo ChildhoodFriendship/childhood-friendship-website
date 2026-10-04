@@ -36,3 +36,4 @@
 - Builder: rig umanoide generato in codice (`apps/web/scripts/rig-builder.mjs`, 24 ossa), animazioni procedurali in `scene/builder-rig.ts` (respiro, sguardo sul cursore, saluto, laptop, 4 pose del metodo, benvenuto finale, salto al click).
 - Listino: righe espandibili con dettagli, switch Sviluppo/Dopo il lancio, font display.
 - Hero: Builder centrato nello stage (colonna destra), laptop retto in mano con IK; zoom nello schermo che mostra il manifesto reale (disegnato dal DOM) e passaggio alla sezione senza stacco.
+- Finale cinematografico: logo-portale 3D, volo attraverso l anello, velo viola che diventa la card contatti (arrotondata). Contatti a quiz in 6 step con barra di avanzamento; il 3D si ferma prima dei contatti.

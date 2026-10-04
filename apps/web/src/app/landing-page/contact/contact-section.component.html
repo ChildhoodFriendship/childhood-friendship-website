@@ -1,57 +1,122 @@
-<section class="contact-section section-shell" id="contatti" aria-labelledby="contact-title">
-  <div class="contact-card">
-    <div>
-      <p class="eyebrow">Hai un'idea?</p>
-      <h2 id="contact-title">Diamo forma a qualcosa<br><em>che resta.</em></h2>
-      <p class="contact-note">Rispondiamo entro un giorno lavorativo con una prima stima di tempi e costi.</p>
+<section class="contact" id="contatti" aria-labelledby="contact-title">
+  <div class="card">
+    <aside class="intro">
+      <p class="eyebrow"><span aria-hidden="true"></span>Hai un’idea?</p>
+      <h2 id="contact-title">Diamo forma a qualcosa <em>che resta.</em></h2>
+      <p class="note">Sei domande, meno di un minuto. Rispondiamo entro un giorno lavorativo con una prima stima di tempi e costi.</p>
+      @if (summary().length) {
+        <div class="summary" aria-label="Le tue risposte">
+          <p>Il tuo progetto</p>
+          <ul>@for (s of summary(); track s) { <li>{{ s }}</li> }</ul>
+        </div>
+      }
+    </aside>
+
+    <div class="quiz">
+      <!-- avanzamento -->
+      <div class="q-progress" role="progressbar" aria-label="Avanzamento" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progress()">
+        <div class="track"><span class="fill" [style.width.%]="progress()"></span></div>
+        <ol class="labels">
+          @for (s of steps; track s.id; let i = $index) {
+            <li [class.done]="i < index() || submission() === 'success'" [class.current]="i === index() && submission() !== 'success'">
+              <button type="button" (click)="goTo(i)" [disabled]="i >= index() || submission() === 'success'">{{ s.short }}</button>
+            </li>
+          }
+        </ol>
+      </div>
+
+      @if (submission() === 'success') {
+        <div class="done-screen" aria-live="polite">
+          <svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-16" /></svg>
+          <h3>Ricevuto, {{ answers().name.split(' ')[0] }}!</h3>
+          <p>Ti scriviamo a <strong>{{ answers().email }}</strong> entro un giorno lavorativo.</p>
+          <button type="button" class="ghost" (click)="restart()">Invia un’altra richiesta</button>
+        </div>
+      } @else {
+        <div class="body" #body>
+          @for (k of [index()]; track k) {
+            <fieldset class="step" [class.back]="direction() === 'back'" [attr.aria-describedby]="error() ? 'quiz-error' : null">
+              <legend>
+                <span class="count">{{ index() + 1 }}<span>/{{ steps.length }}</span></span>
+                {{ step().title }}
+              </legend>
+
+              @switch (step().id) {
+                @case ('service') { <ng-container [ngTemplateOutlet]="pickList" [ngTemplateOutletContext]="{ key: 'service' }" /> }
+                @case ('timing') { <ng-container [ngTemplateOutlet]="pickList" [ngTemplateOutletContext]="{ key: 'timing' }" /> }
+                @case ('budget') { <ng-container [ngTemplateOutlet]="pickList" [ngTemplateOutletContext]="{ key: 'budget' }" /> }
+                @case ('project') {
+                  <label class="q-field">
+                    <span>Cosa deve fare, per chi, e cosa ti piacerebbe ottenere</span>
+                    <textarea rows="5" maxlength="4800" placeholder="Es. Un sito per il mio studio con prenotazione delle visite…"
+                      [value]="answers().message" (input)="set('message', value($event))" (keydown)="onTextareaKey($event)"></textarea>
+                  </label>
+                }
+                @case ('who') {
+                  <div class="pair">
+                    <label class="q-field"><span>Nome e cognome *</span>
+                      <input type="text" autocomplete="name" maxlength="120" [value]="answers().name" (input)="set('name', value($event))"></label>
+                    <label class="q-field"><span>Azienda <small>(facoltativo)</small></span>
+                      <input type="text" autocomplete="organization" maxlength="200" [value]="answers().company" (input)="set('company', value($event))"></label>
+                  </div>
+                }
+                @case ('contact') {
+                  <div class="pair">
+                    <label class="q-field"><span>Email *</span>
+                      <input type="email" autocomplete="email" maxlength="254" [value]="answers().email" (input)="set('email', value($event))"></label>
+                    <label class="q-field"><span>Telefono <small>(facoltativo)</small></span>
+                      <input type="tel" autocomplete="tel" maxlength="40" [value]="answers().phone" (input)="set('phone', value($event))"></label>
+                  </div>
+                  <label class="consent">
+                    <input type="checkbox" [checked]="answers().privacy" (change)="set('privacy', $any($event.target).checked)">
+                    <span>Acconsento al trattamento dei dati per essere ricontattato (GDPR art. 6.1.b).</span>
+                  </label>
+                  <input class="honeypot" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" [value]="answers().website" (input)="set('website', value($event))">
+                }
+              }
+            </fieldset>
+          }
+        </div>
+
+        <p class="error" id="quiz-error" role="alert">{{ error() || (submission() === 'error' ? serverError() : '') }}</p>
+
+        <div class="nav">
+          <button type="button" class="ghost" (click)="back()" [disabled]="index() === 0">
+            <span aria-hidden="true">←</span> Indietro
+          </button>
+          <div class="nav-right">
+            <span class="hint" aria-hidden="true">
+              @switch (step().id) {
+                @case ('project') { Ctrl + Invio per proseguire }
+                @case ('service') { Premi A–E }
+                @case ('timing') { Premi A–D }
+                @case ('budget') { Premi A–D }
+                @default { Premi Invio ↵ }
+              }
+            </span>
+            <button type="button" class="primary" (click)="next()" [disabled]="submission() === 'submitting'">
+              @if (index() === steps.length - 1) {
+                {{ submission() === 'submitting' ? 'Invio in corso…' : 'Invia la richiesta' }}
+              } @else { Avanti }
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
+      }
     </div>
-    <form class="contact-form" (submit)="submitContactForm($event, contactForm)" #contactForm novalidate>
-      <div class="pair">
-        <div class="cell">
-          <label for="contact-name">Nome *</label>
-          <input id="contact-name" name="name" type="text" autocomplete="name" minlength="2" maxlength="120" required>
-        </div>
-        <div class="cell">
-          <label for="contact-company">Azienda</label>
-          <input id="contact-company" name="company" type="text" autocomplete="organization" maxlength="200">
-        </div>
-      </div>
-      <div class="pair">
-        <div class="cell">
-          <label for="contact-email">Email *</label>
-          <input id="contact-email" name="email" type="email" autocomplete="email" maxlength="254" required>
-        </div>
-        <div class="cell">
-          <label for="contact-phone">Telefono</label>
-          <input id="contact-phone" name="phone" type="tel" autocomplete="tel" maxlength="40">
-        </div>
-      </div>
-
-      <label for="contact-service">Di cosa hai bisogno?</label>
-      <select id="contact-service" name="service">
-        @for (s of services; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
-      </select>
-
-      <label for="contact-message">Raccontaci il tuo progetto *</label>
-      <textarea id="contact-message" name="message" rows="5" minlength="10" maxlength="5000" required></textarea>
-
-      <label class="honeypot" for="contact-website">Lascia vuoto questo campo</label>
-      <input id="contact-website" class="honeypot" name="website" type="text" tabindex="-1" autocomplete="off">
-
-      <label class="privacy">
-        <input type="checkbox" name="privacy" required>
-        <span>Acconsento al trattamento dei dati per essere ricontattato (GDPR art. 6.1.b).</span>
-      </label>
-
-      <button class="button button-light" type="submit" [disabled]="submissionState() === 'submitting'">
-        {{ submissionState() === 'submitting' ? 'Invio in corso…' : 'Invia il messaggio' }} <span aria-hidden="true">↗</span>
-      </button>
-      <p class="form-status" [class.form-status-success]="submissionState() === 'success'" [class.form-status-error]="submissionState() === 'error'" aria-live="polite">
-        @switch (submissionState()) {
-          @case ('success') { Grazie, abbiamo ricevuto la tua richiesta: ti ricontattiamo a breve. }
-          @case ('error') { {{ errorMessage() }} }
-        }
-      </p>
-    </form>
   </div>
 </section>
+
+<ng-template #pickList let-key="key">
+  <div class="choices" role="radiogroup" [attr.aria-label]="step().title">
+    @for (c of list(key); track c.value; let i = $index) {
+      @let selected = isPicked(key, c.value);
+      <button type="button" class="choice" role="radio" [attr.aria-checked]="selected" [class.selected]="selected"
+        [style.--d.ms]="i * 50" (click)="pick(key, c.value)">
+        <kbd>{{ keys[i] }}</kbd>
+        <span class="label">{{ c.label }}@if (c.hint) {<small>{{ c.hint }}</small>}</span>
+        <span class="tick" aria-hidden="true">✓</span>
+      </button>
+    }
+  </div>
+</ng-template>
