@@ -32,7 +32,7 @@ const METHOD_STEPS: readonly { mode: BuilderMode; yaw: number }[] = [
   { mode: 'listen', yaw: 0.35 }, { mode: 'design', yaw: -0.3 }, { mode: 'build', yaw: 0.45 }, { mode: 'care', yaw: 0 }
 ];
 
-export interface SceneIds { hero: string; stage: string; manifesto: string; services: string; method: string; contact: string; }
+export interface SceneIds { hero: string; stage: string; manifesto: string; services: string; method: string; methodStage: string; contact: string; }
 export interface SceneOptions { reducedMotion: boolean; mobile: boolean; ids: SceneIds; onReady?: () => void; }
 
 export class BuilderScene {
@@ -64,7 +64,9 @@ export class BuilderScene {
   private readonly portalLight = new THREE.PointLight(VIOLET, 0, 5, 1.5);
   private ringMat?: THREE.MeshPhysicalMaterial;
   private readonly fv = { a: new THREE.Vector3(), b: new THREE.Vector3(), ta: new THREE.Vector3(), tb: new THREE.Vector3() };
-  private readonly anchor = { x: 0.6, y: 0, s: 1, ringX: 1.4, ringY: 0.5 };
+  private readonly anchor = { x: 0.6, y: 0, s: 1, ringX: 1.4, ringY: 0.5, ringS: 0.42 };
+  /** Dove recita il Builder nel metodo: il palco a destra del titolo (stessa camera dell'hero). */
+  private readonly mAnchor = { x: 0.6, y: 0.2, s: 0.8, ringX: 1.2, ringY: 0.25, ringS: 0.5 };
   private readonly clock = new THREE.Clock();
   private readonly pointer = new THREE.Vector2();
   private readonly look = new THREE.Vector2();
@@ -81,6 +83,7 @@ export class BuilderScene {
   private manifestoHidden = false;
   private pinEnd = Infinity;
   private bound = false;
+  private offRefresh?: () => void;
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly opts: SceneOptions) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: false, powerPreference: 'high-performance' });
@@ -95,7 +98,7 @@ export class BuilderScene {
     const m = opts.mobile;
     this.shots = {
       hero: { cx: 0, cy: 0, cz: 3.4, tx: 0, ty: 0, tz: 0, yaw: 0, rings: 0 },
-      method: { cx: m ? 0 : -1.55, cy: m ? 0.2 : -0.72, cz: m ? 4.6 : 5.6, tx: m ? 0 : -1.55, ty: m ? 0.2 : -0.74, tz: 0, yaw: 0, rings: 0.6 },
+      method: { cx: 0, cy: 0, cz: 3.4, tx: 0, ty: 0, tz: 0, yaw: 0, rings: 0.6 },
       far: { cx: m ? 0 : -0.9, cy: 0.35, cz: m ? 6.5 : 5.2, tx: m ? 0 : -0.9, ty: 0.25, tz: 0, yaw: 0, rings: 1 }
     };
     this.shot = { ...this.shots.hero };
@@ -383,6 +386,11 @@ export class BuilderScene {
       }));
     }
     ScrollTrigger.sort();
+    // i palchi (hero e metodo) dipendono dal layout finale: si rimisurano a ogni refresh
+    const remeasure = () => this.resize();
+    ScrollTrigger.addEventListener('refresh', remeasure);
+    this.offRefresh = () => ScrollTrigger.removeEventListener('refresh', remeasure);
+    requestAnimationFrame(remeasure);
     // render solo quando una sezione "3D" è a schermo
     const watch = [hero, method, contact].filter((e): e is HTMLElement => !!e);
     const update = () => { this.visible = watch.some((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }); };
@@ -503,12 +511,12 @@ export class BuilderScene {
       this.rig?.setLook(this.look.x, this.look.y);
 
       // fluttuazione leggera (spenta durante lo zoom)
-      const a = this.anchor;
-      const toCenter = Math.min(1, s.rings / 0.6);
-      const sc = THREE.MathUtils.lerp(a.s, 1, toCenter);
-      this.root.scale.setScalar(sc);
-      this.root.position.x = THREE.MathUtils.lerp(a.x, 0, toCenter);
-      this.root.position.y = THREE.MathUtils.lerp(a.y, this.opts.mobile ? -0.08 : 0, toCenter) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm);
+      // hero → palco del metodo (p1) → centro della scena larga del finale (p2)
+      const a = this.anchor, ma = this.mAnchor, lerp = THREE.MathUtils.lerp;
+      const p1 = THREE.MathUtils.clamp(s.rings / 0.6, 0, 1), p2 = THREE.MathUtils.clamp((s.rings - 0.6) / 0.4, 0, 1);
+      this.root.scale.setScalar(lerp(lerp(a.s, ma.s, p1), 1, p2));
+      this.root.position.x = lerp(lerp(a.x, ma.x, p1), 0, p2);
+      this.root.position.y = lerp(lerp(a.y, ma.y, p1), this.opts.mobile ? -0.08 : 0, p2) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm);
       this.root.rotation.y = s.yaw + this.body.yaw;
 
       // il laptop serve solo nella prima parte: sparisce quando la storia va avanti
@@ -519,11 +527,11 @@ export class BuilderScene {
       // anelli: piccoli dietro il Builder all'inizio, protagonisti alla fine
       this.rings.rotation.y = t * 0.25;
       this.rings.rotation.x = Math.sin(t * 0.4) * 0.2;
-      this.rings.scale.setScalar(THREE.MathUtils.lerp(0.42 * a.s, 1.5, s.rings));
+      this.rings.scale.setScalar(lerp(lerp(a.ringS, ma.ringS, p1), 1.5, p2));
       this.rings.position.set(
-        THREE.MathUtils.lerp(a.ringX, this.opts.mobile ? 0 : 0.7, s.rings),
-        THREE.MathUtils.lerp(a.ringY, 0.45, s.rings),
-        THREE.MathUtils.lerp(-1.3, -2, s.rings)
+        lerp(lerp(a.ringX, ma.ringX, p1), this.opts.mobile ? 0 : 0.7, p2),
+        lerp(lerp(a.ringY, ma.ringY, p1), 0.45, p2),
+        lerp(lerp(-1.3, -0.5, p1), -2, p2)
       );
 
       // mani sul dispositivo (IK), poi le pose
@@ -568,31 +576,58 @@ export class BuilderScene {
     this.camera.updateProjectionMatrix();
     this.buildDevice(window.innerWidth / window.innerHeight);
 
-    const stage = document.getElementById(this.opts.ids.stage);
-    const hero = document.getElementById(this.opts.ids.hero);
-    const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.shots.hero.cz;
-    if (stage && hero) {
-      const r = stage.getBoundingClientRect(), hr = hero.getBoundingClientRect();
-      const cx = r.left + r.width / 2, cy = r.top - hr.top + r.height / 2;
-      const nx = (cx / w) * 2 - 1, ny = -(cy / h) * 2 + 1;
-      // altezza dello stage in unità mondo sul piano del Builder; il Builder ne occupa ~84%
-      const sWorld = (r.height / h) * 2 * tanH;
-      const s = THREE.MathUtils.clamp((sWorld * 0.84) / BUILDER_HEIGHT, 0.45, 1.5);
+    // hero: il Builder occupa ~84% dello stage, anelli piccoli di lato
+    const hero = this.fitStage(this.opts.ids.stage, 0.84);
+    if (hero) {
       Object.assign(this.anchor, {
-        x: nx * tanH * this.camera.aspect,
-        y: ny * tanH - 0.02 * s,
-        s,
-        ringX: nx * tanH * this.camera.aspect + (this.opts.mobile ? 0.5 : 0.78) * s,
-        ringY: ny * tanH + 0.3 * s
+        x: hero.x, y: hero.y - 0.02 * hero.s, s: hero.s,
+        ringX: hero.x + (this.opts.mobile ? 0.5 : 0.78) * hero.s, ringY: hero.y + 0.3 * hero.s, ringS: 0.42 * hero.s
       });
     }
+    // metodo: palco largo a destra del titolo; Builder a sinistra del palco, logo grande accanto
+    const met = this.fitStage(this.opts.ids.methodStage, 0.9);
+    if (met) {
+      const side = Math.min(met.w * 0.22, 0.42 * met.s);
+      Object.assign(this.mAnchor, {
+        x: met.x - side, y: met.y - 0.02 * met.s, s: met.s,
+        ringX: met.x + side * 1.35, ringY: met.y + 0.05 * met.s, ringS: 0.62 * met.s
+      });
+    } else {
+      // mobile (niente palco): Builder al centro, dietro alle card
+      Object.assign(this.mAnchor, { x: 0, y: 0.18, s: 0.75, ringX: 0.45, ringY: 0.55, ringS: 0.4 });
+    }
     this.screenSig = '';
+  }
+
+  /**
+   * Converte un elemento "palco" del DOM in posizione e scala del Builder sul piano z=0, con la camera dell'hero.
+   * Le coordinate sono relative al riquadro che occupa la finestra quando la sezione è a schermo
+   * (l'hero, o il contenitore sticky del metodo), così il calcolo vale anche a pagina non scrollata.
+   */
+  private fitStage(id: string, fill: number): { x: number; y: number; s: number; w: number } | null {
+    const stage = document.getElementById(id);
+    if (!stage) return null;
+    const r = stage.getBoundingClientRect();
+    if (r.height < 40 || r.width < 40) return null;
+    const frame = (stage.closest('.sticky') ?? stage.closest('section') ?? stage) as HTMLElement;
+    const fr = frame.getBoundingClientRect();
+    const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
+    const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.shots.hero.cz;
+    const cx = r.left + r.width / 2, cy = r.top - fr.top + r.height / 2;
+    const s = THREE.MathUtils.clamp(((r.height / h) * 2 * tanH * fill) / BUILDER_HEIGHT, 0.4, 1.5);
+    return {
+      x: ((cx / w) * 2 - 1) * tanH * this.camera.aspect,
+      y: (-(cy / h) * 2 + 1) * tanH,
+      s,
+      w: (r.width / w) * 2 * tanH * this.camera.aspect
+    };
   }
 
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
     this.triggers.forEach((t) => t.kill());
+    this.offRefresh?.();
     gsap.killTweensOf([this.shot, this.body, this.zoom, this.finale]);
     this.rig?.dispose();
     if (this.manifestoEl) {

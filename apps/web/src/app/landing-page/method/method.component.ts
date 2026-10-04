@@ -15,10 +15,19 @@ const STEPS: readonly Step[] = [
   template: `
     <section #section class="method" id="metodo" aria-labelledby="method-title" [style.--steps]="steps.length">
       <div class="sticky">
-        <header class="head">
-          <h2 id="method-title">Come costruiamo</h2>
-          <div class="bar" aria-hidden="true"><span [style.transform]="'scaleX(' + progress() + ')'"></span></div>
-        </header>
+        <div class="top">
+          <header class="head">
+            <p class="kicker">Il metodo</p>
+            <h2 id="method-title">Come<br />costruiamo</h2>
+            <div class="now" aria-live="polite">
+              <span class="now-n">{{ steps[active()].n }}</span>
+              <span class="now-t">{{ steps[active()].title }}</span>
+            </div>
+            <div class="bar" aria-hidden="true"><span [style.transform]="'scaleX(' + progress() + ')'"></span></div>
+          </header>
+          <!-- palco della scena 3D: il Builder recita qui la fase corrente -->
+          <div class="stage" id="method-stage" aria-hidden="true"></div>
+        </div>
         <ol #track class="track" [style.transform]="'translate3d(' + -shift() + 'px,0,0)'">
           @for (s of steps; track s.n; let i = $index) {
             <li class="panel" [class.active]="i === active()">

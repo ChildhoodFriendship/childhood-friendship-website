@@ -37,3 +37,4 @@
 - Listino: righe espandibili con dettagli, switch Sviluppo/Dopo il lancio, font display.
 - Hero: Builder centrato nello stage (colonna destra), laptop retto in mano con IK; zoom nello schermo che mostra il manifesto reale (disegnato dal DOM) e passaggio alla sezione senza stacco.
 - Finale cinematografico: logo-portale 3D, volo attraverso l anello, velo viola che diventa la card contatti (arrotondata). Contatti a quiz in 6 step con barra di avanzamento; il 3D si ferma prima dei contatti.
+- Metodo: titolo a sinistra con fase corrente, palco 3D a destra (Builder più grande + logo), card più piccole in scorrimento.
