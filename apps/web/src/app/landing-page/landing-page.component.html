@@ -1,11 +1,17 @@
 @if (customCursor) { <cf-cursor /> }
+@if (use3d) {
+  @defer (on idle) {
+    <cf-scene (started)="sceneOn.set(true)" />
+  }
+}
 <cf-header />
-<main>
+<main [class.scene-on]="sceneOn()">
   <cf-hero />
   <cf-manifesto />
   <cf-services />
   <cf-method />
   <cf-pricing-section />
+  <cf-outro />
   <cf-contact-section />
 </main>
 <cf-footer />

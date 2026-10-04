@@ -1,5 +1,6 @@
 .section-shell { margin-inline: auto; width: min(100% - 3rem, 1180px); }
 .pricing-section { border-top: 1px solid var(--cf-color-border); padding-block: 9rem; }
+:host { display: block; background: var(--cf-ink-deep); position: relative; }
 .pricing-heading { align-items: end; display: grid; gap: 4rem; grid-template-columns: minmax(0, 1.3fr) minmax(280px, .7fr); margin-bottom: 4rem; }
 .eyebrow { color: var(--cf-color-violet-light); font-size: .68rem; font-weight: 700; letter-spacing: .16em; margin: 0 0 1.6rem; text-transform: uppercase; }
 h2 { font-size: clamp(2.4rem, 5vw, 4.5rem); letter-spacing: -.075em; line-height: .98; margin: 0; }

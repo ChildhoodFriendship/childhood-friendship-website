@@ -22,3 +22,7 @@ h3 { font-family: var(--cf-display); font-weight: 700; font-size: clamp(2rem, 3.
   .panel { min-height: 52vh; }
 }
 @media (max-width: 899px) { .bar { display: none; } }
+
+/* scena 3D: la tela si vede dietro, i pannelli restano leggibili */
+:host-context(main.scene-on) .method { background: transparent; }
+:host-context(main.scene-on) .panel { background: rgba(18, 10, 38, .62); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 1.5rem; border: 1px solid rgba(246, 241, 255, .14); border-radius: 18px; }

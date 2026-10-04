@@ -17,3 +17,5 @@
 @media (max-width: 480px) {
   .section-shell { width: min(100% - 2rem, 1180px); }
 }
+
+:host { display: block; background: var(--cf-ink-deep); }

@@ -1,2 +1,4 @@
 :host { display: block; background: var(--cf-ink-deep); overflow-x: clip; }
 :host(.custom-cursor), :host(.custom-cursor) a, :host(.custom-cursor) button { cursor: none; }
+main { position: relative; z-index: 1; }
+cf-header, cf-footer { position: relative; z-index: 2; }

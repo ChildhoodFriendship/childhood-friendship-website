@@ -34,7 +34,7 @@
 
 h1 {
   font-family: var(--cf-display);
-  font-size: clamp(3.6rem, 14.5vw, 15rem);
+  font-size: clamp(3.4rem, 10vw, 11rem);
   line-height: .84;
   letter-spacing: -.035em;
   margin: 0;
@@ -77,6 +77,10 @@ h1 {
 
 .scroll { position: absolute; right: clamp(1.25rem, 4vw, 4rem); top: 50%; width: 2px; height: 80px; background: rgba(246, 241, 255, .15); overflow: hidden; }
 .scroll span { position: absolute; left: 0; top: -40%; width: 100%; height: 40%; background: var(--cf-chalk); animation: scroll 1.8s ease-in-out infinite; }
+
+/* con la scena 3D attiva lo sfondo diventa la tela WebGL */
+:host-context(main.scene-on) .hero { background: transparent; }
+:host-context(main.scene-on) .glow { opacity: .55; }
 
 @keyframes drop { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
