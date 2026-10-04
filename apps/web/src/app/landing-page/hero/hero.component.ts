@@ -14,6 +14,7 @@ const RADIUS = 260;
     <section #section class="hero" id="top" aria-labelledby="hero-title" [style.--mx.px]="glow().x" [style.--my.px]="glow().y">
       <div class="glow" aria-hidden="true"></div>
       <div class="inner">
+        <div class="copy">
         <p class="kicker">Childhood Friendship, studio di sviluppo software</p>
         <h1 id="hero-title" [attr.aria-label]="lines.join(' ')">
           @for (line of lines; track line; let li = $index) {
@@ -28,6 +29,9 @@ const RADIUS = 260;
           <p class="lede">Siti, web app e app mobile su misura per aziende che vogliono farsi ricordare. Dall'idea al lancio, senza scorciatoie.</p>
           <a class="cta" href="#contatti" data-cursor="scrivici">Parliamo del tuo progetto</a>
         </div>
+        </div>
+        <!-- spazio riservato al Builder 3D: la scena lo centra qui -->
+        <div class="stage" id="hero-stage" aria-hidden="true"></div>
       </div>
       <a class="scroll" href="#manifesto" aria-label="Scorri al manifesto"><span></span></a>
     </section>

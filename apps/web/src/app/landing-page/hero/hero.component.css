@@ -5,8 +5,8 @@
   min-height: 100vh;
   min-height: 100svh;
   display: flex;
-  align-items: flex-end;
-  padding: 8rem clamp(1.25rem, 4vw, 4rem) clamp(3rem, 8vh, 6rem);
+  align-items: center;
+  padding: 6.5rem clamp(1.25rem, 4vw, 4rem) clamp(2.5rem, 6vh, 4.5rem);
   background: var(--cf-ink-deep);
   color: var(--cf-chalk);
   overflow: hidden;
@@ -21,7 +21,19 @@
   transition: background .2s;
 }
 
-.inner { position: relative; width: 100%; max-width: 1440px; margin: 0 auto; }
+.inner {
+  position: relative;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  align-items: center;
+  gap: clamp(1rem, 3vw, 3rem);
+}
+.copy { position: relative; z-index: 1; }
+/* lo stage resta vuoto: è il riquadro in cui la scena centra il Builder */
+.stage { height: min(76vh, 760px); }
 
 .kicker {
   font-family: var(--cf-display);
@@ -34,7 +46,7 @@
 
 h1 {
   font-family: var(--cf-display);
-  font-size: clamp(3.4rem, 10vw, 11rem);
+  font-size: clamp(3.4rem, 8.4vw, 9.6rem);
   line-height: .84;
   letter-spacing: -.035em;
   margin: 0;
@@ -51,10 +63,9 @@ h1 {
 
 .foot {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 2rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.75rem;
   margin-top: clamp(2rem, 5vh, 3.5rem);
   padding-top: 1.75rem;
   border-top: 1px solid rgba(246, 241, 255, .2);
@@ -86,8 +97,10 @@ h1 {
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scroll { to { top: 100%; } }
 
-@media (max-width: 720px) {
-  .hero { align-items: center; }
+@media (max-width: 899px) {
+  .hero { align-items: flex-start; padding-top: 5rem; }
+  .inner { grid-template-columns: 1fr; gap: 0; }
+  .stage { order: -1; height: 40vh; height: 40svh; }
   .scroll { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

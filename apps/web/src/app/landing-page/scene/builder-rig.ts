@@ -1,5 +1,5 @@
 /**
- * Animazione procedurale del Builder sullo scheletro generato da `assets-src/rig-builder.mjs`.
+ * Animazione procedurale del Builder sullo scheletro generato da `scripts/rig-builder.mjs`.
  *
  * Spazio del modello: Y in alto, fronte +X, destra del personaggio +Z. Le ossa hanno rotazione
  * di riposo nulla, quindi gli assi locali coincidono con quelli del modello:
@@ -8,6 +8,7 @@
  *  - rot Y: gira busto e testa (+ verso la destra del personaggio)
  *
  * Le pose sono strati additivi pesati (GSAP anima i pesi): riposo + gesto + sguardo + respiro.
+ * Sopra le pose, una IK a due ossa tiene le mani agganciate al dispositivo che il Builder regge.
  */
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -15,16 +16,16 @@ import gsap from 'gsap';
 type Rot = [number, number, number];
 type Pose = Record<string, Rot>;
 
-export type BuilderMode = 'hero' | 'type' | 'listen' | 'design' | 'build' | 'care' | 'welcome';
+export type BuilderMode = 'hero' | 'present' | 'listen' | 'design' | 'build' | 'care' | 'welcome';
 
 const SIDES = ['R', 'L'] as const;
 
 /** Pose definite sul lato destro: `sym` le specchia sul sinistro (X e Y cambiano segno). */
-function sym(p: Pose, mirror = true): Pose {
+function sym(p: Pose): Pose {
   const out: Pose = {};
   for (const [k, v] of Object.entries(p)) {
     out[k] = v;
-    if (mirror && k.startsWith('R')) out['L' + k.slice(1)] = [-v[0], -v[1], v[2]];
+    if (k.startsWith('R')) out['L' + k.slice(1)] = [-v[0], -v[1], v[2]];
   }
   return out;
 }
@@ -37,12 +38,15 @@ const RELAX: Pose = sym({
   RHand: [0.05, 0, 0.05]
 });
 
+type Gesture = 'wave' | 'present' | 'listen' | 'design' | 'build' | 'care' | 'welcome' | 'crouch' | 'cheer';
+type Weights = Record<Gesture, number>;
+
 // Gesti: delta rispetto al riposo
-const POSES: Record<'wave' | 'type' | 'listen' | 'design' | 'build' | 'care' | 'welcome' | 'crouch' | 'cheer', Pose> = {
+const POSES: Record<Gesture, Pose> = {
   // saluto con la destra: braccio alto di lato, avambraccio verticale
   wave: { RShoulder: [-0.3, 0, 0], RUpperArm: [-1.8, 0, 0.2], RLowerArm: [-1.45, 0, 0.15], Chest: [0.05, 0, 0], Head: [0.08, 0, 0] },
-  // al laptop: busto e testa ruotati verso lo schermo, avambracci in avanti
-  type: { ...sym({ RUpperArm: [-0.1, 0, 0.55], RLowerArm: [-0.25, 0.2, 1.05], RHand: [0, 0, -0.2] }), Spine: [0, -0.18, -0.05], Chest: [0, -0.2, -0.06], Head: [0, -0.35, -0.12] },
+  // mostra lo schermo: petto aperto, sguardo verso chi guarda, mani sotto il dispositivo
+  present: { ...sym({ RHand: [0, 0, -0.35] }), Chest: [0, 0, 0.04], Head: [0, 0, 0.06] },
   // ascoltiamo: si sporge, testa inclinata, mano dietro l'orecchio
   listen: { Spine: [0, 0, -0.12], Chest: [0.05, 0, -0.06], Head: [0.26, 0.15, -0.06], RShoulder: [-0.15, 0, 0], RUpperArm: [-1.05, 0, 0.1], RLowerArm: [-2.35, 0, 0.15], RHand: [0, 0.6, 0] },
   // progettiamo: braccia conserte, mano verso il mento, testa inclinata
@@ -59,9 +63,8 @@ const POSES: Record<'wave' | 'type' | 'listen' | 'design' | 'build' | 'care' | '
   cheer: { ...sym({ RShoulder: [-0.25, 0, 0], RUpperArm: [-2.0, 0, 0.3], RLowerArm: [-0.3, 0, 0.1], RUpperLeg: [0, 0, 0.35], RLowerLeg: [0, 0, -0.6] }), Head: [0, 0, 0.12] }
 };
 
-type Gesture = 'wave' | 'type' | 'listen' | 'design' | 'build' | 'care' | 'welcome' | 'crouch' | 'cheer';
-type Weights = Record<Gesture, number>;
 const GESTURES = Object.keys(POSES) as Gesture[];
+const MODES = ['present', 'listen', 'design', 'build', 'care', 'welcome'] as const;
 const HIPS_DROP = 0.058; // quanto scendono le anche nell'accovacciata
 
 export class BuilderRig {
@@ -69,15 +72,20 @@ export class BuilderRig {
   private readonly rest = new Map<string, THREE.Quaternion>();
   private hipsRestY = 0;
   /** Pesi animati da GSAP. */
-  readonly w: Weights = { wave: 0, type: 0, listen: 0, design: 0, build: 0, care: 0, welcome: 0, crouch: 0, cheer: 0 };
+  readonly w: Weights = { wave: 0, present: 0, listen: 0, design: 0, build: 0, care: 0, welcome: 0, crouch: 0, cheer: 0 };
   private mode: BuilderMode | null = null;
-  private look = new THREE.Vector2();
+  private readonly look = new THREE.Vector2();
   private idleTimer?: gsap.core.Tween;
   private readonly e = new THREE.Euler();
   private readonly q = new THREE.Quaternion();
   private busy = false;
+  /** Prese delle mani sul dispositivo (spazio mondo) e quanto pesano. */
+  private readonly grip = { R: new THREE.Vector3(), L: new THREE.Vector3(), weight: 0 };
+  private readonly v = Array.from({ length: 8 }, () => new THREE.Vector3());
+  private readonly qa = new THREE.Quaternion();
+  private readonly qb = new THREE.Quaternion();
 
-  constructor(model: THREE.Object3D, private readonly reduced = false) {
+  constructor(private readonly model: THREE.Object3D, private readonly reduced = false) {
     model.traverse((o) => {
       if ((o as THREE.Bone).isBone) {
         this.bones.set(o.name, o as THREE.Bone);
@@ -92,6 +100,13 @@ export class BuilderRig {
   /** Il punto da guardare, normalizzato (-1..1) come il puntatore. */
   setLook(x: number, y: number): void { this.look.set(x, y); }
 
+  /** Dove devono stare i polsi (mondo) per reggere il dispositivo; weight 0 = mani libere. */
+  setGrip(right: THREE.Vector3, left: THREE.Vector3, weight: number): void {
+    this.grip.R.copy(right);
+    this.grip.L.copy(left);
+    this.grip.weight = weight;
+  }
+
   /** Cambia "recitazione" con una transizione morbida (blend dei pesi). */
   setMode(mode: BuilderMode): void {
     if (mode === this.mode) return;
@@ -101,32 +116,31 @@ export class BuilderRig {
   }
 
   private blendTo(mode: BuilderMode): void {
-    const target = mode === 'hero' ? null : mode;
     const to: Partial<Weights> = {};
-    for (const g of ['type', 'listen', 'design', 'build', 'care', 'welcome'] as const) to[g] = g === target ? 1 : 0;
+    for (const g of MODES) to[g] = g === mode ? 1 : 0;
     gsap.to(this.w, { ...to, duration: this.reduced ? 0 : 0.9, ease: 'power3.inOut', overwrite: 'auto' });
     this.idleTimer?.kill();
-    if (mode === 'hero' && !this.reduced) this.scheduleWave(4.5);
+    if (mode === 'hero' && !this.reduced) this.scheduleWave(5);
     if (mode === 'welcome' && !this.reduced) this.scheduleWave(1.2);
   }
 
-  /** Saluto: entrata, tre oscillazioni della mano, uscita. Si ripete con calma nell'hero. */
+  /** Saluto: entrata, oscillazioni della mano, uscita. Si ripete con calma nell'hero. */
   wave(): void {
     if (this.reduced || this.busy) return;
     gsap.timeline()
-      .to(this.w, { wave: 1, duration: 0.55, ease: 'back.out(1.6)' })
-      .to(this.w, { wave: 0, duration: 0.7, ease: 'power2.inOut' }, '+=1.5');
+      .to(this.w, { wave: 1, duration: 0.6, ease: 'back.out(1.5)' })
+      .to(this.w, { wave: 0, duration: 0.75, ease: 'power2.inOut' }, '+=1.5');
   }
 
   private scheduleWave(delay: number): void {
     this.idleTimer = gsap.delayedCall(delay, () => {
       if (this.mode !== 'hero' && this.mode !== 'welcome') return;
       this.wave();
-      if (this.mode === 'hero') this.scheduleWave(9 + Math.random() * 4);
+      if (this.mode === 'hero') this.scheduleWave(10 + Math.random() * 4);
     });
   }
 
-  /** Salto con anticipo, volo a braccia alzate e atterraggio ammortizzato. Ritorna la timeline. */
+  /** Salto con anticipo, volo a braccia alzate e atterraggio ammortizzato. */
   jump(target: THREE.Object3D): gsap.core.Timeline | null {
     if (this.reduced || this.busy) return null;
     this.busy = true;
@@ -142,7 +156,7 @@ export class BuilderRig {
     return tl;
   }
 
-  /** Applica tutti gli strati alle ossa. Da chiamare a ogni frame. */
+  /** Applica tutti gli strati alle ossa. Da chiamare a ogni frame, con le matrici dei genitori aggiornate. */
   update(t: number): void {
     if (!this.ok) return;
     const w = this.w;
@@ -168,19 +182,11 @@ export class BuilderRig {
     for (const s of SIDES) {
       const k = s === 'R' ? 1 : -1;
       add(s + 'Shoulder', -br * 0.03 * k, 0, 0);
-      add(s + 'UpperArm', (Math.sin(t * 1.6 + 0.6) * 0.03 * k) * m, 0, Math.sin(t * 0.8 + (k > 0 ? 0 : 1.7)) * 0.03 * m);
+      add(s + 'UpperArm', Math.sin(t * 1.6 + 0.6) * 0.03 * k * m, 0, Math.sin(t * 0.8 + (k > 0 ? 0 : 1.7)) * 0.03 * m);
     }
 
     // gesti con movimento proprio
     if (w.wave) add('RLowerArm', Math.sin(t * 9) * 0.32 * w.wave, Math.sin(t * 9) * 0.2 * w.wave, 0);
-    if (w.type) {
-      for (const s of SIDES) {
-        const ph = s === 'R' ? 0 : 1.3;
-        add(s + 'Hand', 0, 0, (Math.max(0, Math.sin(t * 13 + ph)) * 0.22 + Math.sin(t * 5.3 + ph) * 0.05) * w.type);
-        add(s + 'LowerArm', 0, Math.sin(t * 2.1 + ph) * 0.06 * w.type, 0);
-      }
-      add('Head', 0, 0, Math.sin(t * 0.9) * 0.03 * w.type);
-    }
     if (w.build) {
       const hit = Math.pow(Math.max(0, Math.sin(t * 5.5)), 3); // colpo secco, ritorno lento
       add('RUpperArm', 0, 0, 0.55 * hit * w.build - 0.25 * w.build);
@@ -191,11 +197,11 @@ export class BuilderRig {
     if (w.listen) add('Head', Math.sin(t * 0.8) * 0.05 * w.listen, 0, 0);
     if (w.design) add('Head', 0, Math.sin(t * 0.6) * 0.08 * w.design, 0);
 
-    // sguardo verso il cursore (meno quando è concentrato sul laptop)
-    const focus = 1 - 0.7 * Math.max(w.type, w.design);
+    // sguardo verso il cursore (meno quando pensa)
+    const focus = 1 - 0.7 * w.design;
     add('Neck', 0, this.look.x * 0.18 * focus, -this.look.y * 0.08 * focus);
     add('Head', 0, this.look.x * 0.32 * focus, -this.look.y * 0.16 * focus);
-    add('Chest', 0, this.look.x * 0.1 * focus, 0);
+    add('Chest', 0, this.look.x * 0.08 * focus, 0);
 
     for (const [name, bone] of this.bones) {
       const r = acc.get(name);
@@ -206,8 +212,52 @@ export class BuilderRig {
     }
     const hips = this.bones.get('Hips');
     if (hips) hips.position.y = this.hipsRestY - HIPS_DROP * (w.crouch + w.build * 0.05) + br * 0.002;
+
+    // IK: le mani restano sul dispositivo (la destra lo lascia per salutare o saltare)
+    const free = Math.max(w.crouch, w.cheer);
+    const gw = this.grip.weight * (1 - free);
+    if (gw > 0.001) {
+      this.model.updateMatrixWorld(true);
+      this.reach('L', this.grip.L, gw);
+      this.reach('R', this.grip.R, gw * (1 - w.wave));
+    }
+  }
+
+  /** IK analitica a due ossa (braccio + avambraccio) con il gomito verso il basso e l'esterno. */
+  private reach(side: 'R' | 'L', target: THREE.Vector3, weight: number): void {
+    if (weight <= 0.001) return;
+    const ua = this.bones.get(side + 'UpperArm'), la = this.bones.get(side + 'LowerArm'), ha = this.bones.get(side + 'Hand');
+    const chest = this.bones.get('Chest');
+    if (!ua || !la || !ha || !chest) return;
+    const [S, E0, H0, C, P] = this.v;
+    ua.getWorldPosition(S); la.getWorldPosition(E0); ha.getWorldPosition(H0); chest.getWorldPosition(C);
+    const l1 = S.distanceTo(E0), l2 = E0.distanceTo(H0);
+    const dir = this.v[5].copy(target).sub(S);
+    const d = THREE.MathUtils.clamp(dir.length(), 0.02, (l1 + l2) * 0.999);
+    dir.normalize();
+    // vettore "polo": gomito verso il basso, verso l'esterno e un po' indietro
+    const out = C.sub(S).multiplyScalar(-1).setY(0).normalize();
+    this.model.getWorldQuaternion(this.qa);
+    const fwd = this.v[6].set(1, 0, 0).applyQuaternion(this.qa);
+    P.set(0, -1, 0).addScaledVector(out, 0.7).addScaledVector(fwd, -0.35);
+    P.addScaledVector(dir, -P.dot(dir)).normalize();
+    const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d);
+    const h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+    const elbow = E0.copy(S).addScaledVector(dir, a).addScaledVector(P, h);
+    this.aim(ua, la.position, C.copy(elbow).sub(S), weight);
+    ua.updateMatrixWorld(true);
+    la.getWorldPosition(S);
+    this.aim(la, ha.position, C.copy(target).sub(S), weight);
+    la.updateMatrixWorld(true);
+  }
+
+  /** Ruota `bone` perché il figlio (in `childLocal`) punti nella direzione mondo `worldDir`. */
+  private aim(bone: THREE.Bone, childLocal: THREE.Vector3, worldDir: THREE.Vector3, weight: number): void {
+    bone.parent!.getWorldQuaternion(this.qa).invert();
+    const local = worldDir.applyQuaternion(this.qa).normalize();
+    this.qb.setFromUnitVectors(this.v[7].copy(childLocal).normalize(), local);
+    bone.quaternion.slerp(this.qb, weight);
   }
 
   dispose(): void { this.idleTimer?.kill(); gsap.killTweensOf(this.w); }
 }
-

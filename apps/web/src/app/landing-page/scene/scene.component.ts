@@ -28,6 +28,7 @@ export class SceneComponent {
       try {
         scene = new BuilderScene(this.canvas().nativeElement, {
           reducedMotion, mobile,
+          ids: { hero: 'top', stage: 'hero-stage', manifesto: 'manifesto', services: 'servizi', method: 'metodo', contact: 'finale' },
           onReady: () => { host.classList.add('ready'); }
         });
       } catch (err) {
@@ -48,7 +49,7 @@ export class SceneComponent {
       window.addEventListener('pointerdown', click);
       window.addEventListener('resize', resize);
       // le sezioni sono già nel DOM: collega lo scroll dopo il primo layout
-      requestAnimationFrame(() => scene.bindScroll({ hero: 'top', manifesto: 'manifesto', method: 'metodo', contact: 'finale' }));
+      requestAnimationFrame(() => scene.bindScroll());
       scene.start();
       destroyRef.onDestroy(() => {
         window.removeEventListener('pointermove', move);
