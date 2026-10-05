@@ -15,17 +15,17 @@ h2 em { font-style: normal; color: #A78BFA; }
 
 /* ---------- card ---------- */
 .ring { list-style: none; margin: 2.5rem 0 0; padding: 0 0 1rem; display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; }
-.card { position: relative; flex: 0 0 min(82vw, 380px); height: min(118vw, 520px); scroll-snap-align: center; perspective: 1400px; }
+.pcard { position: relative; flex: 0 0 min(82vw, 380px); height: min(118vw, 520px); scroll-snap-align: center; perspective: 1400px; }
 .flipper { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; transform-style: preserve-3d;
   transition: transform .6s cubic-bezier(.2, .8, .2, 1); text-align: left; color: var(--ink); font: inherit; }
 .face { position: absolute; inset: 0; display: flex; flex-direction: column; border-radius: 26px; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
   padding: clamp(1.25rem, 2vw, 1.8rem); box-sizing: border-box; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .14); }
 /* l'ombra della faccia nascosta resterebbe visibile: la si toglie */
-.card.flipped .front, .card:not(.flipped) .back { box-shadow: none; }
+.pcard.flipped .front, .pcard:not(.flipped) .back { box-shadow: none; }
 .front { background: radial-gradient(120% 90% at 20% 0%, var(--c2), transparent 60%), linear-gradient(160deg, var(--c1), var(--c2)); }
 /* riflesso che scorre con la rotazione della card */
 .front::after, .back::after { content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent calc(var(--sheen, 50%) - 22%), rgba(255, 255, 255, .28) var(--sheen, 50%), transparent calc(var(--sheen, 50%) + 22%)); mix-blend-mode: soft-light; }
+  background: linear-gradient(105deg, transparent calc(var(--sheen, 50%) - 22%), rgba(255, 255, 255, .12) var(--sheen, 50%), transparent calc(var(--sheen, 50%) + 22%)); }
 .back { transform: rotateY(180deg); background: linear-gradient(200deg, var(--c1), color-mix(in srgb, var(--c1) 70%, #000)); color: var(--ink); gap: .7rem; }
 .kind { font-family: var(--cf-display); font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
 .name { margin-top: auto; font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 78, 'opsz' 96; font-size: clamp(2.2rem, 3.6vw, 3.4rem); line-height: .9; letter-spacing: -.03em; }
@@ -38,9 +38,7 @@ h2 em { font-style: normal; color: #A78BFA; }
 .done span::before { content: '✦'; margin-right: .55rem; color: var(--accent); }
 .stack { margin-top: auto; display: flex; flex-wrap: wrap; gap: .4rem; }
 .stack span { font-family: var(--cf-display); font-size: .8rem; font-weight: 600; padding: .35rem .7rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); }
-.link { position: absolute; right: 1.4rem; bottom: 1.3rem; z-index: 5; font-family: var(--cf-display); font-weight: 700; font-size: .9rem; color: var(--cf-ink-deep); background: var(--accent);
-  padding: .55rem .95rem; border-radius: 999px; text-decoration: none; opacity: 0; pointer-events: none; transition: opacity .3s; }
-.link.show { opacity: 1; pointer-events: auto; }
+.live { align-self: flex-start; margin-top: .4rem; font-family: var(--cf-display); font-weight: 700; font-size: .9rem; color: var(--cf-ink-deep); background: var(--accent); padding: .5rem .9rem; border-radius: 999px; }
 
 /* dispositivo stilizzato sul fronte */
 .device { position: relative; align-self: center; margin: 1.5rem 0 1rem; display: grid; place-items: center; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .35)); }
@@ -73,8 +71,14 @@ h2 em { font-style: normal; color: #A78BFA; }
   .slot.left { left: .5vw; }
   .slot.right { right: .5vw; }
   .ring { position: absolute; inset: 0; margin: 0; padding: 0; overflow: visible; display: block; perspective: 1800px; perspective-origin: 50% 45%; transform-style: preserve-3d; z-index: 1; }
-  .card { position: absolute; left: 50%; top: 56%; width: min(27vw, 420px); height: min(62vh, 540px); flex: none; transform-style: preserve-3d; will-change: transform, opacity; }
-  .card .flipper { transition: none; }
-  .card.center:not(.flipped) .front, .card.center.flipped .back { box-shadow: 0 40px 90px -30px rgba(124, 58, 237, .5), 0 20px 50px -20px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .2); }
+  .pcard { position: absolute; left: 50%; top: 56%; width: min(27vw, 420px); height: min(62vh, 540px); flex: none; transform-style: preserve-3d; will-change: transform, opacity; }
+  /* il giro segue lo scroll con un filo di inerzia; l'hover ingrandisce e mostra i dettagli */
+  /* l'anello sta sul piano z=0 e "copre" le card spinte indietro: i click devono arrivare alle card */
+  .ring { pointer-events: none; }
+  .pcard { pointer-events: auto; }
+  .pcard .flipper { transition: transform .55s cubic-bezier(.2, .8, .2, 1); }
+  .pcard { transition: opacity .3s; }
+  .pcard.hov .back { box-shadow: 0 50px 110px -30px rgba(124, 58, 237, .7), 0 20px 50px -20px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .25); }
+  .pcard.center:not(.flipped) .front, .pcard.center.flipped .back { box-shadow: 0 40px 90px -30px rgba(124, 58, 237, .5), 0 20px 50px -20px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .2); }
 }
 @media (prefers-reduced-motion: reduce) { .flipper { transition: none; } }

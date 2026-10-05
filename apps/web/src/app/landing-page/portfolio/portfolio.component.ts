@@ -96,11 +96,13 @@ const PROJECTS: readonly Project[] = [
         <ol class="ring" role="list">
           @for (p of projects; track p.id; let i = $index) {
             @let st = card()[i];
-            <li class="card" [class.center]="i === current()" [class.flipped]="st.flip > 90"
+            <li class="pcard" [class.center]="i === current()" [class.flipped]="st.flip > 90" [class.hov]="hovered() === i"
+              (pointerenter)="hover(i, $event)" (pointermove)="hover(i, $event)" (pointerleave)="hovered.set(-1)"
               [style.transform]="st.transform" [style.opacity]="st.opacity" [style.zIndex]="st.z"
               [style.--c1]="p.c1" [style.--c2]="p.c2" [style.--accent]="p.accent" [style.--ink]="p.ink" [style.--sheen]="st.sheen">
-              <button type="button" class="flipper" [style.transform]="'rotateY(' + st.flip + 'deg)'" (click)="toggle(i)"
-                [attr.aria-label]="p.name + ': ' + (st.flip > 90 ? 'mostra copertina' : 'mostra dettagli')" [attr.data-cursor]="st.flip > 90 ? 'gira' : 'dettagli'">
+              <button type="button" class="flipper" [style.transform]="'rotateY(' + st.flip + 'deg) scale(' + st.hs + ')'" (click)="open(i)"
+                [attr.aria-label]="p.link ? p.name + ': apri il sito live' : p.name + ': ' + (st.flip > 90 ? 'mostra copertina' : 'mostra dettagli')"
+                [attr.data-cursor]="p.link ? 'apri sito' : (st.flip > 90 ? 'gira' : 'dettagli')">
                 <!-- fronte: poster del progetto -->
                 <span class="face front">
                   <span class="kind">{{ p.kind }}</span>
@@ -109,7 +111,7 @@ const PROJECTS: readonly Project[] = [
                   </span>
                   <span class="name">{{ p.name }}</span>
                   <span class="line">{{ p.line }}</span>
-                  <span class="hint" aria-hidden="true">Gira per i dettagli ↻</span>
+                  <span class="hint" aria-hidden="true">{{ p.link ? 'Clicca per il sito live ↗' : 'Passa sopra per i dettagli' }}</span>
                 </span>
                 <!-- retro: dettagli -->
                 <span class="face back">
@@ -119,11 +121,9 @@ const PROJECTS: readonly Project[] = [
                   <span class="label">Cosa abbiamo costruito</span>
                   <span class="done">@for (d of p.done; track d) {<span>{{ d }}</span>}</span>
                   <span class="stack">@for (s of p.stack; track s) {<span>{{ s }}</span>}</span>
+                  @if (p.link) { <span class="live" aria-hidden="true">{{ p.link.label }} ↗</span> }
                 </span>
               </button>
-              @if (p.link) {
-                <a class="link" [href]="p.link.href" target="_blank" rel="noopener" [class.show]="st.flip > 90">{{ p.link.label }} ↗</a>
-              }
             </li>
           }
         </ol>
@@ -139,6 +139,8 @@ export class PortfolioComponent {
   private readonly pos = signal(0);
   private readonly flipNow = signal(0);
   private readonly manual = signal<Record<number, boolean>>({});
+  /** Card sotto il puntatore: si gira sui dettagli e si ingrandisce. */
+  protected readonly hovered = signal(-1);
   protected readonly progress = signal(0);
   protected readonly current = computed(() => Math.max(0, Math.min(this.projects.length - 1, Math.round(this.pos()))));
   private readonly cinematic = signal(false);
@@ -146,23 +148,25 @@ export class PortfolioComponent {
 
   /** Trasformazione 3D di ogni card: arco di carosello, profondità, giro della centrale. */
   protected readonly card = computed(() => {
-    const pos = this.pos(), cur = this.current(), cin = this.cinematic(), man = this.manual();
+    const pos = this.pos(), cur = this.current(), cin = this.cinematic(), man = this.manual(), hov = this.hovered();
     return this.projects.map((_, i) => {
       const o = i - pos;
       const a = Math.abs(o);
       // le card già passate restano girate (mostrano i dettagli), quelle future mostrano il fronte
       let flip = i < cur ? 180 : i === cur ? this.flipNow() : 0;
       if (man[i] !== undefined) flip = man[i] ? 180 : 0;
-      if (!cin) return { transform: '', opacity: 1, z: 1, flip, sheen: '50%' };
+      if (hov === i) flip = 180;
+      const hs = hov === i ? (cin ? 1.12 : 1.03) : 1;
+      if (!cin) return { transform: '', opacity: 1, z: 1, flip, hs, sheen: '50%' };
       const x = o * 24;                       // vw: carosello stretto, ai lati restano liberi i due personaggi
       const ry = -o * 38;                     // gradi
       const z = -a * 300;                     // px
       const s = 1 - Math.min(a, 2) * 0.12;
       return {
         transform: `translate(-50%, -50%) translateX(${x}vw) translateZ(${z}px) rotateY(${ry}deg) scale(${s})`,
-        opacity: a <= 1 ? 1 - a * 0.3 : Math.max(0, 0.7 - (a - 1) * 0.9),
-        z: 100 - Math.round(a * 10),
-        flip,
+        opacity: hov === i ? Math.max(1 - a * 0.3, 0.95) : a <= 1 ? 1 - a * 0.3 : Math.max(0, 0.7 - (a - 1) * 0.9),
+        z: hov === i ? 200 : 100 - Math.round(a * 10),
+        flip, hs,
         sheen: `${50 + o * 60 + (flip / 180) * 40}%`
       };
     });
@@ -213,7 +217,20 @@ export class PortfolioComponent {
     });
   }
 
-  /** Click/tap: gira la card a mano (su mobile è l'unico modo). */
+  /** Hover solo con mouse vero: su touch il tocco gira la card. */
+  protected hover(i: number, e: PointerEvent): void {
+    if (e.pointerType === 'mouse' && this.hovered() !== i) this.hovered.set(i);
+  }
+
+  /** Click: apre il sito live se c'è; su touch il primo tocco gira la card, il secondo apre. */
+  protected open(i: number): void {
+    const p = this.projects[i];
+    const flipped = this.card()[i].flip > 90;
+    if (p.link && (this.cinematic() || flipped)) { window.open(p.link.href, '_blank', 'noopener'); return; }
+    this.toggle(i);
+  }
+
+  /** Gira la card a mano. */
   protected toggle(i: number): void {
     const now = this.card()[i].flip > 90;
     this.manual.update((m) => ({ ...m, [i]: !now }));
