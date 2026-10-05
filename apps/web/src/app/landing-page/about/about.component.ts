@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, viewChild } from '@angular/core';
+import { ParticleText } from './particle-text';
 
 interface Fact { readonly k: string; readonly v: string; }
 
 const FACTS: readonly Fact[] = [
-  { k: 'Un team piccolo', v: 'Parli direttamente con chi progetta e scrive il codice.' },
-  { k: "Dall'idea al lancio", v: 'Strategia, design e sviluppo nelle stesse mani.' },
-  { k: 'Anche dopo', v: 'Restiamo a portata di messaggio quando il prodotto cresce.' }
+  { k: 'Parli con chi costruisce', v: 'Nessun intermediario: ogni domanda arriva a chi progetta e scrive il codice.' },
+  { k: 'Un solo team, dall\'inizio alla fine', v: 'Strategia, design e sviluppo restano nelle stesse mani. Niente pezzi persi nei passaggi.' },
+  { k: 'Il lancio è solo l\'inizio', v: 'Misuriamo, correggiamo, miglioriamo. E restiamo a un messaggio di distanza.' }
 ];
 
 /** Chi siamo: titolo a due voci, testo a destra, tre righe di fatti sotto. Le righe si rivelano con lo scroll. */
@@ -16,17 +17,19 @@ const FACTS: readonly Fact[] = [
       <div class="inner">
         <div class="head">
           <p class="kicker"><span aria-hidden="true"></span>Chi siamo</p>
-          <h2 id="about-title">
+          <div class="title" #area>
+          <canvas #cvs class="fx" aria-hidden="true"></canvas>
+          <h2 id="about-title" #title>
             <span class="ln"><span>L'amicizia ci ha</span></span>
             <span class="ln"><span>dato il nome.</span></span>
             <span class="ln em"><span>La disciplina</span></span>
             <span class="ln em"><span>ci definisce.</span></span>
           </h2>
+          </div>
         </div>
         <div class="copy">
-          <p>Childhood Friendship nasce da un legame che dura nel tempo e da una convinzione semplice: il software migliore è quello costruito con cura, insieme alle persone giuste.</p>
-          <p>Uniamo pensiero strategico, design essenziale e ingegneria pragmatica per trasformare obiettivi complessi in prodotti digitali chiari, utili e pronti a crescere.</p>
-          <a class="link" href="#contatti" data-cursor="ciao">Conosciamoci <span aria-hidden="true">↗</span></a>
+          <p>Siamo amici da quando eravamo bambini. Abbiamo imparato a costruire cose insieme molto prima che diventasse un mestiere, e quel modo di lavorare non l'abbiamo più cambiato.</p>
+          <p>Oggi lo mettiamo al servizio delle aziende: pensiero strategico, design essenziale e ingegneria pragmatica, per trasformare obiettivi complessi in prodotti digitali chiari, utili e pronti a crescere.</p>
         </div>
         <ol class="facts">
           @for (f of facts; track f.k; let i = $index) {
@@ -51,18 +54,25 @@ const FACTS: readonly Fact[] = [
     .ln { display: block; overflow: hidden; padding-bottom: .06em; }
     .ln > span { display: inline-block; }
     .em { color: #A78BFA; }
+    /* titolo a particelle: il canvas sborda per far volare la polvere; il testo vero compare a riposo */
+    .title { position: relative; }
+    .fx { position: absolute; pointer-events: none; z-index: 1; }
+    h2.fx-on .ln > span { opacity: var(--solid, 0); animation: none !important; }
+    h2.fx-on { cursor: crosshair; }
 
     .copy { display: grid; gap: 1.25rem; padding-bottom: .4rem; }
     .copy p { margin: 0; font-family: var(--cf-display); font-size: clamp(1rem, 1.15vw, 1.15rem); line-height: 1.6; color: rgba(246, 241, 255, .74); max-width: 46ch; }
     .copy p:first-child { color: var(--cf-chalk); }
-    .link { justify-self: start; margin-top: .75rem; display: inline-flex; gap: .55rem; align-items: center; font-family: var(--cf-display); font-weight: 700; font-size: 1rem; color: var(--cf-chalk); text-decoration: none;
-      padding-bottom: .35rem; background: linear-gradient(currentColor, currentColor) left bottom / 100% 1px no-repeat; transition: background-size .35s cubic-bezier(.7, 0, .2, 1), color .2s; }
-    .link span { color: #A78BFA; transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
-    .link:hover, .link:focus-visible { color: #A78BFA; background-size: 0 1px; background-position: right bottom; outline: none; }
-    .link:hover span { transform: translate(3px, -3px); }
 
     .facts { grid-column: 1 / -1; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid rgba(246, 241, 255, .14); }
-    .facts li { display: grid; gap: .45rem; align-content: start; padding: 1.5rem 1.5rem 0 0; font-family: var(--cf-display); }
+    .facts li { position: relative; display: grid; gap: .45rem; align-content: start; padding: 1.5rem 1.5rem 0 0; font-family: var(--cf-display); }
+    /* hover: una linea viola corre sul bordo, il testo si accende */
+    .facts li::before { content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: var(--cf-violet); transform: scaleX(0); transform-origin: left; transition: transform .5s cubic-bezier(.7, 0, .2, 1); }
+    .facts li + li::before { left: 1.5rem; }
+    .facts li:hover::before { transform: scaleX(1); }
+    .facts strong, .facts .v { transition: color .3s, transform .4s cubic-bezier(.2, .8, .2, 1); }
+    .facts li:hover strong { color: #A78BFA; transform: translateX(4px); }
+    .facts li:hover .v { color: rgba(246, 241, 255, .88); }
     .facts li + li { padding-left: 1.5rem; border-left: 1px solid rgba(246, 241, 255, .14); }
     .facts .n { font-size: .78rem; font-weight: 600; letter-spacing: .14em; color: #A78BFA; }
     .facts strong { font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em; }
@@ -89,10 +99,23 @@ const FACTS: readonly Fact[] = [
       .facts { grid-template-columns: 1fr; margin-top: 1rem; }
       .facts li { padding: 1.1rem 0; border-bottom: 1px solid rgba(246, 241, 255, .14); }
       .facts li + li { padding-left: 0; border-left: 0; }
+      .facts li + li::before { left: 0; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AboutComponent {
   protected readonly facts = FACTS;
+  private readonly area = viewChild.required<ElementRef<HTMLElement>>('area');
+  private readonly title = viewChild.required<ElementRef<HTMLElement>>('title');
+  private readonly cvs = viewChild.required<ElementRef<HTMLCanvasElement>>('cvs');
+
+  constructor() {
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const fx = new ParticleText(this.title().nativeElement, this.cvs().nativeElement, this.area().nativeElement);
+      destroyRef.onDestroy(() => fx.dispose());
+    });
+  }
 }
