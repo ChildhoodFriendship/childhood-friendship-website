@@ -110,7 +110,7 @@ h1 {
   .lede { font-size: .9rem; line-height: 1.4; max-width: 28ch; color: rgba(246, 241, 255, .75); }
   .cta { align-self: flex-start; font-size: .9rem; padding: .8rem 1.2rem; }
   /* il palco occupa tutto lo spazio sotto il testo: il Builder è il protagonista */
-  .stage { position: absolute; left: 0; right: 0; top: clamp(10rem, 28svh, 13rem); bottom: 3.5rem; height: auto; }
+  .stage { position: absolute; left: 0; right: 0; top: clamp(9rem, 25svh, 12rem); bottom: 3.25rem; height: auto; }
   .scroll { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

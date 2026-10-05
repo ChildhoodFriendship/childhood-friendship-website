@@ -851,7 +851,11 @@ export class BuilderScene {
       this.lastT = t;
       if (this.opts.mobile && !this.opts.reducedMotion) {
         const TAU = Math.PI * 2;
-        if (z < 0.001 && window.scrollY < 4 && this.finale.f === 0) this.turn += tdt * 0.75;
+        if (z < 0.001 && window.scrollY < 4 && this.finale.f === 0) {
+          // lento quando è frontale, veloce quando dà le spalle: si vede soprattutto di fronte
+          const back = (1 - Math.cos(this.turn)) / 2;
+          this.turn += tdt * (0.35 + 4.2 * back * back);
+        }
         else this.turn += (Math.round(this.turn / TAU) * TAU - this.turn) * (1 - Math.exp(-tdt * 7));
       }
       const s = this.shot;
@@ -968,7 +972,7 @@ export class BuilderScene {
     this.offX = Math.tan(THREE.MathUtils.degToRad(this.baseFov / 2)) * this.shots.far.cz * (w / h) + 0.6;
 
     // hero: il Builder occupa ~84% dello stage, anelli piccoli di lato
-    const hero = this.fitStage(this.opts.ids.stage, this.opts.mobile ? 0.94 : 0.84);
+    const hero = this.fitStage(this.opts.ids.stage, this.opts.mobile ? 1.06 : 0.84);
     if (hero) {
       Object.assign(this.anchor, {
         x: hero.x, y: hero.y - 0.02 * hero.s, s: hero.s,

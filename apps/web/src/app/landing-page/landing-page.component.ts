@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { AboutComponent } from './about/about.component';
 import { ContactSectionComponent } from './contact/contact-section.component';
 import { CursorComponent } from './cursor/cursor.component';
 import { FooterComponent } from './footer/footer.component';
@@ -14,7 +15,7 @@ import { ServicesComponent } from './services/services.component';
 
 @Component({
   selector: 'cf-landing-page',
-  imports: [ContactSectionComponent, CursorComponent, FooterComponent, HeaderComponent, HeroComponent, ManifestoComponent, MethodComponent, OutroComponent, PortfolioComponent, SceneComponent, ServicesComponent],
+  imports: [AboutComponent, ContactSectionComponent, CursorComponent, FooterComponent, HeaderComponent, HeroComponent, ManifestoComponent, MethodComponent, OutroComponent, PortfolioComponent, SceneComponent, ServicesComponent],
   providers: [PointerService],
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css',
