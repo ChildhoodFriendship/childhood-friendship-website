@@ -40,11 +40,11 @@ const SERVICES: readonly Service[] = [
         <h2 id="services-title">Cosa costruiamo</h2>
         <p>Quattro modi di lavorare insieme. Scegli da dove partire, al resto pensiamo noi.</p>
       </header>
-      <ul class="rows">
+      <ul class="rows" (mouseleave)="hoverOut()">
         @for (s of services; track s.id) {
           @let isOpen = open() === s.id;
           <li class="row" [class.open]="isOpen">
-            <button type="button" class="summary" (click)="toggle(s.id)" [attr.aria-expanded]="isOpen" [attr.aria-controls]="'srv-' + s.id"
+            <button type="button" class="summary" (click)="toggle(s.id)" (mouseenter)="hoverIn(s.id)" [attr.aria-expanded]="isOpen" [attr.aria-controls]="'srv-' + s.id"
               [attr.data-cursor]="isOpen ? 'chiudi' : 'apri'">
               <span class="title">{{ s.title }}</span>
               <span class="line">{{ s.line }}</span>
@@ -68,6 +68,18 @@ const SERVICES: readonly Service[] = [
 })
 export class ServicesComponent {
   protected readonly services = SERVICES;
-  protected readonly open = signal<string | null>('siti');
-  protected toggle(id: string): void { this.open.update((o) => (o === id ? null : id)); }
+  /** All'arrivo sono tutte chiuse: si aprono al click o, col mouse, al passaggio. */
+  protected readonly open = signal<string | null>(null);
+  private byHover = false;
+  private readonly finePointer = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  protected toggle(id: string): void { this.byHover = false; this.open.update((o) => (o === id ? null : id)); }
+  protected hoverIn(id: string): void {
+    if (!this.finePointer) return;
+    this.byHover = true;
+    this.open.set(id);
+  }
+  /** Uscendo dalla lista si richiude ciò che era stato aperto col passaggio (non quello aperto col click). */
+  protected hoverOut(): void {
+    if (this.byHover) { this.open.set(null); this.byHover = false; }
+  }
 }

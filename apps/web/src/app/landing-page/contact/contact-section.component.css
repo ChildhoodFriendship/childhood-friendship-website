@@ -117,11 +117,32 @@ legend { padding: 0; margin-bottom: 1.75rem; font-family: var(--cf-display); fon
 @keyframes pop { from { opacity: 0; transform: scale(.6); } }
 
 @media (max-width: 900px) {
-  .card { grid-template-columns: 1fr; padding: 2.25rem 1.4rem; border-radius: 24px; }
+  /* mobile: tutto il quiz (titolo, domanda, opzioni, pulsanti) sta in una schermata */
+  .contact { padding: 1.25rem .75rem 3rem; }
+  .card { grid-template-columns: 1fr; gap: 1.1rem; padding: 1.4rem 1.1rem 1.2rem; border-radius: 24px; }
   @keyframes card-in { to { inset: 0; border-radius: 24px; } }
+  .eyebrow { margin-bottom: .6rem; font-size: .72rem; }
+  h2 { font-size: clamp(1.9rem, 8.5vw, 2.4rem); }
+  .summary { display: none; }
   .labels { display: none; }
   .quiz { min-height: 0; }
-  .pair { grid-template-columns: 1fr; }
+  .q-progress { margin-bottom: 1rem; }
+  .track { height: 5px; }
+  legend { font-size: 1.35rem; margin-bottom: .9rem; }
+  .count { font-size: .85rem; margin-bottom: .3rem; }
+  .choices { gap: .45rem; }
+  .choice { padding: .7rem .9rem; font-size: 1rem; border-radius: 14px; gap: .6rem; }
+  .choice small { display: none; }
+  .pair { grid-template-columns: 1fr; gap: .7rem; }
+  .q-field { gap: .4rem; font-size: .9rem; }
+  .q-field input, .q-field textarea { padding: .75rem .9rem; font-size: 1rem; }
+  .q-field textarea { min-height: 7rem; }
+  .consent { margin-top: .8rem; font-size: .88rem; }
+  .error { min-height: 0; margin-top: .5rem; font-size: .9rem; }
+  .error:empty { display: none; }
+  .nav { margin-top: .9rem; }
+  .primary { padding: .8rem 1.25rem; font-size: 1rem; }
+  .ghost { padding: .7rem 1rem; font-size: .95rem; }
   .hint { display: none; }
 }
 /* su touch niente tasti: via le lettere */
