@@ -34,7 +34,6 @@
 .eyebrow span { width: .55rem; height: .55rem; border-radius: 2px; background: #fff; }
 h2 { font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 80, 'opsz' 96; font-size: clamp(2.6rem, 5vw, 5rem); letter-spacing: -.03em; line-height: .92; margin: 0; }
 h2 em { font-style: normal; color: #DDD6FE; }
-.note { font-family: var(--cf-display); font-size: 1.1rem; line-height: 1.5; color: rgba(255, 255, 255, .82); max-width: 34ch; margin: 1.5rem 0 0; }
 .summary { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, .25); }
 .summary p { margin: 0 0 .75rem; font-family: var(--cf-display); font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .7); }
 .summary ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }

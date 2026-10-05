@@ -18,7 +18,6 @@ const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
             <span class="line" aria-hidden="true">@for (w of line; track $index) {<span class="w">{{ w }}</span> }</span>
           }
         </h2>
-        <a class="cta" href="#contatti" data-cursor="scrivici">Parliamone <span aria-hidden="true">→</span></a>
       </div>
       <div class="veil" aria-hidden="true"></div>
     </section>
@@ -35,9 +34,6 @@ const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
     .line { display: block; }
     .w { display: inline-block; margin: 0 .09em; will-change: transform, opacity, filter; }
     .line:last-child .w { color: #C4B5FD; }
-    .cta { display: inline-flex; align-items: center; gap: .6rem; font-family: var(--cf-display); font-weight: 700; font-size: 1.1rem; color: var(--cf-ink-deep);
-      background: var(--cf-chalk); padding: 1.1rem 1.9rem; border-radius: 999px; text-decoration: none; transition: background .2s, color .2s, gap .2s; }
-    .cta:hover { background: var(--cf-violet); color: #fff; gap: 1rem; }
     .veil { position: absolute; inset: 0; background: #7C3AED; opacity: 0; pointer-events: none; z-index: 2; }
     @media (max-width: 899px) { .stage { margin-top: -38vh; } }
   `,

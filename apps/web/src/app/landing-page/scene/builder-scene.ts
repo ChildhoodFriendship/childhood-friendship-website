@@ -520,7 +520,6 @@ export class BuilderScene {
     tl.to(this.finale, { f: 1, duration: 1, ease: 'none' }, 0)
       .fromTo(q('.kicker'), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, 0.05)
       .fromTo(q('.w'), { opacity: 0, yPercent: 70, filter: 'blur(14px)' }, { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 0.14, stagger: 0.035, ease: 'power3.out' }, 0.09)
-      .fromTo(q('.cta'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, 0.38)
       .to(q('.stage'), { scale: 1.9, opacity: 0, filter: 'blur(16px)', duration: 0.16, ease: 'power2.in' }, 0.64)
       .fromTo(q('.veil'), { opacity: 0 }, { opacity: 1, duration: 0.1, ease: 'power1.in' }, 0.88);
     if (tl.scrollTrigger) this.triggers.push(tl.scrollTrigger);
