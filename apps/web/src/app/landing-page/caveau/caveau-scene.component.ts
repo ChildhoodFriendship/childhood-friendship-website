@@ -30,7 +30,6 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
   protected readonly unlockProgress = signal<number>(0);
   protected readonly isUnlocking = signal<boolean>(false);
   protected readonly currentUnlockPhase = signal<string>('Inizializzazione sensori...');
-  protected readonly selectedProject = signal<ProjectExhibit | null>(null);
   protected readonly hoveredProject = signal<ProjectExhibit | null>(null);
 
   // Three.js internal references
@@ -82,6 +81,13 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
   private keyDownListener?: (e: KeyboardEvent) => void;
   private keyUpListener?: (e: KeyboardEvent) => void;
   private keys = { w: false, a: false, s: false, d: false };
+  /** Inquadratura di riposo dentro la galleria. */
+  private readonly overview = new THREE.Vector3(0, 4.5, 29);
+  private lastInput = 0;
+  private idleAmt = 0;
+  private focusedId: string | null = null;
+  private readonly smoothMouse = new THREE.Vector2();
+  private intro?: gsap.core.Timeline;
 
   // Projects list showcased in the vault pedestals & frames
   protected readonly projects = VAULT_PROJECTS;
@@ -196,28 +202,7 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
         if (this.gridHelper) this.gridHelper.visible = true;
         if (this.galleryGroup) this.galleryGroup.visible = true;
 
-        // Slow cinematic camera push into the room
-        this.targetCameraPos.set(0, 4.0, 45);
-
-        // GSAP Motion Design: Animate hero text stagger reveal
-        setTimeout(() => {
-          gsap.fromTo('.eyebrow', 
-            { opacity: 0, y: 15 },
-            { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
-          );
-          gsap.fromTo('#hero-title', 
-            { opacity: 0, y: 25 },
-            { opacity: 1, y: 0, duration: 1.0, ease: 'power4.out', delay: 0.15 }
-          );
-          gsap.fromTo('.hero-description', 
-            { opacity: 0, y: 15 },
-            { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.3 }
-          );
-          gsap.fromTo('.hero-actions', 
-            { opacity: 0, y: 10 },
-            { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', delay: 0.45 }
-          );
-        }, 100);
+        this.playEntrance();
       }
     }, 28);
   }
@@ -234,37 +219,29 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
     if (this.gridHelper) this.gridHelper.visible = true;
     if (this.galleryGroup) this.galleryGroup.visible = true;
     
-    this.targetCameraPos.set(0, 4.0, 45);
-    this.currentCameraPos.set(0, 4.0, 45);
-    if (this.camera) {
-      this.camera.position.set(0, 4.0, 45);
-    }
-    
-    // GSAP Motion Design (immediate)
-    setTimeout(() => {
-      gsap.fromTo('.eyebrow', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' });
-      gsap.fromTo('#hero-title', { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 1.0, ease: 'power4.out', delay: 0.15 });
-      gsap.fromTo('.hero-description', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.3 });
-      gsap.fromTo('.hero-actions', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', delay: 0.45 });
-    }, 50);
+    this.targetCameraPos.copy(this.overview);
+    this.currentCameraPos.copy(this.overview);
+    this.camera?.position.copy(this.overview);
   }
 
-  protected inspectProject(project: ProjectExhibit): void {
-    this.selectedProject.set(project);
-    const idx = this.projects.findIndex(p => p.id === project.id);
-    if (idx !== -1) {
-      const angle = (idx - 1) * 0.28;
-      this.targetCameraRot.y = -angle;
-      this.targetCameraPos.x = (idx - 1) * 8;
-      this.targetCameraPos.z = 26; // Smooth zoom into the selected exhibit
-    }
+
+  /** Porta che si apre con inerzia e volo della camera attraverso il varco. */
+  private playEntrance(): void {
+    const door = this.vaultDoorGroup;
+    gsap.to(door.rotation, { y: -Math.PI * 0.85, duration: 2.6, ease: 'power3.inOut' });
+    gsap.to(door.position, { x: -65, duration: 2.8, ease: 'power2.inOut', delay: 0.25 });
+    this.intro = gsap.timeline({ onComplete: () => { this.lastInput = performance.now(); } })
+      .to(this.targetCameraPos, { x: -5, y: 7.5, z: 70, duration: 1.8, ease: 'sine.inOut' })
+      .to(this, { orbitYaw: 0.1, duration: 1.8, ease: 'sine.inOut' }, '<')
+      .to(this.targetCameraPos, { x: 0, y: this.overview.y, z: this.overview.z, duration: 3.2, ease: 'power3.inOut' })
+      .to(this, { orbitYaw: 0, orbitPitch: -0.04, duration: 3.2, ease: 'power2.inOut' }, '<');
   }
 
-  protected closeProjectModal(): void {
-    this.selectedProject.set(null);
-    this.targetCameraRot.y = 0;
-    this.targetCameraPos.x = 0;
-    this.targetCameraPos.z = 31;
+  /** Torna all'inquadratura d'insieme. */
+  private backToOverview(): void {
+    this.focusedId = null;
+    gsap.to(this.targetCameraPos, { x: this.overview.x, y: this.overview.y, z: this.overview.z, duration: 1.6, ease: 'power3.inOut', overwrite: true });
+    gsap.to(this, { orbitYaw: 0, orbitPitch: -0.04, duration: 1.6, ease: 'power3.inOut', overwrite: true });
   }
 
   private initThreeVault(): void {
@@ -282,6 +259,7 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
 
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 300);
     this.camera.position.copy(this.currentCameraPos);
+    this.camera.rotation.order = 'YXZ'; // yaw poi pitch: niente rollio spurio
 
     // 2. Renderer (Cinema High-End Configuration)
     this.renderer = new THREE.WebGLRenderer({
@@ -336,6 +314,7 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
       const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
       this.mouseX = x;
       this.mouseY = y;
+      this.lastInput = performance.now();
       
       if (this.camera && this.scene && this.vaultUnlocked()) {
         const raycaster = new THREE.Raycaster();
@@ -391,6 +370,8 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
             // window.open(proj.link || 'https://example.com/project-placeholder', '_blank');
             this.zoomToProject(hit, proj);
         }
+      } else if (this.focusedId) {
+        this.backToOverview();
       }
     };
     canvas.addEventListener('click', this.canvasClickListener);
@@ -398,6 +379,7 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
       // 7. Interactive Free Drag & Orbit & Zoom Navigation (Cinematic 3D Room exploration)
       this.pointerDownListener = (e: PointerEvent) => {
         if (!this.vaultUnlocked()) return;
+        this.lastInput = performance.now();
         this.isDragging = true;
         this.prevPointerX = e.clientX;
         this.prevPointerY = e.clientY;
@@ -406,6 +388,8 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
 
       this.pointerMoveListener = (e: PointerEvent) => {
           if (!this.isDragging || !this.vaultUnlocked() || !this.camera) return;
+          this.lastInput = performance.now();
+          gsap.killTweensOf(this);
           const dx = e.clientX - this.prevPointerX;
           const dy = e.clientY - this.prevPointerY;
           this.prevPointerX = e.clientX;
@@ -440,6 +424,9 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
       this.wheelListener = (e: WheelEvent) => {
         if (!this.vaultUnlocked()) return;
         e.preventDefault();
+        this.lastInput = performance.now();
+        this.intro?.kill();
+        gsap.killTweensOf(this.targetCameraPos);
         const zoomDelta = e.deltaY * 0.035;
         
         // Deep zoom: from far outside door (z = 45) to deep into the gallery (z = -25)
@@ -454,8 +441,13 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
       // WASD Videogame Navigation
       this.keyDownListener = (e: KeyboardEvent) => {
         if (!this.vaultUnlocked()) return;
+        this.lastInput = performance.now();
+        if (e.key === 'Escape') { this.backToOverview(); return; }
         const key = e.key.toLowerCase();
         if (key in this.keys) {
+          this.intro?.kill();
+          gsap.killTweensOf(this.targetCameraPos);
+          this.focusedId = null;
           this.keys[key as keyof typeof this.keys] = true;
         }
       };
@@ -486,13 +478,13 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
       const animate = () => {
         this.animFrameId = requestAnimationFrame(animate);
         const time = performance.now();
-        const delta = (time - lastTime) / 1000;
+        const delta = Math.min(0.1, (time - lastTime) / 1000);
         lastTime = time;
         elapsed += delta;
 
         // WASD movement logic
         if (this.vaultUnlocked() && this.camera) {
-          const moveSpeed = 40.0 * delta; // speed per second
+          const moveSpeed = 24.0 * delta; // speed per second
           
           // Move in camera's local forward/right directions
           const forward = new THREE.Vector3(0, 0, -1);
@@ -522,41 +514,55 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
           this.targetCameraPos.x = Math.max(-50, Math.min(50, this.targetCameraPos.x));
           this.targetCameraPos.z = Math.max(-25, Math.min(65, this.targetCameraPos.z));
           
-          // Adjust height based on Z depth dynamically when moving
-          const depthRatio = (this.targetCameraPos.z + 25) / 90; // 0 (deep) to 1 (far)
-          this.targetCameraPos.y = 2.0 + (Math.max(0, depthRatio) * 2.0);
+          // Altezza legata alla profondità solo mentre si cammina
+          if (this.keys.w || this.keys.a || this.keys.s || this.keys.d) {
+            const depthRatio = (this.targetCameraPos.z + 25) / 90;
+            this.targetCameraPos.y += (2.0 + Math.max(0, depthRatio) * 2.5 - this.targetCameraPos.y) * (1 - Math.exp(-delta * 3));
+          }
         }
 
-        // Smooth camera interpolation
-        const smoothFactor = 0.05;
-        this.currentCameraPos.lerp(this.targetCameraPos, smoothFactor);
-        
+        // Camera: smorzamento indipendente dal frame-rate
+        const kPos = 1 - Math.exp(-delta * 3.2);
+        const kRot = 1 - Math.exp(-delta * 4.0);
+        this.currentCameraPos.lerp(this.targetCameraPos, kPos);
+        this.smoothMouse.x += (this.mouseX - this.smoothMouse.x) * (1 - Math.exp(-delta * 3));
+        this.smoothMouse.y += (this.mouseY - this.smoothMouse.y) * (1 - Math.exp(-delta * 3));
+        const idle = this.vaultUnlocked() && !this.isDragging && !this.focusedId && time - this.lastInput > 5000;
+        this.idleAmt += ((idle ? 1 : 0) - this.idleAmt) * (1 - Math.exp(-delta * 0.5));
+
         if (this.camera) {
-          // Cinematic camera floating + user orbit yaw/pitch
-          const breatheY = Math.sin(elapsed * 0.8) * 0.25;
-          const breatheX = Math.cos(elapsed * 0.6) * 0.35;
+          const cam = this.camera;
+          const focus = this.focusedId ? 0.35 : 1; // da vicino la camera sta più ferma
+          const breatheY = Math.sin(elapsed * 0.7) * 0.18 * focus;
+          const breatheX = Math.cos(elapsed * 0.5) * 0.25 * focus;
+          // carrellata lenta quando nessuno tocca niente
+          const driftX = Math.sin(elapsed * 0.09) * 9 * this.idleAmt;
+          const driftZ = Math.cos(elapsed * 0.07) * 4 * this.idleAmt;
 
-          this.camera.position.x = this.currentCameraPos.x + breatheX + this.mouseX * 2.2;
-          this.camera.position.y = this.currentCameraPos.y + breatheY + this.mouseY * 1.4;
-          this.camera.position.z = this.currentCameraPos.z;
+          cam.position.set(
+            this.currentCameraPos.x + breatheX + driftX + this.smoothMouse.x * 1.1 * focus,
+            this.currentCameraPos.y + breatheY + this.smoothMouse.y * 0.6 * focus,
+            this.currentCameraPos.z + driftZ
+          );
 
-          // Camera rotation with drag-orbit yaw & pitch + subtle mouse sway
-          const targetRotY = this.targetCameraRot.y + this.orbitYaw - this.mouseX * 0.12;
-          const targetRotX = this.orbitPitch + this.mouseY * 0.08;
-
-          this.camera.rotation.y += (targetRotY - this.camera.rotation.y) * 0.06;
-          this.camera.rotation.x += (targetRotX - this.camera.rotation.x) * 0.06;
+          const yaw = this.targetCameraRot.y + this.orbitYaw - this.smoothMouse.x * 0.07 * focus - driftX * 0.012;
+          const pitch = this.orbitPitch + this.smoothMouse.y * 0.05 * focus;
+          const dYaw = yaw - cam.rotation.y;
+          cam.rotation.y += dYaw * kRot;
+          cam.rotation.x += (pitch - cam.rotation.x) * kRot;
+          // leggero banking in curva, come una steadicam
+          cam.rotation.z += (-dYaw * 0.35 - cam.rotation.z) * kRot;
         }
 
-        // Vault door swing open animation when unlocked
-        if (this.vaultUnlocked()) {
-          if (this.vaultDoorGroup.rotation.y > -Math.PI * 0.85) {
-            this.vaultDoorGroup.rotation.y -= delta * 2.0;
-          }
-          if (this.vaultDoorGroup.position.x > -65) {
-            this.vaultDoorGroup.position.x -= delta * 32;
-          }
-        }
+        // Laptop che fluttuano piano; quello sotto il mouse si alza e ruota verso la camera
+        this.exhibitMeshes.forEach((ex, i) => {
+          const hot = this.hoveredProject()?.id === ex.project.id || this.focusedId === ex.project.id;
+          const k = 1 - Math.exp(-delta * 4);
+          const y = 5.2 + Math.sin(elapsed * 1.1 + i * 1.3) * 0.12 + (hot ? 0.6 : 0);
+          const ry = hot ? Math.sin(elapsed * 0.9) * 0.22 : Math.sin(elapsed * 0.35 + i) * 0.06;
+          ex.mesh.position.y += (y - ex.mesh.position.y) * k;
+          ex.mesh.rotation.y += (ry - ex.mesh.rotation.y) * k;
+        });
 
         // Hover glow animation on wall frames
         this.wallFrames.forEach((frame, index) => {
@@ -565,6 +571,8 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
           if (frame.borderMat) {
             frame.borderMat.emissiveIntensity += (targetPulse - frame.borderMat.emissiveIntensity) * 0.1;
           }
+          const sc = isHovered || this.focusedId === frame.project.id ? 1.05 : 1;
+          frame.mesh.scale.setScalar(frame.mesh.scale.x + (sc - frame.mesh.scale.x) * 0.1);
         });
 
         // Dynamic breathing for honeycomb ceiling LED lights
@@ -602,29 +610,29 @@ export class CaveauSceneComponent implements AfterViewInit, OnDestroy {
     const worldPos = new THREE.Vector3();
     group.getWorldPosition(worldPos);
     
-    const offsetDistance = 18;
-    const heightOffset = 4;
-    
-    const euler = new THREE.Euler().setFromQuaternion(group.quaternion);
-    const rotY = euler.y;
-    
-    const offsetX = Math.sin(rotY) * offsetDistance;
-    const offsetZ = Math.cos(rotY) * offsetDistance;
-    
-    const destX = worldPos.x + offsetX;
-    const destY = worldPos.y + heightOffset;
-    const destZ = worldPos.z + offsetZ;
-    
-    const distSq = this.targetCameraPos.distanceToSquared(new THREE.Vector3(destX, destY, destZ));
-    if (distSq < 5.0) {
-      // Already zoomed in, open link
-      window.open(proj.link || 'https://example.com/project-placeholder', '_blank');
+    const isFrame = group.userData['type'] === 'frame';
+    const look = isFrame ? worldPos.clone() : worldPos.clone().add(new THREE.Vector3(0, 6.2, 0));
+    const dest = isFrame
+      ? look.clone().add(new THREE.Vector3(0, -1.2, 17))
+      : look.clone().add(new THREE.Vector3(0, 3.2, 12));
+
+    // secondo click sullo stesso progetto: apre il sito
+    if (this.focusedId === proj.id) {
+      if (proj.link) window.open(proj.link, '_blank', 'noopener');
       return;
     }
-    
-    this.targetCameraPos.set(destX, destY, destZ);
-    this.orbitYaw = rotY; 
-    this.orbitPitch = 0;
+    this.focusedId = proj.id;
+    this.intro?.kill();
+
+    const d = look.clone().sub(dest);
+    const yaw = Math.atan2(-d.x, -d.z);
+    const pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+    this.targetCameraRot.y = 0;
+    // arco: si alza un po' a metà volo invece di andare dritta
+    const tl = gsap.timeline({ defaults: { overwrite: 'auto' } });
+    tl.to(this.targetCameraPos, { x: dest.x, z: dest.z, duration: 1.8, ease: 'power3.inOut' }, 0)
+      .to(this.targetCameraPos, { keyframes: { y: [this.targetCameraPos.y, Math.max(dest.y, this.targetCameraPos.y) + 2.5, dest.y], easeEach: 'sine.inOut' }, duration: 1.8, ease: 'none' }, 0)
+      .to(this, { orbitYaw: yaw, orbitPitch: pitch, duration: 1.6, ease: 'power3.inOut' }, 0.1);
   }
 
   private buildVaultDoor(): void {
