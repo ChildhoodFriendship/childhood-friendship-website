@@ -70,6 +70,9 @@ export class BuilderScene {
   private partnerMode: BuilderMode = 'present';
   /** Orientamento del Builder, separato dalla camera: lo animano le fasi, non lo scrub. */
   private readonly body = { yaw: 0 };
+  /** Mobile: giro su sé stesso finché la pagina è in cima, si ferma frontale appena si scrolla. */
+  private turn = 0;
+  private lastT = 0;
   /** 0 = inquadratura normale, 1 = camera esattamente davanti allo schermo, che riempie la finestra. */
   private readonly zoom = { v: 0 };
   /** Avanzamento della sequenza finale (0..1), guidato dallo scroll sul pin del finale. */
@@ -844,6 +847,13 @@ export class BuilderScene {
       if (this.bound) this.setManifestoHidden(z < 0.999 && window.scrollY < this.pinEnd - 1);
       if (!this.visible || document.hidden) return;
       const t = this.clock.getElapsedTime();
+      const tdt = Math.min(0.1, t - this.lastT);
+      this.lastT = t;
+      if (this.opts.mobile && !this.opts.reducedMotion) {
+        const TAU = Math.PI * 2;
+        if (z < 0.001 && window.scrollY < 4 && this.finale.f === 0) this.turn += tdt * 0.75;
+        else this.turn += (Math.round(this.turn / TAU) * TAU - this.turn) * (1 - Math.exp(-tdt * 7));
+      }
       const s = this.shot;
       // con lo zoom il cursore non muove più nulla: lo schermo deve restare fermo
       const calm = 1 - Math.min(1, z * 1.5);
@@ -867,7 +877,7 @@ export class BuilderScene {
       // nel portfolio stanno ai lati del carosello; nella scena larga escono ai lati (camminando) e rientreranno nel finale
       this.root.position.x = lerp(lerp(lerp(a.x, ma.x, p1), pa.bx, pt), -this.offX, p2);
       this.root.position.y = lerp(lerp(lerp(a.y, ma.y, p1), pa.by, pt), -0.3, p2) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm * (1 - p2));
-      this.root.rotation.y = s.yaw + this.body.yaw;
+      this.root.rotation.y = s.yaw + this.body.yaw + this.turn;
       // socio: accanto al Builder nel palco del metodo, poi nella scena larga; cade dall'alto quando entra
       const pv = this.partnerIn.v;
       this.pRoot.visible = !!this.partner && pv > 0.001;
@@ -958,11 +968,12 @@ export class BuilderScene {
     this.offX = Math.tan(THREE.MathUtils.degToRad(this.baseFov / 2)) * this.shots.far.cz * (w / h) + 0.6;
 
     // hero: il Builder occupa ~84% dello stage, anelli piccoli di lato
-    const hero = this.fitStage(this.opts.ids.stage, 0.84);
+    const hero = this.fitStage(this.opts.ids.stage, this.opts.mobile ? 0.94 : 0.84);
     if (hero) {
       Object.assign(this.anchor, {
         x: hero.x, y: hero.y - 0.02 * hero.s, s: hero.s,
-        ringX: hero.x + (this.opts.mobile ? 0.5 : 0.78) * hero.s, ringY: hero.y + 0.3 * hero.s, ringS: 0.42 * hero.s
+        // su mobile il logo sta dietro al Builder (di lato uscirebbe dallo schermo)
+        ringX: hero.x + (this.opts.mobile ? 0 : 0.78) * hero.s, ringY: hero.y + (this.opts.mobile ? 0.12 : 0.3) * hero.s, ringS: (this.opts.mobile ? 0.5 : 0.42) * hero.s
       });
     }
     // metodo: palco largo a destra del titolo; Builder a sinistra del palco, logo grande accanto
@@ -1003,7 +1014,9 @@ export class BuilderScene {
     const fr = frame.getBoundingClientRect();
     const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.shots.hero.cz;
-    const cx = r.left + r.width / 2, cy = r.top - fr.top + r.height / 2;
+    // mobile: all'apertura l'hero sta sotto l'header, ed è lì che il Builder deve stare (gira finché non si scrolla)
+    const head = this.opts.mobile && id === this.opts.ids.stage ? (document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0) : 0;
+    const cx = r.left + r.width / 2, cy = r.top - fr.top + r.height / 2 + head;
     const s = THREE.MathUtils.clamp(((r.height / h) * 2 * tanH * fill) / BUILDER_HEIGHT, 0.4, 1.5);
     return {
       x: ((cx / w) * 2 - 1) * tanH * this.camera.aspect,
