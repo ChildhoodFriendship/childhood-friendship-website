@@ -28,7 +28,7 @@ export class SceneComponent {
       try {
         scene = new BuilderScene(this.canvas().nativeElement, {
           reducedMotion, mobile,
-          ids: { hero: 'top', stage: 'hero-stage', manifesto: 'manifesto', services: 'servizi', method: 'metodo', methodStage: 'method-stage', contact: 'finale' },
+          ids: { hero: 'top', stage: 'hero-stage', manifesto: 'manifesto', services: 'servizi', method: 'metodo', methodStage: 'method-stage', portfolio: 'progetti', portLeft: 'port-left', portRight: 'port-right', contact: 'finale' },
           onReady: () => { host.classList.add('ready'); }
         });
       } catch (err) {

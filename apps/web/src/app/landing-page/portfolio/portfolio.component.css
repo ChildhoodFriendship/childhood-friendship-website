@@ -1,0 +1,80 @@
+:host { display: block; position: relative; }
+.portfolio { --pad: clamp(1.25rem, 4vw, 4rem); background: var(--cf-ink-deep); color: var(--cf-chalk); }
+:host-context(main.scene-on) .portfolio { background: transparent; }
+.sticky { position: relative; padding: clamp(5rem, 12vh, 8rem) var(--pad); overflow: hidden; }
+
+/* titolo fantasma gigante dietro al carosello */
+.ghost { display: none; }
+.head { position: relative; z-index: 2; max-width: 1440px; margin: 0 auto; }
+.kicker { display: flex; align-items: center; gap: .7rem; margin: 0 0 1rem; font-family: var(--cf-display); font-size: .8rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: rgba(246, 241, 255, .6); }
+.kicker span { width: .55rem; height: .55rem; border-radius: 2px; background: var(--cf-violet); box-shadow: 0 0 18px var(--cf-violet); }
+h2 { font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 80, 'opsz' 96; font-size: clamp(2.6rem, 5.4vw, 5.2rem); letter-spacing: -.035em; line-height: .9; margin: 0; }
+h2 em { font-style: normal; color: #A78BFA; }
+.count { display: none; }
+.slot { display: none; }
+
+/* ---------- card ---------- */
+.ring { list-style: none; margin: 2.5rem 0 0; padding: 0 0 1rem; display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; }
+.card { position: relative; flex: 0 0 min(82vw, 380px); height: min(118vw, 520px); scroll-snap-align: center; perspective: 1400px; }
+.flipper { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; transform-style: preserve-3d;
+  transition: transform .6s cubic-bezier(.2, .8, .2, 1); text-align: left; color: var(--ink); font: inherit; }
+.face { position: absolute; inset: 0; display: flex; flex-direction: column; border-radius: 26px; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  padding: clamp(1.25rem, 2vw, 1.8rem); box-sizing: border-box; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .14); }
+/* l'ombra della faccia nascosta resterebbe visibile: la si toglie */
+.card.flipped .front, .card:not(.flipped) .back { box-shadow: none; }
+.front { background: radial-gradient(120% 90% at 20% 0%, var(--c2), transparent 60%), linear-gradient(160deg, var(--c1), var(--c2)); }
+/* riflesso che scorre con la rotazione della card */
+.front::after, .back::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent calc(var(--sheen, 50%) - 22%), rgba(255, 255, 255, .28) var(--sheen, 50%), transparent calc(var(--sheen, 50%) + 22%)); mix-blend-mode: soft-light; }
+.back { transform: rotateY(180deg); background: linear-gradient(200deg, var(--c1), color-mix(in srgb, var(--c1) 70%, #000)); color: var(--ink); gap: .7rem; }
+.kind { font-family: var(--cf-display); font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
+.name { margin-top: auto; font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 78, 'opsz' 96; font-size: clamp(2.2rem, 3.6vw, 3.4rem); line-height: .9; letter-spacing: -.03em; }
+.line { margin-top: .6rem; font-family: var(--cf-display); font-size: 1.05rem; opacity: .85; }
+.hint { margin-top: 1rem; font-family: var(--cf-display); font-size: .8rem; font-weight: 600; opacity: .6; }
+.bname { font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 80, 'opsz' 72; font-size: clamp(1.7rem, 2.4vw, 2.3rem); line-height: .95; letter-spacing: -.02em; }
+.what { font-family: var(--cf-display); font-size: .98rem; line-height: 1.5; opacity: .9; }
+.label { margin-top: .3rem; font-family: var(--cf-display); font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.done { display: grid; gap: .4rem; font-family: var(--cf-display); font-size: .95rem; font-weight: 600; }
+.done span::before { content: '✦'; margin-right: .55rem; color: var(--accent); }
+.stack { margin-top: auto; display: flex; flex-wrap: wrap; gap: .4rem; }
+.stack span { font-family: var(--cf-display); font-size: .8rem; font-weight: 600; padding: .35rem .7rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); }
+.link { position: absolute; right: 1.4rem; bottom: 1.3rem; z-index: 5; font-family: var(--cf-display); font-weight: 700; font-size: .9rem; color: var(--cf-ink-deep); background: var(--accent);
+  padding: .55rem .95rem; border-radius: 999px; text-decoration: none; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.link.show { opacity: 1; pointer-events: auto; }
+
+/* dispositivo stilizzato sul fronte */
+.device { position: relative; align-self: center; margin: 1.5rem 0 1rem; display: grid; place-items: center; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .35)); }
+.device .screen { position: relative; display: grid; align-content: start; gap: 8px; padding: 14px; box-sizing: border-box; background: color-mix(in srgb, var(--ink) 10%, rgba(255, 255, 255, .85)); border: 6px solid color-mix(in srgb, var(--ink) 85%, #000); }
+.device.browser .screen { width: min(62vw, 250px); height: min(40vw, 160px); border-radius: 14px; border-top-width: 18px; }
+.device.phone .screen { width: min(30vw, 120px); height: min(58vw, 230px); border-radius: 22px; }
+.device.chip .screen { width: min(42vw, 170px); height: min(42vw, 170px); border-radius: 30px; place-content: center; }
+.screen span { display: block; height: 10px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 70%, #fff); }
+.screen .l1 { width: 70%; height: 16px; background: var(--accent); }
+.screen .l2 { width: 90%; opacity: .6; }
+.screen .l3 { width: 55%; opacity: .45; }
+.screen .dot { position: absolute; right: 14px; bottom: 14px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 25%, transparent); }
+.device.chip .screen span:not(.dot) { display: none; }
+.device.chip .screen .dot { position: static; width: 64px; height: 64px; box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 0 30px color-mix(in srgb, var(--accent) 14%, transparent); }
+
+/* ---------- desktop: carosello 3D guidato dallo scroll ---------- */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .portfolio { height: calc(var(--n) * 85vh + 100vh); }
+  .sticky { position: sticky; top: 0; height: 100vh; box-sizing: border-box; padding: 6rem var(--pad) 2rem; }
+  .ghost { display: block; position: absolute; left: 50%; top: 56%; transform: translate(-50%, -50%); z-index: 0; pointer-events: none; white-space: nowrap;
+    font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 75, 'opsz' 96; font-size: 22vw; letter-spacing: -.04em; line-height: 1;
+    color: transparent; -webkit-text-stroke: 1px rgba(246, 241, 255, .08); }
+  .head { position: absolute; left: var(--pad); top: 6rem; margin: 0; }
+  .count { display: flex; align-items: baseline; gap: .5rem; position: absolute; right: var(--pad); top: 6.5rem; z-index: 2; font-family: var(--cf-display); }
+  .count strong { font-size: 3rem; font-weight: 800; font-variation-settings: 'wdth' 75; color: #A78BFA; }
+  .count span { opacity: .55; font-weight: 600; }
+  .count .bar { position: absolute; right: 0; top: calc(100% + .6rem); width: 9rem; height: 2px; background: rgba(246, 241, 255, .2); }
+  .count .bar span { display: block; height: 100%; background: var(--cf-chalk); opacity: 1; transform-origin: left; }
+  .slot { display: block; position: absolute; bottom: 5vh; width: 15vw; height: 46vh; }
+  .slot.left { left: .5vw; }
+  .slot.right { right: .5vw; }
+  .ring { position: absolute; inset: 0; margin: 0; padding: 0; overflow: visible; display: block; perspective: 1800px; perspective-origin: 50% 45%; transform-style: preserve-3d; z-index: 1; }
+  .card { position: absolute; left: 50%; top: 56%; width: min(27vw, 420px); height: min(62vh, 540px); flex: none; transform-style: preserve-3d; will-change: transform, opacity; }
+  .card .flipper { transition: none; }
+  .card.center:not(.flipped) .front, .card.center.flipped .back { box-shadow: 0 40px 90px -30px rgba(124, 58, 237, .5), 0 20px 50px -20px rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .2); }
+}
+@media (prefers-reduced-motion: reduce) { .flipper { transition: none; } }

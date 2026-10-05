@@ -8,13 +8,13 @@ import { ManifestoComponent } from './manifesto/manifesto.component';
 import { MethodComponent } from './method/method.component';
 import { OutroComponent } from './outro/outro.component';
 import { PointerService } from './pointer.service';
-import { PricingSectionComponent } from './pricing/pricing-section.component';
+import { PortfolioComponent } from './portfolio/portfolio.component';
 import { SceneComponent } from './scene/scene.component';
 import { ServicesComponent } from './services/services.component';
 
 @Component({
   selector: 'cf-landing-page',
-  imports: [ContactSectionComponent, CursorComponent, FooterComponent, HeaderComponent, HeroComponent, ManifestoComponent, MethodComponent, OutroComponent, PricingSectionComponent, SceneComponent, ServicesComponent],
+  imports: [ContactSectionComponent, CursorComponent, FooterComponent, HeaderComponent, HeroComponent, ManifestoComponent, MethodComponent, OutroComponent, PortfolioComponent, SceneComponent, ServicesComponent],
   providers: [PointerService],
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css',

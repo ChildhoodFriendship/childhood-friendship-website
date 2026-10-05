@@ -22,7 +22,7 @@ La route principale usa `loadComponent` per caricare la landing solo quando la r
 - **Hero:** messaggio principale, call to action e showcase Three.js.
 - **Trust bar:** elementi di fiducia del brand.
 - **Services:** tre offerte: siti web, web app e app mobile.
-- **Pricing:** viste sviluppo iniziale e gestione post-lancio.
+- **Portfolio:** carosello 3D di progetti reali guidato dallo scroll (sostituisce il listino, rimosso il 2026-10-05). Dettagli in [[modules/landing-3d.md|landing 3D]].
 - **About:** identità e posizionamento.
 - **Process:** capire, costruire, far crescere.
 - **Contact:** form nome/email/messaggio con honeypot.
@@ -35,7 +35,7 @@ La route principale usa `loadComponent` per caricare la landing solo quando la r
 | Hero | Signals per sblocco, progresso, fase, progetto selezionato; tipo `ProjectExhibit` nel componente | `hero-section.component.ts` |
 | Services | array readonly di `ServiceCard` | `services-section.component.ts` |
 | Process | array readonly di `ProcessStep` | `process-section.component.ts` |
-| Pricing | `PricingView` e `PricingCard`; Signal `activeView` | `pricing-section.component.ts` |
+| Portfolio | `Project`; signal `pos`/`flipNow`, `computed` per le trasformazioni 3D; evento `cf:portfolio` | `portfolio/portfolio.component.ts` |
 | Contact | union state `idle/submitting/success/error`; endpoint environment | `contact-section.component.ts` |
 
 ## Flusso del contatto

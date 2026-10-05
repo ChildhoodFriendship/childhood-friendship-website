@@ -1,6 +1,6 @@
 # Indice della wiki del progetto
 
-> Catalogo della conoscenza del progetto. Inizia da qui. Ultimo aggiornamento: 2026-10-03 | Pagine: 16
+> Catalogo della conoscenza del progetto. Inizia da qui. Ultimo aggiornamento: 2026-10-05 | Pagine: 17
 
 ## Progetto
 
@@ -14,10 +14,11 @@
 
 - [[modules/api-backend.md|API backend]] — endpoint, ruoli, AI.
 - [[modules/admin-portal.md|Area admin e portale]] — struttura frontend, rotte, flusso documenti.
+- [[modules/landing-3d.md|Landing 3D]] — scena three.js, personaggi riggati in codice, sequenza guidata dallo scroll, portfolio, finale, quiz contatti.
 
 - [[modules/application-modules.md|Moduli applicativi]] — struttura della landing, stato locale, form di contatto e dipendenze condivise.
 - [[modules/component-catalog.md|Catalogo componenti]] — responsabilità dei componenti e fonti nel codice.
-- [[pricing.md|Offerta e listino]] — contenuti commerciali effettivamente esposti dalla pagina corrente.
+- [[pricing.md|Offerta e listino]] — prezzi esposti nella sezione servizi (il listino separato è stato rimosso).
 
 ## Decisioni
 

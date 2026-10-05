@@ -1,14 +1,17 @@
 ---
 title: Offerta e listino
 created: 2026-09-28
-updated: 2026-09-28
+updated: 2026-10-05
 type: concept
 tags: [project, documentation]
 project: childhood-friendship-website
 status: active
 confidence: high
-sources: [src/app/landing-page/pricing/pricing-section.component.ts, src/app/landing-page/pricing/pricing-section.component.html]
+sources: [apps/web/src/app/landing-page/services/services.component.ts]
 ---
+
+> **Aggiornamento 2026-10-05**: la sezione listino separata è stata rimossa dalla landing perché duplicava i prezzi già mostrati nei servizi (da 200 € sito, da 600 € web app, da 700 € app mobile, da 20 €/mese cura). Al suo posto c'è il portfolio: vedi [[modules/landing-3d.md|landing 3D]]. Le righe sotto restano come storico dell'offerta "dopo il lancio" (canone 20 €/mese, modifica a chiamata 50 €).
+
 
 # Offerta e listino
 

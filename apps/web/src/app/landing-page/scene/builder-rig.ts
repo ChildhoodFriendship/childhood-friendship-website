@@ -175,6 +175,14 @@ export class BuilderRig {
       .to(this.w, { wave: 0, duration: 0.75, ease: 'power2.inOut' }, '+=1.5');
   }
 
+  /** Gesto breve sopra la posa corrente (es. presentare una card): sale, tiene, torna. */
+  pulse(g: 'care' | 'wave' | 'welcome' | 'design', hold = 0.7): void {
+    if (this.reduced || this.busy) return;
+    gsap.timeline()
+      .to(this.w, { [g]: 1, duration: 0.45, ease: 'back.out(1.6)' })
+      .to(this.w, { [g]: this.mode === g ? 1 : 0, duration: 0.6, ease: 'power2.inOut' }, `+=${hold}`);
+  }
+
   /** Atterraggio dopo una caduta: accovacciata secca e rimbalzo elastico. */
   land(): void {
     if (this.reduced) return;

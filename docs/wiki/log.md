@@ -40,3 +40,9 @@
 - Metodo: titolo a sinistra con fase corrente, palco 3D a destra (Builder più grande + logo), card più piccole in scorrimento.
 - Socio 3D (Tripo, decimato 1,9M→30k tri, rig con scripts/rig-partner.mjs): entra nel metodo a "Progettiamo", pose complementari, finale in due davanti al portale. Card del metodo a larghezza piena: quella raggiunta si allarga con lo scroll.
 - Movimenti: molle smorzate per osso (follow-through), camminata procedurale automatica, vita da fermo. Finale: entrate dai lati, logo dal fondo al centro, salto + batti cinque (IK, lampo, scintille, scossa), dissolvenza in particelle verso la camera.
+
+## [2026-10-05] feat | Portfolio cinematografico e finale rivisto
+- Listino rimosso dalla landing (duplicava i servizi), sostituito da `cf-portfolio`: carosello 3D di 6 progetti reali con card che si girano sui dettagli, presentate dai due personaggi.
+- Finale: dissolvenza più lenta e verso l'esterno, logo che gira veloce prima dello zoom.
+- Nuova pagina [[modules/landing-3d.md]]; aggiornati [[current-status.md]], [[pricing.md]], [[index.md]].
+- Menu: "Prezzi" → "Progetti" (dopo "Come lavoriamo"); "Chi siamo" ora punta al manifesto.

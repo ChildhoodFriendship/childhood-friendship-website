@@ -7,7 +7,7 @@ tags: [module, architecture, documentation]
 project: childhood-friendship-website
 status: active
 confidence: high
-sources: [src/app/landing-page/landing-page.component.ts, src/app/landing-page/header, src/app/landing-page/hero, src/app/landing-page/trust-bar, src/app/landing-page/services, src/app/landing-page/pricing, src/app/landing-page/about, src/app/landing-page/process, src/app/landing-page/contact, src/app/landing-page/footer]
+sources: [src/app/landing-page/landing-page.component.ts, src/app/landing-page/header, src/app/landing-page/hero, src/app/landing-page/trust-bar, src/app/landing-page/services, src/app/landing-page/portfolio, src/app/landing-page/about, src/app/landing-page/process, src/app/landing-page/contact, src/app/landing-page/footer]
 ---
 
 # Catalogo dei componenti della landing
@@ -30,7 +30,7 @@ Catalogo derivato dai componenti presenti nel codice. La presenza del componente
 | `HeroSectionComponent` | Hero, canvas Three.js, showcase e modale | Stato locale complesso; smoke test browser aperto |
 | `TrustBarComponent` | Barra di elementi di fiducia | Contenuto statico osservato nel template |
 | `ServicesSectionComponent` | Tre card servizio da array readonly | Tipizzato; contenuto statico |
-| `PricingSectionComponent` | Tab sviluppo/manutenzione e card prezzo | Signal locale; verificare tastiera e pannelli |
+| `PortfolioComponent` | Carosello 3D di progetti, card girevoli con dettagli; desktop guidato dallo scroll, mobile a scorrimento + tocco | Signal + computed; segnala alla scena 3D con `cf:portfolio` |
 | `AboutSectionComponent` | Posizionamento e identità | Contenuto statico |
 | `ProcessSectionComponent` | Tre passaggi del metodo | Array readonly tipizzato |
 | `ContactSectionComponent` | Form contatti → `/api/public/leads` (lead in area admin) | Verificato con smoke test |

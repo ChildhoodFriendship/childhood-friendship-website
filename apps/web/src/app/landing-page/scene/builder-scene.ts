@@ -36,7 +36,7 @@ const METHOD_STEPS: readonly { mode: BuilderMode; yaw: number; partner: BuilderM
   { mode: 'care', yaw: 0.15, partner: 'welcome', pYaw: -0.2 }
 ];
 
-export interface SceneIds { hero: string; stage: string; manifesto: string; services: string; method: string; methodStage: string; contact: string; }
+export interface SceneIds { hero: string; stage: string; manifesto: string; services: string; method: string; methodStage: string; portfolio: string; portLeft: string; portRight: string; contact: string; }
 export interface SceneOptions { reducedMotion: boolean; mobile: boolean; ids: SceneIds; onReady?: () => void; }
 
 export class BuilderScene {
@@ -98,6 +98,9 @@ export class BuilderScene {
   private readonly anchor = { x: 0.6, y: 0, s: 1, ringX: 1.4, ringY: 0.5, ringS: 0.42 };
   /** Dove recita il Builder nel metodo: il palco a destra del titolo (stessa camera dell'hero). */
   private readonly mAnchor = { x: 0.6, y: 0.2, s: 0.8, px: 1.1, ringX: 1.2, ringY: 0.25, ringS: 0.5 };
+  /** Portfolio: i due ai lati del carosello (posti misurati dal DOM), il logo già lontano al centro. */
+  private readonly portA = { bx: -1.4, by: -0.3, bs: 0.7, px: 1.4, py: -0.3, ps: 0.7 };
+  private readonly port = { v: 0 };
   private readonly clock = new THREE.Clock();
   private readonly pointer = new THREE.Vector2();
   private readonly look = new THREE.Vector2();
@@ -115,6 +118,7 @@ export class BuilderScene {
   private pinEnd = Infinity;
   private bound = false;
   private offRefresh?: () => void;
+  private offPortfolio?: () => void;
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly opts: SceneOptions) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: false, powerPreference: 'high-performance' });
@@ -450,6 +454,31 @@ export class BuilderScene {
         onLeaveBack: () => { step = -1; this.act('present'); gsap.to(this.body, { yaw: 0, duration: 0.8, overwrite: true }); this.setPartner(false); }
       }));
     }
+    const portfolio = $(ids.portfolio);
+    if (portfolio) {
+      const tw = gsap.fromTo(this.port, { v: 0 }, { v: 1, ease: 'power2.inOut', immediateRender: false, scrollTrigger: { trigger: portfolio, start: 'top bottom', end: 'top top', scrub: 1 } });
+      if (tw.scrollTrigger) this.triggers.push(tw.scrollTrigger);
+      // entrano ai lati del carosello girati verso il centro; le card le "presentano" loro
+      this.triggers.push(ScrollTrigger.create({
+        trigger: portfolio, start: 'top 60%', end: 'bottom bottom',
+        onEnter: () => this.enterPortfolio(),
+        onEnterBack: () => this.enterPortfolio(),
+        onLeaveBack: () => {
+          const last = METHOD_STEPS[METHOD_STEPS.length - 1];
+          this.act(last.mode);
+          gsap.to(this.body, { yaw: last.yaw, duration: 1, ease: 'power3.inOut', overwrite: true });
+          this.setPartner(true, last.partner ?? 'welcome', last.pYaw);
+        }
+      }));
+      const onCard = (e: Event) => {
+        const d = (e as CustomEvent<{ index: number; flipped: boolean; newCard: boolean }>).detail;
+        if (this.finale.f > 0) return;
+        if (d.flipped) this.rig?.pulse('care', 0.6);          // il Builder "gira" la card
+        else if (d.newCard) this.pRig?.pulse('care', 0.5);   // il socio presenta la nuova
+      };
+      window.addEventListener('cf:portfolio', onCard);
+      this.offPortfolio = () => window.removeEventListener('cf:portfolio', onCard);
+    }
     if (contact) {
       toShot(this.shots.method, this.shots.far, contact, 'top bottom', 'top top', 'power2.out');
       this.bindFinale(contact);
@@ -474,7 +503,7 @@ export class BuilderScene {
     this.offRefresh = () => ScrollTrigger.removeEventListener('refresh', remeasure);
     requestAnimationFrame(remeasure);
     // render solo quando una sezione "3D" è a schermo
-    const watch = [hero, method, contact].filter((e): e is HTMLElement => !!e);
+    const watch = [hero, method, portfolio, contact].filter((e): e is HTMLElement => !!e);
     const update = () => { this.visible = watch.some((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }); };
     this.triggers.push(ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update }));
     ScrollTrigger.refresh();
@@ -528,12 +557,14 @@ export class BuilderScene {
     // il logo: dal fondo al centro fino al portale, smette di girare e si mette frontale
     const kr = ss(0.02, 0.4);
     const spin = (t * 0.25) % (Math.PI * 2);
-    this.rings.rotation.y = lerp(spin, spin > Math.PI ? Math.PI * 2 : 0, ss(0.15, 0.4));
+    // allineato e frontale, poi rimasto solo gira velocissimo (tre giri pieni: torna frontale per lo zoom)
+    const whirl = ss(0.6, 0.86);
+    this.rings.rotation.y = lerp(spin, spin > Math.PI ? Math.PI * 2 : 0, ss(0.15, 0.4)) + whirl * whirl * Math.PI * 6;
     this.rings.rotation.x = lerp(this.rings.rotation.x, 0, kr);
     this.rings.position.set(0, 0.3, lerp(-9, -0.7, kr * kr * (3 - 2 * kr)));
     this.rings.scale.setScalar(lerp(0.7, 1.7, kr));
-    const burst = ss(0.7, 1);
-    if (this.ringMat) this.ringMat.emissiveIntensity = 0.25 + kr * 0.9 + burst * 2.5 + this.five.flash * 1.5;
+    const burst = ss(0.78, 1);
+    if (this.ringMat) this.ringMat.emissiveIntensity = 0.25 + kr * 0.9 + whirl * 1.2 + burst * 2.5 + this.five.flash * 1.5;
     this.portalLight.position.copy(this.rings.position);
     this.portalLight.intensity = kr * 6 + burst * 30 + this.five.flash * 18;
   }
@@ -546,7 +577,7 @@ export class BuilderScene {
     this.camera.getWorldDirection(tgt).multiplyScalar(5).add(cam); // target corrente approssimato
     const K = [
       { f: 0.42, p: [0, 0.08, 3.6], t: [0, 0.3, -0.7] },
-      { f: 0.72, p: [0, 0.26, 2.3], t: [0, 0.3, -0.7] },
+      { f: 0.8, p: [0, 0.26, 2.3], t: [0, 0.3, -0.7] },
       { f: 1, p: [0, 0.3, -1.7], t: [0, 0.3, -4] }
     ];
     const pos = this.fv.a.copy(cam), look = this.fv.ta.copy(tgt);
@@ -563,7 +594,7 @@ export class BuilderScene {
     if (sh) pos.add(this.fv.b.set((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh, 0));
     this.camera.position.copy(pos);
     this.camera.lookAt(look);
-    const fov = lerp(this.baseFov, 72, Math.pow(ss(0.72, 1), 2));
+    const fov = lerp(this.baseFov, 72, Math.pow(ss(0.8, 1), 2));
     if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
   }
 
@@ -659,7 +690,7 @@ export class BuilderScene {
    * particelle che volano verso la camera e oltre, dall'alto verso il basso, mentre i modelli svaniscono.
    */
   private updateDust(f: number): void {
-    const d = THREE.MathUtils.smoothstep(f, 0.56, 0.7);
+    const d = THREE.MathUtils.smoothstep(f, 0.52, 0.8);
     const models = [this.builder, this.partner].filter((m): m is THREE.Object3D => !!m);
     if (d <= 0) {
       if (this.dust) { this.scene.remove(this.dust); this.dust.geometry.dispose(); this.dust = undefined; }
@@ -676,6 +707,9 @@ export class BuilderScene {
     const pos: number[] = [], col: number[] = [], dir: number[] = [], rnd: number[] = [];
     const v = new THREE.Vector3(), c = new THREE.Vector3(), cam = this.camera.position;
     this.scene.updateMatrixWorld();
+    // centro della coppia: le particelle si allontanano da qui verso l'esterno (e un po' verso la camera)
+    const center = new THREE.Vector3().copy(this.root.position).add(this.pRoot.visible ? this.pRoot.position : this.root.position).multiplyScalar(0.5);
+    center.y += 0.15;
     for (const model of models) {
       model.traverse((o) => {
         const mesh = o as THREE.SkinnedMesh;
@@ -697,9 +731,12 @@ export class BuilderScene {
             const k = (py * tex.w + px) * 4;
             col.push(tex.data[k] / 255, tex.data[k + 1] / 255, tex.data[k + 2] / 255);
           } else col.push(0.7, 0.6, 1);
-          // verso la camera (e oltre), con dispersione e una spinta verso l'alto
-          c.copy(cam).sub(v).normalize().multiplyScalar(1 + Math.random() * 0.8);
-          c.add(this.fv.b.randomDirection().multiplyScalar(0.55)).add(this.fv.b.set(0, 0.25, 0));
+          // verso l'esterno (radiale dalla coppia), con una componente verso la camera e dispersione
+          const out = this.fv.ta.copy(v).sub(center);
+          out.y *= 0.6;
+          out.normalize().multiplyScalar(1.3 + Math.random() * 0.9);
+          c.copy(cam).sub(v).normalize().multiplyScalar(0.45 + Math.random() * 0.3).add(out);
+          c.add(this.fv.b.randomDirection().multiplyScalar(0.35)).add(this.fv.b.set(0, 0.12, 0));
           dir.push(c.x, c.y, c.z);
           rnd.push((1 - h) * 0.32 + Math.random() * 0.12); // dalla testa ai piedi
         }
@@ -720,7 +757,7 @@ export class BuilderScene {
         void main() {
           float p = clamp((uP - aDelay) / (1.0 - 0.44), 0.0, 1.0);
           float e = p * p * (3.0 - 2.0 * p);
-          vec3 pos = position + aDir * (e * e * 4.0);
+          vec3 pos = position + aDir * (e * e * 3.2);
           vec4 mv = modelViewMatrix * vec4(pos, 1.0);
           gl_Position = projectionMatrix * mv;
           gl_PointSize = min(uSize * (1.0 + e * 2.5) / max(0.05, -mv.z), 48.0);
@@ -757,6 +794,12 @@ export class BuilderScene {
     const turn = st.amt * st.amt * (3 - 2 * st.amt);
     obj.rotation.y = THREE.MathUtils.lerp(obj.rotation.y, st.face * Math.PI / 2, turn * 0.9);
     rig?.setWalk(st.phase, st.amt);
+  }
+
+  private enterPortfolio(): void {
+    this.act('present');
+    gsap.to(this.body, { yaw: 0.55, duration: 1.1, ease: 'power3.inOut', overwrite: true });
+    this.setPartner(true, 'present', -0.55);
   }
 
   private setManifestoHidden(hidden: boolean): void {
@@ -812,26 +855,30 @@ export class BuilderScene {
       const lookUp = THREE.MathUtils.smoothstep(fin, 0.2, 0.5);
       this.look.x += (THREE.MathUtils.lerp(this.pointer.x * calm, 0, lookUp) - this.look.x) * 0.12;
       this.look.y += (THREE.MathUtils.lerp(this.pointer.y * calm, 0.75, lookUp) - this.look.y) * 0.12;
-      this.rig?.setLook(this.look.x, this.look.y);
+      // nel portfolio guardano la card al centro
+      const ptl = this.port.v * (1 - THREE.MathUtils.clamp((this.shot.rings - 0.6) / 0.4, 0, 1));
+      this.rig?.setLook(THREE.MathUtils.lerp(this.look.x, 0.7, ptl), THREE.MathUtils.lerp(this.look.y, 0.1, ptl));
 
       // fluttuazione leggera (spenta durante lo zoom)
       // hero → palco del metodo (p1) → centro della scena larga del finale (p2)
       const a = this.anchor, ma = this.mAnchor, lerp = THREE.MathUtils.lerp;
       const p1 = THREE.MathUtils.clamp(s.rings / 0.6, 0, 1), p2 = THREE.MathUtils.clamp((s.rings - 0.6) / 0.4, 0, 1);
-      this.root.scale.setScalar(lerp(lerp(a.s, ma.s, p1), 1, p2));
-      // nella scena larga i due escono ai lati (camminando): rientreranno nel finale
-      this.root.position.x = lerp(lerp(a.x, ma.x, p1), -this.offX, p2);
-      this.root.position.y = lerp(lerp(a.y, ma.y, p1), -0.3, p2) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm * (1 - p2));
+      const pa = this.portA, pt = this.port.v;
+      this.root.scale.setScalar(lerp(lerp(lerp(a.s, ma.s, p1), pa.bs, pt), 1, p2));
+      // nel portfolio stanno ai lati del carosello; nella scena larga escono ai lati (camminando) e rientreranno nel finale
+      this.root.position.x = lerp(lerp(lerp(a.x, ma.x, p1), pa.bx, pt), -this.offX, p2);
+      this.root.position.y = lerp(lerp(lerp(a.y, ma.y, p1), pa.by, pt), -0.3, p2) + (this.opts.reducedMotion ? 0 : Math.sin(t * 1.2) * 0.012 * calm * (1 - p2));
       this.root.rotation.y = s.yaw + this.body.yaw;
       // socio: accanto al Builder nel palco del metodo, poi nella scena larga; cade dall'alto quando entra
       const pv = this.partnerIn.v;
       this.pRoot.visible = !!this.partner && pv > 0.001;
       if (this.pRoot.visible) {
-        const ps = lerp(ma.s, 1, p2);
+        const ps = lerp(lerp(ma.s, pa.ps, pt), 1, p2);
         this.pRoot.scale.setScalar(ps);
-        this.pRoot.position.set(lerp(ma.px, this.offX, p2), this.root.position.y + (1 - pv) * 1.9, 0.05);
+        const py = lerp(lerp(lerp(a.y, ma.y, p1), pa.py, pt), -0.3, p2);
+        this.pRoot.position.set(lerp(lerp(ma.px, pa.px, pt), this.offX, p2), py + (1 - pv) * 1.9, 0.05);
         this.pRoot.rotation.y = this.pBody.yaw;
-        this.pRig?.setLook(this.look.x, this.look.y);
+        this.pRig?.setLook(THREE.MathUtils.lerp(this.look.x, -0.7, ptl), THREE.MathUtils.lerp(this.look.y, 0.1, ptl));
       }
 
       // il laptop serve solo nella prima parte: sparisce quando la storia va avanti
@@ -843,11 +890,12 @@ export class BuilderScene {
       this.rings.rotation.y = t * 0.25;
       this.rings.rotation.x = Math.sin(t * 0.4) * 0.2;
       // nella scena larga il logo si allontana al centro, lontanissimo: da lì partirà verso il pubblico
-      this.rings.scale.setScalar(lerp(lerp(a.ringS, ma.ringS, p1), 0.7, p2));
+      const far = Math.max(pt, p2); // dal portfolio in poi il logo è lontano al centro
+      this.rings.scale.setScalar(lerp(lerp(a.ringS, ma.ringS, p1), 0.7, far));
       this.rings.position.set(
-        lerp(lerp(a.ringX, ma.ringX, p1), 0, p2),
-        lerp(lerp(a.ringY, ma.ringY, p1), 0.3, p2),
-        lerp(lerp(-1.3, -1.5, p1), -9, p2)
+        lerp(lerp(a.ringX, ma.ringX, p1), 0, far),
+        lerp(lerp(a.ringY, ma.ringY, p1), 0.3, far),
+        lerp(lerp(-1.3, -1.5, p1), -9, far)
       );
 
       // finale: entrate dai lati, logo che arriva, batti cinque, dissolvenza
@@ -927,7 +975,15 @@ export class BuilderScene {
         x: met.x - side, y: met.y - 0.02 * met.s, s: met.s, px: met.x + side,
         ringX: met.x, ringY: met.y + 0.7 * met.s, ringS: 0.26 * met.s
       });
+    }
+    const pl = this.fitStage(this.opts.ids.portLeft, 0.85), pr = this.fitStage(this.opts.ids.portRight, 0.85);
+    if (pl && pr) {
+      Object.assign(this.portA, { bx: pl.x, by: pl.y - 0.02 * pl.s, bs: pl.s, px: pr.x, py: pr.y - 0.02 * pr.s, ps: pr.s });
     } else {
+      // mobile: piccoli in basso ai lati
+      Object.assign(this.portA, { bx: -0.38, by: -0.55, bs: 0.45, px: 0.38, py: -0.55, ps: 0.45 });
+    }
+    if (!met) {
       // mobile (niente palco): i due al centro, dietro alle card
       Object.assign(this.mAnchor, { x: -0.2, y: 0.18, s: 0.7, px: 0.2, ringX: 0, ringY: 0.6, ringS: 0.35 });
     }
@@ -963,6 +1019,7 @@ export class BuilderScene {
     cancelAnimationFrame(this.raf);
     this.triggers.forEach((t) => t.kill());
     this.offRefresh?.();
+    this.offPortfolio?.();
     gsap.killTweensOf([this.shot, this.body, this.zoom, this.finale, this.pBody, this.partnerIn, this.five, this.burstState]);
     this.fiveTl?.kill();
     this.pRig?.dispose();
