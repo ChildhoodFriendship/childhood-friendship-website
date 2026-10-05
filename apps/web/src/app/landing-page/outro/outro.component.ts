@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CONTACTS } from '../contacts';
 
 const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
 
@@ -19,6 +20,24 @@ const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
           }
         </h2>
       </div>
+      <!-- contatti diretti: solo icone -->
+      <nav class="social" aria-label="Contatti diretti">
+        @if (contacts.email) {
+          <a class="ico" [href]="'mailto:' + contacts.email" aria-label="Scrivici una email" data-cursor="email">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="3" /><path d="M4 7.5l8 6 8-6" /></svg>
+          </a>
+        }
+        @if (contacts.phone) {
+          <a class="ico" [href]="'tel:' + phoneHref" aria-label="Chiamaci" data-cursor="chiama">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.6 4.2-2 1.3a11.5 11.5 0 0 0 6.2 6.2l1.3-2 4.2 1.6v2.6a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" /></svg>
+          </a>
+        }
+        @if (contacts.instagram) {
+          <a class="ico" [href]="'https://instagram.com/' + contacts.instagram" target="_blank" rel="noopener" aria-label="Seguici su Instagram" data-cursor="instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle class="dot" cx="17.2" cy="6.8" r="1" /></svg>
+          </a>
+        }
+      </nav>
       <div class="veil" aria-hidden="true"></div>
     </section>
   `,
@@ -34,11 +53,25 @@ const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
     .line { display: block; }
     .w { display: inline-block; margin: 0 .09em; will-change: transform, opacity, filter; }
     .line:last-child .w { color: #C4B5FD; }
+    .social { position: absolute; z-index: 1; top: 6.5rem; right: clamp(1.25rem, 4vw, 4rem); display: flex; gap: .75rem; }
+    .ico { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 16px; color: var(--cf-chalk);
+      background: rgba(246, 241, 255, .06); border: 1.5px solid rgba(246, 241, 255, .22); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      transition: background .25s, border-color .25s, color .25s, transform .25s, box-shadow .25s; }
+    .ico svg { width: 1.45rem; height: 1.45rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .ico .dot { fill: currentColor; stroke: none; }
+    .ico:hover, .ico:focus-visible { background: var(--cf-violet); border-color: #A78BFA; color: #fff; transform: translateY(-3px); box-shadow: 0 10px 30px -8px rgba(124, 58, 237, .8); outline: none; }
     .veil { position: absolute; inset: 0; background: #7C3AED; opacity: 0; pointer-events: none; z-index: 2; }
-    @media (max-width: 899px) { .stage { margin-top: -38vh; } }
+    @media (max-width: 899px) {
+      .stage { margin-top: -38vh; }
+      .social { top: 5rem; right: 1rem; gap: .5rem; }
+      .ico { width: 2.75rem; height: 2.75rem; border-radius: 14px; }
+      .ico svg { width: 1.25rem; height: 1.25rem; }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OutroComponent {
+  protected readonly contacts = CONTACTS;
+  protected readonly phoneHref = CONTACTS.phone.replace(/[^\d+]/g, '');
   protected readonly lines = LINES;
 }
