@@ -1,6 +1,6 @@
 /**
  * Contatti pubblici dello studio, usati dai bottoni icona del finale.
- * Un bottone compare solo se il suo valore è compilato.
+ * Finché telefono/Instagram sono vuoti i bottoni restano visibili e portano al form (#contatti).
  */
 export const CONTACTS = {
   email: 'hello@childhoodfriendship.dev',

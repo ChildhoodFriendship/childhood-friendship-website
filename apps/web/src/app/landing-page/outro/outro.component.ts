@@ -27,16 +27,12 @@ const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="3" /><path d="M4 7.5l8 6 8-6" /></svg>
           </a>
         }
-        @if (contacts.phone) {
-          <a class="ico" [href]="'tel:' + phoneHref" aria-label="Chiamaci" data-cursor="chiama">
+          <a class="ico" [href]="contacts.phone ? 'tel:' + phoneHref : '#contatti'" aria-label="Chiamaci" data-cursor="chiama">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.6 4.2-2 1.3a11.5 11.5 0 0 0 6.2 6.2l1.3-2 4.2 1.6v2.6a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" /></svg>
           </a>
-        }
-        @if (contacts.instagram) {
-          <a class="ico" [href]="'https://instagram.com/' + contacts.instagram" target="_blank" rel="noopener" aria-label="Seguici su Instagram" data-cursor="instagram">
+          <a class="ico" [href]="contacts.instagram ? 'https://instagram.com/' + contacts.instagram : '#contatti'" [attr.target]="contacts.instagram ? '_blank' : null" rel="noopener" aria-label="Seguici su Instagram" data-cursor="instagram">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle class="dot" cx="17.2" cy="6.8" r="1" /></svg>
           </a>
-        }
       </nav>
       <div class="veil" aria-hidden="true"></div>
     </section>
