@@ -46,3 +46,9 @@
 - Finale: dissolvenza più lenta e verso l'esterno, logo che gira veloce prima dello zoom.
 - Nuova pagina [[modules/landing-3d.md]]; aggiornati [[current-status.md]], [[pricing.md]], [[index.md]].
 - Menu: "Prezzi" → "Progetti" (dopo "Come lavoriamo"); "Chi siamo" ora punta al manifesto.
+
+## [2026-10-05] update | Landing: chi siamo, hero mobile, portfolio, caveau
+- Nuova sezione Chi siamo tra servizi e metodo, titolo a particelle; navbar riordinata.
+- Hero mobile alla Olter con Builder rotante; finale con bottoni contatto a icona (`contacts.ts`).
+- Portfolio: rimossi i riquadri scuri (collisione con `.card` globale), hover con dettagli, click sul sito live.
+- Caveau: solo ambiente 3D e camera cinematografica.
