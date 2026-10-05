@@ -18,6 +18,8 @@ export class ParticleText {
   private last = 0;
   private solid = 0;
   private readonly mouse = { x: -1e4, y: -1e4, in: false };
+  /** Quanto il puntatore sta "mescolando": cresce col movimento, si spegne da fermo (un cursore immobile non tiene le particelle lontane). */
+  private stir = 0;
   private readonly ro: ResizeObserver;
   private readonly io: IntersectionObserver;
   private visible = false;
@@ -45,8 +47,10 @@ export class ParticleText {
 
   private readonly onMove = (e: PointerEvent): void => {
     const r = this.canvas.getBoundingClientRect();
-    this.mouse.x = e.clientX - r.left;
-    this.mouse.y = e.clientY - r.top;
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    if (this.mouse.x > -1e3) this.stir = Math.min(1, this.stir + Math.hypot(x - this.mouse.x, y - this.mouse.y) / 60);
+    this.mouse.x = x;
+    this.mouse.y = y;
     this.mouse.in = this.mouse.x > this.pad * 0.5 && this.mouse.y > this.pad * 0.5 && this.mouse.x < r.width - this.pad * 0.5 && this.mouse.y < r.height - this.pad * 0.5;
     if (this.mouse.in) this.wake();
   };
@@ -56,7 +60,7 @@ export class ParticleText {
   private build(): void {
     const rect = this.title.getBoundingClientRect();
     if (rect.width < 10) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 2);
     const W = Math.ceil(rect.width + this.pad * 2), H = Math.ceil(rect.height + this.pad * 2);
     Object.assign(this.canvas.style, { left: `${-this.pad}px`, top: `${-this.pad}px`, width: `${W}px`, height: `${H}px` });
     this.canvas.width = W * dpr; this.canvas.height = H * dpr;
@@ -137,15 +141,18 @@ export class ParticleText {
     const { hx, hy, px, py, vx, vy, delay } = this;
     const mx = this.mouse.x, my = this.mouse.y, R = 140, R2 = R * R;
     const spring = 0.045 * dt, damp = Math.pow(0.84, dt);
+    this.stir *= Math.pow(0.9, dt);
+    if (this.stir < 0.01) this.stir = 0;
+    const stir = this.stir;
     let moving = 0;
     for (let i = 0; i < this.n; i++) {
       if (born < delay[i]) { moving++; continue; }
       let ax = (hx[i] - px[i]) * spring, ay = (hy[i] - py[i]) * spring;
-      if (this.mouse.in) {
+      if (this.mouse.in && stir > 0) {
         const dx = px[i] - mx, dy = py[i] - my, d2 = dx * dx + dy * dy;
         if (d2 < R2) {
           const d = Math.sqrt(d2) || 1, f = (1 - d / R);
-          const k = f * f * 12 * dt;
+          const k = f * f * 12 * dt * stir;
           ax += (dx / d) * k + (Math.random() - 0.5) * k * 1.2;
           ay += (dy / d) * k + (Math.random() - 0.5) * k * 1.2;
         }
@@ -155,18 +162,19 @@ export class ParticleText {
       if (Math.abs(hx[i] - px[i]) + Math.abs(hy[i] - py[i]) > 0.6 || Math.abs(vx[i]) + Math.abs(vy[i]) > 0.05) moving++;
     }
     // a riposo il testo vero prende il posto delle particelle (nitido); appena si muovono, torna la polvere
-    const target = born >= 0 && moving < this.n * 0.004 ? 1 : 0;
+    const target = born >= 0 && stir === 0 && moving < this.n * 0.004 ? 1 : 0;
     this.solid += (target - this.solid) * (target ? 0.08 : 0.35) * dt;
     if (target && this.solid > 0.995) this.solid = 1;
     this.title.style.setProperty('--solid', this.solid.toFixed(3));
     this.draw(born);
-    const busy = born < 0 ? this.visible && this.bornAt < 0 : moving > 0 || this.solid < 1 || this.mouse.in;
+    const busy = born < 0 ? this.visible && this.bornAt < 0 : moving > 0 || this.solid < 1 || stir > 0;
     if (busy && this.visible) this.raf = requestAnimationFrame(this.frame);
   };
 
   private draw(born: number): void {
     const c = this.ctx, s = this.size;
-    c.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // pulizia in pixel reali: con zoom del browser < 100% il devicePixelRatio è < 1
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, this.canvas.width, this.canvas.height); c.restore();
     if (born < 0) return;
     c.globalAlpha = 1 - this.solid;
     for (let ci = 0; ci < this.colors.length; ci++) {
