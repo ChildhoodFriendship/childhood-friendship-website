@@ -8,13 +8,13 @@ Questo file contiene le istruzioni operative per qualsiasi IA o sviluppatore che
 
 La fonte di verità per regole, contesto, decisioni architetturali e stato del progetto è la cartella:
 
-`docs/wiki/`
+`doc/wiki/`
 
 Prima di modificare il codice è obbligatorio consultare:
 
-- [`docs/wiki/best-practices.md`](docs/wiki/best-practices.md)
-- [`docs/wiki/milestones.md`](docs/wiki/milestones.md)
-- [`docs/wiki/boundaries.md`](docs/wiki/boundaries.md)
+- [`doc/wiki/SCHEMA.md`](doc/wiki/SCHEMA.md)
+- [`doc/wiki/agent-guide.md`](doc/wiki/agent-guide.md)
+- [`doc/wiki/current-status.md`](doc/wiki/current-status.md)
 
 In caso di conflitto, la documentazione aggiornata nella wiki prevale sulle supposizioni personali. Se una decisione è ambigua o non documentata, fermarsi e chiedere chiarimenti prima di procedere.
 
@@ -47,9 +47,10 @@ La wiki deve essere aggiornata quando viene:
 
 Aggiornare almeno uno dei seguenti file quando necessario:
 
-- `docs/wiki/best-practices.md`
-- `docs/wiki/milestones.md`
-- `docs/wiki/boundaries.md`
+- `doc/wiki/agent-guide.md`
+- `doc/wiki/current-status.md`
+- `doc/wiki/SCHEMA.md`
+- `doc/wiki/log.md`
 
 ## Identità del progetto
 
