@@ -8,15 +8,17 @@ Questo file contiene le istruzioni operative per qualsiasi IA o sviluppatore che
 
 La fonte di verità per regole, contesto, decisioni architetturali e stato del progetto è la cartella:
 
-`doc/wiki/`
+`docs/wiki/`
 
 Prima di modificare il codice è obbligatorio consultare:
 
-- [`doc/wiki/SCHEMA.md`](doc/wiki/SCHEMA.md)
-- [`doc/wiki/agent-guide.md`](doc/wiki/agent-guide.md)
-- [`doc/wiki/current-status.md`](doc/wiki/current-status.md)
+- [`docs/wiki/SCHEMA.md`](docs/wiki/SCHEMA.md)
+- [`docs/wiki/agent-guide.md`](docs/wiki/agent-guide.md)
+- [`docs/wiki/current-status.md`](docs/wiki/current-status.md)
 
 In caso di conflitto, la documentazione aggiornata nella wiki prevale sulle supposizioni personali. Se una decisione è ambigua o non documentata, fermarsi e chiedere chiarimenti prima di procedere.
+
+Prima di modificare la repo, eseguire `git status`. Se ci sono modifiche locali non committate, fermarsi e comunicarlo. Se lo stato è pulito, eseguire `git fetch` e `git pull --ff-only` sul branch corrente. Se il pull fallisce o i branch sono divergenti, non risolvere autonomamente: mostrare lo stato e attendere. Lavorare su un branch `hermes/<task>`, mai direttamente su `main`.
 
 ## Regole operative
 
@@ -47,10 +49,10 @@ La wiki deve essere aggiornata quando viene:
 
 Aggiornare almeno uno dei seguenti file quando necessario:
 
-- `doc/wiki/agent-guide.md`
-- `doc/wiki/current-status.md`
-- `doc/wiki/SCHEMA.md`
-- `doc/wiki/log.md`
+- `docs/wiki/agent-guide.md`
+- `docs/wiki/current-status.md`
+- `docs/wiki/SCHEMA.md`
+- `docs/wiki/log.md`
 
 ## Identità del progetto
 

@@ -33,4 +33,4 @@ Accedi da `http://localhost:4200/login`. I clienti e i colleghi entrano solo tra
 | `npm run db:generate` | Genera una nuova migrazione dopo modifiche a `apps/api/src/db/schema.ts` |
 | `npm run db:migrate` | Applica le migrazioni al `DATABASE_URL` configurato |
 
-Deploy, variabili d'ambiente e procedure operative: `docs/wiki/runbooks/deploy-production.md`.
+Regole operative, stato e integrazioni: `docs/wiki/` (indice e guida agenti).

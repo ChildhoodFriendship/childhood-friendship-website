@@ -1,4 +1,4 @@
-# Never commit secrets or local exports
+# Non versionare segreti o esportazioni locali
 .env
 .env.*
 !.env.example
