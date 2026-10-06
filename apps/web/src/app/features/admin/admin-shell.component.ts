@@ -85,7 +85,6 @@ export class AdminShellComponent {
   protected readonly initials = computed(() => (this.auth.user()?.name ?? '?').split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase());
 
   constructor() {
-    // chiude il menu mobile a ogni navigazione
     toSignal(inject(Router).events.pipe(filter((e) => e instanceof NavigationEnd), map(() => this.navOpen.set(false))));
   }
 }
