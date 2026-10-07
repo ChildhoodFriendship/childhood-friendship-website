@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { projectInputSchema, projectListQuerySchema, projectPatchSchema } from '@cf/shared/schemas';
+import type { ProjectHealthCheckDto } from '@cf/shared/types';
 import type { AppContext } from '../../context.js';
 import { clients, projects } from '../../db/schema.js';
 import { audit } from '../../lib/audit.js';
@@ -69,6 +70,102 @@ export function projectsRouter(ctx: AppContext): Router {
     if (!row) throw notFound('Progetto');
     await audit(ctx.db, req, { action: 'project.deleted', entity: 'project', entityId: project.id, meta: { name: project.name } });
     res.status(204).end();
+  });
+
+  router.post('/:projectId/health-check', requireTeam, scope, async (req, res) => {
+    const project = currentProject(res);
+
+    let siteOnline = false;
+    let siteStatus: number | null = null;
+    let siteLatencyMs: number | null = null;
+    let siteError: string | null = null;
+
+    if (project.targetUrl) {
+      const start = performance.now();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const urlToFetch = project.targetUrl.startsWith('http') ? project.targetUrl : `https://${project.targetUrl}`;
+        const resp = await fetch(urlToFetch, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: { 'User-Agent': 'ChildhoodFriendship-Monitor/1.0' }
+        });
+        clearTimeout(timeoutId);
+        siteLatencyMs = Math.round(performance.now() - start);
+        siteStatus = resp.status;
+        siteOnline = resp.ok || (resp.status >= 200 && resp.status < 400);
+      } catch (err) {
+        siteLatencyMs = Math.round(performance.now() - start);
+        siteOnline = false;
+        siteError = (err as Error).name === 'AbortError' ? 'Timeout (>6s)' : 'Host non raggiungibile';
+      }
+    }
+
+    let stagingOnline = false;
+    let stagingStatus: number | null = null;
+    let stagingLatencyMs: number | null = null;
+
+    if (project.stagingUrl) {
+      const start = performance.now();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const urlToFetch = project.stagingUrl.startsWith('http') ? project.stagingUrl : `https://${project.stagingUrl}`;
+        const resp = await fetch(urlToFetch, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: { 'User-Agent': 'ChildhoodFriendship-Monitor/1.0' }
+        });
+        clearTimeout(timeoutId);
+        stagingLatencyMs = Math.round(performance.now() - start);
+        stagingStatus = resp.status;
+        stagingOnline = resp.ok || (resp.status >= 200 && resp.status < 400);
+      } catch {
+        stagingLatencyMs = Math.round(performance.now() - start);
+        stagingOnline = false;
+      }
+    }
+
+    let dbConnected = false;
+    let dbLatencyMs = 0;
+    try {
+      const dbStart = performance.now();
+      await ctx.db.execute(sql`SELECT 1`);
+      dbLatencyMs = Math.round(performance.now() - dbStart);
+      dbConnected = true;
+    } catch {
+      dbConnected = false;
+    }
+
+    if (project.targetUrl) {
+      await ctx.db.update(projects).set({ isOnline: siteOnline }).where(eq(projects.id, project.id));
+    }
+
+    await audit(ctx.db, req, {
+      action: 'project.health_checked',
+      entity: 'project',
+      entityId: project.id,
+      projectId: project.id,
+      meta: { siteOnline, siteStatus, siteLatencyMs, dbConnected, dbLatencyMs }
+    });
+
+    const result: ProjectHealthCheckDto = {
+      targetUrl: project.targetUrl,
+      stagingUrl: project.stagingUrl,
+      siteOnline,
+      siteStatus,
+      siteLatencyMs,
+      siteError,
+      stagingOnline,
+      stagingStatus,
+      stagingLatencyMs,
+      dbConnected,
+      dbLatencyMs,
+      checkedAt: new Date().toISOString()
+    };
+
+    res.json(result);
   });
 
   return router;

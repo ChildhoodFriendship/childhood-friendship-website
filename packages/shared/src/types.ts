@@ -85,3 +85,18 @@ export interface DashboardDto {
 
 export interface AiUsageDto { usedToday: number; dailyLimit: number; enabled: boolean; }
 export interface AiTextResult { text: string; }
+
+export interface ProjectHealthCheckDto {
+  targetUrl: string | null;
+  stagingUrl: string | null;
+  siteOnline: boolean;
+  siteStatus: number | null;
+  siteLatencyMs: number | null;
+  siteError: string | null;
+  stagingOnline: boolean;
+  stagingStatus: number | null;
+  stagingLatencyMs: number | null;
+  dbConnected: boolean;
+  dbLatencyMs: number;
+  checkedAt: string;
+}
