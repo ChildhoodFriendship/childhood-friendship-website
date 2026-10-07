@@ -30,7 +30,7 @@ export function createApp(ctx: AppContext): Express {
   app.disable('x-powered-by');
   app.set('trust proxy', ctx.env.TRUST_PROXY);
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } }, crossOriginResourcePolicy: { policy: 'same-origin' } }));
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.json({ limit: '10mb' }));
   app.use(cookieParser());
 
   const api = Router();

@@ -76,6 +76,14 @@ async function main() {
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS salon_media (
+      id TEXT PRIMARY KEY,
+      filename TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      data_base64 TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    );
+
     ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_client_id_fkey;
   `);
   console.log('Tabelle create con successo!');
