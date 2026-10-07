@@ -19,6 +19,7 @@ import { marketingRouter } from './modules/marketing/marketing.routes.js';
 import { messagesRouter } from './modules/messages/messages.routes.js';
 import { projectScope } from './modules/projects/access.js';
 import { projectsRouter } from './modules/projects/projects.routes.js';
+import { salonRouter } from './modules/salon/salon.routes.js';
 import { tasksRouter } from './modules/tasks/tasks.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 
@@ -38,11 +39,12 @@ export function createApp(ctx: AppContext): Express {
     windowMs: 60_000, limit: ctx.env.NODE_ENV === 'test' ? 10_000 : 300, standardHeaders: 'draft-8', legacyHeaders: false,
     message: { error: { code: 'rate_limited', message: 'Troppe richieste, rallenta.' } }
   }));
-  api.use(csrf(isProd, (path) => path.startsWith('/public/')));
+  api.use(csrf(isProd, (path) => path.startsWith('/public/') || path.startsWith('/salon/')));
   api.use(authenticate(ctx));
 
   api.get('/health', (_req, res) => { res.json({ ok: true }); });
   api.use('/public/leads', publicLeadsRouter(ctx));
+  api.use('/salon', salonRouter(ctx));
   api.use('/auth', authRouter(ctx));
 
   api.use(requireAuth);
