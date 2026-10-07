@@ -59,7 +59,7 @@ async function main() {
       id TEXT PRIMARY KEY,
       service_id TEXT NOT NULL REFERENCES services(id),
       employee_id TEXT NOT NULL REFERENCES employees(id),
-      client_id TEXT NOT NULL REFERENCES salon_clients(id),
+      client_id TEXT NOT NULL,
       start_time TIMESTAMP WITH TIME ZONE NOT NULL,
       duration_minutes INTEGER NOT NULL,
       status TEXT NOT NULL DEFAULT 'confirmed',
@@ -75,6 +75,8 @@ async function main() {
       employee_id TEXT REFERENCES employees(id),
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_client_id_fkey;
   `);
   console.log('Tabelle create con successo!');
 
