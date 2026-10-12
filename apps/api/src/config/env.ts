@@ -16,8 +16,7 @@ const envSchema = z.object({
   AI_MODEL: z.string().default('gemini-2.5-flash'),
   AI_BASE_URL: z.string().optional(),
   AI_API_KEY: z.string().optional(),
-  AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(50),
-  SISSY_DATABASE_URL: z.string().default('postgresql://neondb_owner:npg_Ze0q5UkiOHWN@ep-snowy-star-b7nt23aw-pooler.c-13.us-east-1.aws.neon.tech/sissy_hairstyle?sslmode=require')
+  AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(50)
 });
 
 export type Env = z.infer<typeof envSchema>;
