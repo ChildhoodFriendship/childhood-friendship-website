@@ -1,0 +1,3 @@
+# Mantieni la wiki priva di artefatti locali
+*.local.md
+*.tmp
