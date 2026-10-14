@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -134,17 +134,6 @@ const urlPattern = /^https?:\/\/.+/;
           </section>
         }
 
-        @if (isSalon()) {
-          <section class="card stack-sm" style="border: 1px solid rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.05)">
-            <div class="row-between">
-              <h3>✂ Modulo Salone</h3>
-              <span class="badge badge-green">Attivo</span>
-            </div>
-            <p class="small muted">Gestione salone: agenda prenotazioni, schede tecniche colore dei clienti e listino.</p>
-            <a class="btn btn-primary btn-sm" routerLink="salone">Apri Gestione Salone →</a>
-          </section>
-        }
-
         <section class="card stack-sm">
           <h3>Appuntamenti</h3>
           @for (a of appointments(); track a.id) {
@@ -213,12 +202,6 @@ export class OverviewTab {
   protected readonly saving = signal(false);
   protected readonly health = signal<ProjectHealthCheckDto | null>(null);
   protected readonly checkingHealth = signal(false);
-  protected readonly isSalon = computed(() => {
-    const p = this.store.project();
-    if (!p) return false;
-    const combined = `${p.name} ${this.client()?.name ?? ''}`.toLowerCase();
-    return combined.includes('sissy') || combined.includes('salone') || combined.includes('hairstyle');
-  });
   private loadedFor = '';
 
   protected async checkHealth(): Promise<void> {

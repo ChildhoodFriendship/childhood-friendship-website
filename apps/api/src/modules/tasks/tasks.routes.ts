@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { and, asc, eq, inArray, max } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, max, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { taskInputSchema, taskPatchSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
@@ -8,14 +8,15 @@ import { audit } from '../../lib/audit.js';
 import { badRequest, notFound } from '../../lib/http-error.js';
 import { serialize } from '../../lib/serialize.js';
 import { defined, parse } from '../../lib/validate.js';
-import { requireTeam } from '../../middleware/auth.js';
+import { isTeam, requireTeam } from '../../middleware/auth.js';
 import { assertWritable, currentProject } from '../projects/access.js';
 
 const uuidParam = z.uuid('ID non valido');
-const columns = {
+const { assigneeId: _assignee, ...portalColumns } = {
   id: tasks.id, projectId: tasks.projectId, title: tasks.title, phase: tasks.phase, done: tasks.done, dueDate: tasks.dueDate,
   assigneeId: tasks.assigneeId, documentId: tasks.documentId, position: tasks.position, completedAt: tasks.completedAt
 };
+const columns = { ...portalColumns, assigneeId: tasks.assigneeId };
 
 export function tasksRouter(ctx: AppContext): Router {
   const router = Router({ mergeParams: true });
@@ -32,8 +33,18 @@ export function tasksRouter(ctx: AppContext): Router {
     }
   }
 
-  router.get('/', async (_req, res) => {
-    const rows = await db.select(columns).from(tasks).where(eq(tasks.projectId, currentProject(res).id)).orderBy(asc(tasks.position), asc(tasks.createdAt));
+  router.get('/', async (req, res) => {
+    const projectId = currentProject(res).id;
+    if (isTeam(req)) {
+      const rows = await db.select(columns).from(tasks).where(eq(tasks.projectId, projectId)).orderBy(asc(tasks.position), asc(tasks.createdAt));
+      res.json(serialize(rows));
+      return;
+    }
+    // Cliente: niente assegnatari e niente task legati a documenti interni
+    const visibleDocs = db.select({ id: documents.id }).from(documents).where(and(eq(documents.projectId, projectId), eq(documents.clientVisible, true)));
+    const rows = await db.select(portalColumns).from(tasks)
+      .where(and(eq(tasks.projectId, projectId), or(isNull(tasks.documentId), inArray(tasks.documentId, visibleDocs))))
+      .orderBy(asc(tasks.position), asc(tasks.createdAt));
     res.json(serialize(rows));
   });
 

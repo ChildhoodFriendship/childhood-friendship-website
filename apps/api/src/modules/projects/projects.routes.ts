@@ -10,7 +10,7 @@ import { serialize } from '../../lib/serialize.js';
 import { defined, emptyToNull, parse } from '../../lib/validate.js';
 import { isTeam, requireAdmin, requireTeam } from '../../middleware/auth.js';
 import { currentProject, projectScope } from './access.js';
-import { ProjectsService } from './projects.service.js';
+import { ProjectsService, toPortalDto } from './projects.service.js';
 
 export function projectsRouter(ctx: AppContext): Router {
   const router = Router();
@@ -19,8 +19,9 @@ export function projectsRouter(ctx: AppContext): Router {
 
   router.get('/', async (req, res) => {
     const query = parse(projectListQuerySchema, req.query);
-    const onlyClient = isTeam(req) ? undefined : req.user!.clientId ?? '00000000-0000-0000-0000-000000000000';
-    res.json(serialize(await service.list(query, onlyClient)));
+    if (isTeam(req)) { res.json(serialize(await service.list(query))); return; }
+    const page = await service.list(query, req.user!.clientId ?? '00000000-0000-0000-0000-000000000000');
+    res.json(serialize({ ...page, items: page.items.map(toPortalDto) }));
   });
 
   router.post('/', requireTeam, async (req, res) => {
@@ -30,8 +31,10 @@ export function projectsRouter(ctx: AppContext): Router {
     res.status(201).json(serialize(await service.get(created.id)));
   });
 
-  router.get('/:projectId', scope, async (_req, res) => {
-    res.json(serialize(await service.get(currentProject(res).id)));
+  router.get('/:projectId', scope, async (req, res) => {
+    if (isTeam(req)) { res.json(serialize(await service.get(currentProject(res).id))); return; }
+    const dto = await service.get(currentProject(res).id, true);
+    res.json(serialize(dto && toPortalDto(dto)));
   });
 
   router.patch('/:projectId', requireTeam, scope, async (req, res) => {

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import type { Paginated, ProjectDto } from '@cf/shared/types';
+import type { Paginated, PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
@@ -42,17 +42,17 @@ export class PortalProjectsPage implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   protected readonly projectStatus = projectStatus;
-  protected readonly items = signal<ProjectDto[]>([]);
+  protected readonly items = signal<PortalProjectDto[]>([]);
   protected readonly loading = signal(true);
   protected readonly firstName = inject(AuthService).user()?.name.split(' ')[0] ?? '';
 
   async ngOnInit(): Promise<void> {
     try {
-      const r = await this.api.get<Paginated<ProjectDto>>('/projects', { pageSize: 50 });
+      const r = await this.api.get<Paginated<PortalProjectDto>>('/projects', { pageSize: 50 });
       this.items.set(r.items);
       if (r.items.length === 1) await this.router.navigate(['/portale/progetti', r.items[0]!.id], { replaceUrl: true });
     } catch (err) { this.toast.error(err); } finally { this.loading.set(false); }
   }
 
-  protected pctOf(p: ProjectDto): number { return p.progress ? percent(p.progress.tasksDone, p.progress.tasksTotal) : 0; }
+  protected pctOf(p: PortalProjectDto): number { return p.progress ? percent(p.progress.tasksDone, p.progress.tasksTotal) : 0; }
 }

@@ -1,6 +1,6 @@
 # Stato corrente
 
-> Snapshot documentale: 2026-10-06 · branch osservato: `main`.
+> Snapshot documentale: 2026-10-14 · branch osservato: `fix/portale-privacy`.
 
 ## Sistema
 
@@ -8,15 +8,16 @@
 - Web Angular 22 con landing pubblica, area admin e portale clienti.
 - API Express + Drizzle; PGlite in locale, Postgres/Neon previsto in produzione.
 - Auth a sessione con access/refresh token, inviti, ruoli `admin`/`staff`/`client`, CSRF e audit.
+- Portale cliente: dati interni di progetto, assegnatari, task di documenti interni e note appuntamenti non esposti (DTO `Portal*`).
 - Landing con scena Three.js caricata in differita, portfolio 3D, contatti e route `/caveau`.
 
 ## Verifiche riconfermate
 
 | Controllo | Esito registrato |
 |---|---|
-| `npm run check` | passato per shared, API e web il 2026-10-06 |
-| `npm run test` | 26/26 test API passati il 2026-10-06 |
-| `npm run build` | passato web + API il 2026-10-06; scena 3D e feature restano lazy |
+| `npm run check` | passato per shared, API e web il 2026-10-14 |
+| `npm run test` | 29/29 test API passati il 2026-10-14 |
+| `npm run build` | passato web + API il 2026-10-14; scena 3D e feature restano lazy |
 | Smoke test Chromium | passato nello snapshot precedente; non rieseguito in questa migrazione |
 
 Il smoke test browser resta un'evidenza precedente; la migrazione documentale non modifica il runtime.

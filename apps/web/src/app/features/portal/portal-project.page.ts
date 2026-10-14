@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PHASES, getDocumentTypeDef } from '@cf/shared/catalog';
-import type { AppointmentDto, DocumentSummaryDto, ProjectDto, TaskDto } from '@cf/shared/types';
+import type { DocumentSummaryDto, PortalAppointmentDto, PortalProjectDto, PortalTaskDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
 import { BadgeComponent } from '../../shared/badge.component';
@@ -102,10 +102,10 @@ export class PortalProjectPage {
   private readonly toast = inject(ToastService);
   protected readonly projectStatus = projectStatus;
   protected readonly documentStatus = documentStatus;
-  protected readonly project = signal<ProjectDto | null>(null);
+  protected readonly project = signal<PortalProjectDto | null>(null);
   protected readonly docs = signal<DocumentSummaryDto[]>([]);
-  protected readonly tasks = signal<TaskDto[]>([]);
-  protected readonly appointments = signal<AppointmentDto[]>([]);
+  protected readonly tasks = signal<PortalTaskDto[]>([]);
+  protected readonly appointments = signal<PortalAppointmentDto[]>([]);
   protected readonly error = signal<string | null>(null);
 
   protected readonly toReview = computed(() => this.docs().filter((d) => d.status === 'in_revisione'));
@@ -127,10 +127,10 @@ export class PortalProjectPage {
   private async load(id: string): Promise<void> {
     try {
       const [p, docs, tasks, appts] = await Promise.all([
-        this.api.get<ProjectDto>(`/projects/${id}`),
+        this.api.get<PortalProjectDto>(`/projects/${id}`),
         this.api.get<DocumentSummaryDto[]>(`/projects/${id}/documents`),
-        this.api.get<TaskDto[]>(`/projects/${id}/tasks`),
-        this.api.get<AppointmentDto[]>(`/projects/${id}/appointments`)
+        this.api.get<PortalTaskDto[]>(`/projects/${id}/tasks`),
+        this.api.get<PortalAppointmentDto[]>(`/projects/${id}/appointments`)
       ]);
       this.project.set(p);
       // Mostriamo al cliente solo documenti già avviati, ordinati per fase

@@ -146,3 +146,44 @@ describe('archiviazione', () => {
     expect((await admin.delete(`/api/projects/${projectB}`)).status).toBe(204);
   });
 });
+
+describe('dati interni nascosti al cliente', () => {
+  const hidden = ['stagingUrl', 'repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus'];
+
+  it('progetto senza repo, staging, budget e indicizzazione', async () => {
+    expect((await admin.patch(`/api/projects/${projectA}`, {
+      repositoryUrl: 'https://github.com/cf/alfa', stagingUrl: 'https://staging.alfa.it', marketingEnabled: true, marketingBudgetCents: 50000
+    })).status).toBe(200);
+    const team = (await admin.get(`/api/projects/${projectA}`)).body as Record<string, unknown>;
+    expect(team['repositoryUrl']).toBe('https://github.com/cf/alfa');
+    const mine = (await clientA.get(`/api/projects/${projectA}`)).body as Record<string, unknown>;
+    const list = (await clientA.get('/api/projects')).body.items[0] as Record<string, unknown>;
+    for (const k of hidden) {
+      expect(mine).not.toHaveProperty(k);
+      expect(list).not.toHaveProperty(k);
+    }
+    expect(mine['name']).toBe('Sito Alfa');
+    expect(JSON.stringify(mine)).not.toContain('github.com');
+  });
+
+  it('task: niente assegnatari né task di documenti interni, avanzamento coerente', async () => {
+    const team = (await admin.get(`/api/projects/${projectA}/tasks`)).body as { documentId: string | null }[];
+    const visibleDocs = new Set(((await clientA.get(`/api/projects/${projectA}/documents`)).body as { id: string }[]).map((d) => d.id));
+    const mine = (await clientA.get(`/api/projects/${projectA}/tasks`)).body as Record<string, unknown>[];
+    expect(mine.length).toBeLessThan(team.length);
+    expect(mine.every((x) => !('assigneeId' in x))).toBe(true);
+    expect(mine.every((x) => x['documentId'] === null || visibleDocs.has(x['documentId'] as string))).toBe(true);
+    const p = (await clientA.get(`/api/projects/${projectA}`)).body as { progress: { tasksTotal: number; documentsTotal: number } };
+    expect(p.progress.tasksTotal).toBe(mine.length);
+    expect(p.progress.documentsTotal).toBe(visibleDocs.size);
+  });
+
+  it('appuntamenti senza note interne', async () => {
+    const created = await admin.post(`/api/projects/${projectA}/appointments`, { title: 'Call di allineamento', startsAt: '2030-01-10T10:00:00.000Z', notes: 'Cliente lento sui pagamenti' });
+    expect(created.status).toBe(201);
+    expect((await admin.get(`/api/projects/${projectA}/appointments`)).body[0].notes).toBe('Cliente lento sui pagamenti');
+    const mine = (await clientA.get(`/api/projects/${projectA}/appointments`)).body as Record<string, unknown>[];
+    expect(mine[0]!['title']).toBe('Call di allineamento');
+    expect(mine[0]).not.toHaveProperty('notes');
+  });
+});

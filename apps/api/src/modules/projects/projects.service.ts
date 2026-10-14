@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, ilike, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
-import { DEFAULT_PROJECT_DOCUMENTS } from '@cf/shared/catalog';
+import { DEFAULT_PROJECT_DOCUMENTS, PORTAL_HIDDEN_PROJECT_FIELDS } from '@cf/shared/catalog';
 import type { z } from 'zod';
 import type { projectInputSchema, projectListQuerySchema } from '@cf/shared/schemas';
 import type { Database } from '../../db/client.js';
@@ -13,6 +13,22 @@ const progressColumns = {
   documentsTotal: sql<number>`(select count(*)::int from ${documents} where ${documents.projectId} = ${projects.id})`
 };
 
+/** Avanzamento visto dal cliente: solo task senza documento o legati a documenti visibili, solo documenti visibili. */
+const clientVisibleTask = sql`(${tasks.documentId} is null or ${tasks.documentId} in (select ${documents.id} from ${documents} where ${documents.clientVisible}))`;
+const portalProgressColumns = {
+  tasksDone: sql<number>`(select count(*)::int from ${tasks} where ${tasks.projectId} = ${projects.id} and ${tasks.done} and ${clientVisibleTask})`,
+  tasksTotal: sql<number>`(select count(*)::int from ${tasks} where ${tasks.projectId} = ${projects.id} and ${clientVisibleTask})`,
+  documentsApproved: sql<number>`(select count(*)::int from ${documents} where ${documents.projectId} = ${projects.id} and ${documents.clientVisible} and ${documents.status} = 'approvato')`,
+  documentsTotal: sql<number>`(select count(*)::int from ${documents} where ${documents.projectId} = ${projects.id} and ${documents.clientVisible})`
+};
+
+/** Toglie i campi interni prima di rispondere a un cliente. */
+export function toPortalDto<T extends Record<string, unknown>>(dto: T): Omit<T, (typeof PORTAL_HIDDEN_PROJECT_FIELDS)[number]> {
+  const copy: Record<string, unknown> = { ...dto };
+  for (const k of PORTAL_HIDDEN_PROJECT_FIELDS) delete copy[k];
+  return copy as Omit<T, (typeof PORTAL_HIDDEN_PROJECT_FIELDS)[number]>;
+}
+
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (m) => `\\${m}`);
 
 export type ProjectListQuery = z.output<typeof projectListQuerySchema>;
@@ -21,6 +37,7 @@ export class ProjectsService {
   constructor(private readonly db: Database) {}
 
   async list(query: ProjectListQuery, onlyClientId?: string) {
+    const progress = onlyClientId ? portalProgressColumns : progressColumns;
     const where: SQL[] = [query.archived ? isNotNull(projects.archivedAt) : isNull(projects.archivedAt)];
     if (onlyClientId) where.push(eq(projects.clientId, onlyClientId));
     else if (query.clientId) where.push(eq(projects.clientId, query.clientId));
@@ -32,7 +49,7 @@ export class ProjectsService {
     const cond = and(...where);
     const [{ total } = { total: 0 }] = await this.db.select({ total: count() }).from(projects).innerJoin(clients, eq(clients.id, projects.clientId)).where(cond);
     const rows = await this.db
-      .select({ project: projects, clientName: clients.name, ...progressColumns })
+      .select({ project: projects, clientName: clients.name, ...progress })
       .from(projects).innerJoin(clients, eq(clients.id, projects.clientId))
       .where(cond)
       .orderBy(asc(sql`${projects.deadline} is null`), asc(projects.deadline), desc(projects.updatedAt))
@@ -40,9 +57,9 @@ export class ProjectsService {
     return { items: rows.map(toDto), total: Number(total), page: query.page, pageSize: query.pageSize };
   }
 
-  async get(id: string) {
+  async get(id: string, forClient = false) {
     const [row] = await this.db
-      .select({ project: projects, clientName: clients.name, ...progressColumns })
+      .select({ project: projects, clientName: clients.name, ...(forClient ? portalProgressColumns : progressColumns) })
       .from(projects).innerJoin(clients, eq(clients.id, projects.clientId))
       .where(eq(projects.id, id)).limit(1);
     return row ? toDto(row) : undefined;

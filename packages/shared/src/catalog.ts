@@ -144,3 +144,6 @@ export type LeadService = (typeof LEAD_SERVICES)[number];
 
 export const AI_FEATURES = ['document', 'suggestions', 'swot', 'pestel', 'campaign_post', 'task_due_date'] as const;
 export type AiFeature = (typeof AI_FEATURES)[number];
+
+/** Campi del progetto che il cliente non deve ricevere dall'API. */
+export const PORTAL_HIDDEN_PROJECT_FIELDS = ['stagingUrl', 'repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus'] as const;

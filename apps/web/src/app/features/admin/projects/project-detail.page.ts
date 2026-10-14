@@ -37,9 +37,6 @@ import { ProjectStore } from './project.store';
           </div>
           <nav class="tabs" aria-label="Sezioni progetto">
             <a [routerLink]="['./']" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Panoramica</a>
-            @if (isSalon()) {
-              <a routerLink="salone" routerLinkActive="active">✂ Gestione Salone</a>
-            }
             <a routerLink="checklist" routerLinkActive="active">Checklist</a>
             <a routerLink="documenti" routerLinkActive="active">Documenti</a>
             @if (p.marketingEnabled) { <a routerLink="marketing" routerLinkActive="active">Marketing</a> }
@@ -62,12 +59,6 @@ export class ProjectDetailPage {
   protected readonly auth = inject(AuthService);
   protected readonly status = computed(() => { const p = this.store.project(); return p ? projectStatus(p.status) : null; });
   protected readonly pct = computed(() => { const p = this.store.project()?.progress; return p ? percent(p.tasksDone, p.tasksTotal) : 0; });
-  protected readonly isSalon = computed(() => {
-    const p = this.store.project();
-    if (!p) return false;
-    const combined = `${p.name} ${p.clientName ?? ''}`.toLowerCase();
-    return combined.includes('sissy') || combined.includes('salone') || combined.includes('hairstyle');
-  });
 
   constructor() {
     effect(() => { void this.store.load(this.projectId()); });

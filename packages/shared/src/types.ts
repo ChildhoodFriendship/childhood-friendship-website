@@ -32,6 +32,9 @@ export interface ProjectDto {
   progress?: { tasksDone: number; tasksTotal: number; documentsApproved: number; documentsTotal: number };
 }
 
+/** Vista del progetto per il cliente: senza campi interni (repo, staging, budget, indicizzazione). */
+export type PortalProjectDto = Omit<ProjectDto, 'stagingUrl' | 'repositoryUrl' | 'marketingEnabled' | 'marketingBudgetCents' | 'indexingStatus'>;
+
 export interface TaskDto {
   id: string; projectId: string; title: string; phase: Phase; done: boolean; dueDate: string | null;
   assigneeId: string | null; documentId: string | null; position: number; completedAt: string | null;
@@ -51,6 +54,9 @@ export interface MessageDto { id: string; projectId: string; authorId: string; a
 export interface CredentialDto { id: string; service: string; url: string | null; username: string | null; hasSecret: boolean; notes: string | null; updatedAt: string; }
 
 export interface AppointmentDto { id: string; projectId: string; title: string; startsAt: string; kind: string | null; notes: string | null; }
+/** Il cliente non vede assegnatari dei task né note interne degli appuntamenti. */
+export type PortalTaskDto = Omit<TaskDto, 'assigneeId'>;
+export type PortalAppointmentDto = Omit<AppointmentDto, 'notes'>;
 
 export interface TargetDto { age?: string | null; sex?: 'maschio' | 'femmina' | 'tutti' | null; audience?: string | null; }
 export interface PlatformDto { id: string; projectId: string; kind: PlatformKind; name: string; profileUrl: string | null; enabled: boolean; frequency: { posts?: number; stories?: number; reels?: number }; }

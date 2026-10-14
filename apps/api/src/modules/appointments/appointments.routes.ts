@@ -8,18 +8,21 @@ import { audit } from '../../lib/audit.js';
 import { notFound } from '../../lib/http-error.js';
 import { serialize } from '../../lib/serialize.js';
 import { defined, parse } from '../../lib/validate.js';
-import { requireTeam } from '../../middleware/auth.js';
+import { isTeam, requireTeam } from '../../middleware/auth.js';
 import { assertWritable, currentProject } from '../projects/access.js';
 
 const uuidParam = z.uuid('ID non valido');
-const columns = { id: appointments.id, projectId: appointments.projectId, title: appointments.title, startsAt: appointments.startsAt, kind: appointments.kind, notes: appointments.notes };
+const portalColumns = { id: appointments.id, projectId: appointments.projectId, title: appointments.title, startsAt: appointments.startsAt, kind: appointments.kind };
+const columns = { ...portalColumns, notes: appointments.notes };
 
 export function appointmentsRouter(ctx: AppContext): Router {
   const router = Router({ mergeParams: true });
   const { db } = ctx;
 
-  router.get('/', async (_req, res) => {
-    res.json(serialize(await db.select(columns).from(appointments).where(eq(appointments.projectId, currentProject(res).id)).orderBy(asc(appointments.startsAt))));
+  router.get('/', async (req, res) => {
+    // Le note sono interne al team
+    const cols = isTeam(req) ? columns : portalColumns;
+    res.json(serialize(await db.select(cols).from(appointments).where(eq(appointments.projectId, currentProject(res).id)).orderBy(asc(appointments.startsAt))));
   });
 
   router.post('/', requireTeam, async (req, res) => {
