@@ -247,19 +247,47 @@ export const marketingAnalyses = pgTable('marketing_analyses', {
 export const leads = pgTable('leads', {
   id: id(),
   name: text().notNull(),
-  email: text().notNull(),
+  /** Facoltativa: i lead trovati da n8n (Google Maps) di solito hanno solo il telefono. */
+  email: text(),
   phone: text(),
   company: text(),
   service: leadServiceEnum().notNull().default('altro'),
-  message: text().notNull(),
+  message: text(),
   status: leadStatusEnum().notNull().default('nuovo'),
   notes: text(),
   source: text().notNull().default('sito'),
   clientId: uuid().references(() => clients.id, { onDelete: 'set null' }),
   ipHash: text(),
+  /* Prospezione automatica (n8n) */
+  placeId: text(),
+  score: integer(),
+  category: text(),
+  address: text(),
+  website: text(),
+  mapsUrl: text(),
+  outreachMessage: text(),
+  waLink: text(),
+  /* Esito commerciale */
+  priceCents: integer(),
+  offeredService: text(),
+  contactedAt: ts(),
+  closedAt: ts(),
   createdAt: createdAt(),
   updatedAt: updatedAt()
-}, (t) => [index('leads_status_idx').on(t.status, t.createdAt)]);
+}, (t) => [index('leads_status_idx').on(t.status, t.createdAt), uniqueIndex('leads_place_id_uq').on(t.placeId)]);
+
+/** Materiali caricati su un progetto (logo, foto, testi): file su Vercel Blob, metadati qui. */
+export const projectFiles = pgTable('project_files', {
+  id: id(),
+  projectId: uuid().notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  uploadedById: uuid().references(() => users.id, { onDelete: 'set null' }),
+  name: text().notNull(),
+  contentType: text().notNull(),
+  sizeBytes: integer().notNull(),
+  url: text().notNull(),
+  pathname: text().notNull(),
+  createdAt: createdAt()
+}, (t) => [index('project_files_project_idx').on(t.projectId, t.createdAt), uniqueIndex('project_files_pathname_uq').on(t.pathname)]);
 
 export const auditLog = pgTable('audit_log', {
   id: id(),

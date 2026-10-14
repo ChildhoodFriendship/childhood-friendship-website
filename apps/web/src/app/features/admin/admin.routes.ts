@@ -21,6 +21,7 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'documenti/:docId', title: t('Documento'), loadComponent: () => import('./projects/document-editor.page').then((m) => m.DocumentEditorPage) },
           { path: 'marketing', title: t('Marketing'), loadComponent: () => import('./projects/marketing.tab').then((m) => m.MarketingTab) },
           { path: 'messaggi', title: t('Messaggi'), loadComponent: () => import('./projects/messages.tab').then((m) => m.MessagesTab) },
+          { path: 'materiali', title: t('Materiali'), loadComponent: () => import('./projects/files.tab').then((m) => m.FilesTab) },
           { path: 'accessi', title: t('Accessi'), loadComponent: () => import('./projects/credentials.tab').then((m) => m.CredentialsTab) }
         ]
       },

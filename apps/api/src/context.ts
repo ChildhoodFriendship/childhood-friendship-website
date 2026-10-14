@@ -2,6 +2,7 @@ import type { Env } from './config/env.js';
 import type { Database } from './db/client.js';
 import type { SecretBox } from './lib/crypto.js';
 import type { AiProvider } from './modules/ai/provider.js';
+import type { FileStorage } from './lib/storage.js';
 
 /** Dipendenze iniettate nell'app: rende i test indipendenti dall'ambiente. */
 export interface AppContext {
@@ -9,4 +10,6 @@ export interface AppContext {
   db: Database;
   box: SecretBox;
   ai: AiProvider | null;
+  /** Archivio file (Vercel Blob); null se non configurato. */
+  storage?: FileStorage | null;
 }

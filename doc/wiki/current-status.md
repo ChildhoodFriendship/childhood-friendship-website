@@ -17,7 +17,7 @@
 | Controllo | Esito registrato |
 |---|---|
 | `npm run check` | passato per shared, API e web il 2026-10-14 |
-| `npm run test` | 32/32 test API passati il 2026-10-14 |
+| `npm run test` | 38/38 test API passati il 2026-10-14 |
 | `npm run build` | passato web + API il 2026-10-14; scena 3D e feature restano lazy |
 | Smoke test Chromium | passato nello snapshot precedente; non rieseguito in questa migrazione |
 
@@ -28,6 +28,7 @@ Il smoke test browser resta un'evidenza precedente; la migrazione documentale no
 - Bootstrap, landing, piattaforma monorepo, API, admin/portale e lead: completati.
 - Primo deploy Vercel + Neon: completato (produzione `childhood-friendship-website-pi.vercel.app`, deploy automatico da `refactor/platform`, DB Neon verificato il 2026-10-14).
 - Notifiche Telegram al team (lead sito, messaggi e revisioni del cliente): completate.
+- CRM unico (form sito + prospezione n8n) e materiali del cliente su Vercel Blob: completati.
 - Notifiche email transazionali: da pianificare.
 - Tariffe, abbonamenti e cashflow: esclusi dalla v1.
 

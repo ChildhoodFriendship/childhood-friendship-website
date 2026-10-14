@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { count, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, or, type SQL } from 'drizzle-orm';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { leadListQuerySchema, leadPatchSchema, leadPublicSchema } from '@cf/shared/schemas';
@@ -51,7 +51,14 @@ export function leadsRouter(ctx: AppContext): Router {
 
   router.get('/', async (req, res) => {
     const q = parse(leadListQuerySchema, req.query);
-    const where = q.status ? eq(leads.status, q.status) : undefined;
+    const conds: SQL[] = [];
+    if (q.status) conds.push(eq(leads.status, q.status));
+    if (q.source) conds.push(eq(leads.source, q.source));
+    if (q.q) {
+      const like = '%' + q.q + '%';
+      conds.push(or(ilike(leads.name, like), ilike(leads.company, like), ilike(leads.category, like), ilike(leads.address, like), ilike(leads.offeredService, like))!);
+    }
+    const where = conds.length ? and(...conds) : undefined;
     const [{ total } = { total: 0 }] = await db.select({ total: count() }).from(leads).where(where);
     const rows = await db.select().from(leads).where(where).orderBy(desc(leads.createdAt)).limit(q.pageSize).offset((q.page - 1) * q.pageSize);
     res.json({ items: rows.map(toDto), total: Number(total), page: q.page, pageSize: q.pageSize });
@@ -60,7 +67,12 @@ export function leadsRouter(ctx: AppContext): Router {
   router.patch('/:id', async (req, res) => {
     const id = parse(uuidParam, req.params['id']);
     const input = defined(parse(leadPatchSchema, req.body));
-    const [row] = await db.update(leads).set(input).where(eq(leads.id, id)).returning();
+    const [current] = await db.select({ contactedAt: leads.contactedAt, closedAt: leads.closedAt }).from(leads).where(eq(leads.id, id));
+    if (!current) throw notFound('Lead');
+    const patch: Partial<typeof leads.$inferInsert> = { ...input };
+    if (input.status && input.status !== 'nuovo' && !current.contactedAt) patch.contactedAt = new Date();
+    if (input.status) patch.closedAt = input.status === 'convertito' ? current.closedAt ?? new Date() : null;
+    const [row] = await db.update(leads).set(patch).where(eq(leads.id, id)).returning();
     if (!row) throw notFound('Lead');
     await audit(db, req, { action: 'lead.updated', entity: 'lead', entityId: id, meta: { fields: Object.keys(input) } });
     res.json(toDto(row));
@@ -75,7 +87,7 @@ export function leadsRouter(ctx: AppContext): Router {
       if (lead.clientId) throw badRequest('Lead già convertito');
       const [client] = await tx.insert(clients).values({
         name: lead.company || lead.name, contactName: lead.name, contactEmail: lead.email, contactPhone: lead.phone,
-        notes: `Da lead del ${lead.createdAt.toISOString().slice(0, 10)}:\n${lead.message}`
+        notes: `Da lead del ${lead.createdAt.toISOString().slice(0, 10)}:\n${lead.message ?? lead.outreachMessage ?? ''}`
       }).returning();
       const [updated] = await tx.update(leads).set({ status: 'convertito', clientId: client!.id }).where(eq(leads.id, id)).returning();
       return { client: client!, lead: updated! };

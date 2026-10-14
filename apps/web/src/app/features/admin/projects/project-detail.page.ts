@@ -41,6 +41,7 @@ import { ProjectStore } from './project.store';
             <a routerLink="documenti" routerLinkActive="active">Documenti</a>
             @if (p.marketingEnabled) { <a routerLink="marketing" routerLinkActive="active">Marketing</a> }
             <a routerLink="messaggi" routerLinkActive="active">Messaggi</a>
+            <a routerLink="materiali" routerLinkActive="active">Materiali</a>
             <a routerLink="accessi" routerLinkActive="active">Accessi</a>
           </nav>
         </header>

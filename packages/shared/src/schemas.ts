@@ -253,11 +253,46 @@ export const leadPublicSchema = z.object({
 
 export const leadPatchSchema = z.object({
   status: z.enum(LEAD_STATUSES).optional(),
-  notes: optText(5000)
+  notes: optText(5000),
+  priceCents: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  offeredService: optText(200)
+});
+
+/** Lead dalla prospezione automatica (n8n / Google Maps). */
+export const leadIngestSchema = z.object({
+  placeId: trimmed(200).min(3),
+  name: trimmed(200).min(1),
+  category: optText(200),
+  address: optText(300),
+  phone: optText(40),
+  website: optText(500),
+  mapsUrl: optText(1000),
+  score: z.number().int().min(-100).max(1000).nullable().optional(),
+  signals: optText(1000),
+  outreachMessage: optText(2000),
+  waLink: optText(3000),
+  source: trimmed(40).default('n8n')
+});
+export const leadIngestBatchSchema = z.object({ leads: z.array(leadIngestSchema).min(1).max(200) });
+export const leadIngestStatusSchema = z.object({
+  placeId: trimmed(200).min(3),
+  status: z.enum(['contattato', 'qualificato', 'convertito', 'perso', 'nuovo'])
+});
+
+export const fileUploadRequestSchema = z.object({
+  name: trimmed(200).min(1, 'Nome file richiesto'),
+  contentType: trimmed(120).min(3),
+  size: z.number().int().min(1).max(25 * 1024 * 1024, 'File troppo grande (max 25 MB)')
+});
+export const fileRegisterSchema = z.object({
+  pathname: trimmed(400).min(5),
+  name: trimmed(200).min(1)
 });
 
 export const leadListQuerySchema = z.object({
   status: z.enum(LEAD_STATUSES).optional(),
+  source: trimmed(40).optional(),
+  q: trimmed(100).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20)
 });

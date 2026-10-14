@@ -31,6 +31,15 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Config opzionale `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` (impostate su Vercel produzione); no-op in test o se mancano.
 - Verifica: `npm run check`, `npm run test` (32/32, +3 test notify).
 
+## 2026-10-14 — feature — CRM unico e materiali del cliente
+
+- Migrazione `0001_crm_materiali`: `leads` con email/messaggio facoltativi e campi di prospezione (place_id univoco, score, categoria, indirizzo, sito, scheda Google, messaggio di contatto, link WhatsApp) ed esito (prezzo in centesimi, servizio offerto, contattato/chiuso il); nuova tabella `project_files`.
+- API `/api/integrations/leads*` per n8n con token Bearer `LEADS_INGEST_TOKEN` (fuori da sessione e CSRF): place-ids, inserimento deduplicato, stato dal bot, statistiche.
+- Pagina admin Lead = CRM unico: filtri per origine/stato, ricerca, score, WhatsApp e scheda Google, progetto chiuso, prezzo fatto, servizio offerto.
+- Materiali: caricamento diretto dal browser su Vercel Blob (store `cf-materiali`, fra1) con token monouso limitato a `projects/<id>/`, registrazione verificata con `head`, max 25 MB, tipi ammessi in `lib/storage.ts`. Il cliente elimina solo i propri file; il team tutti. Notifica Telegram quando carica il cliente.
+- Nuova dipendenza autorizzata: `@vercel/blob` (api + web). File pubblici con percorso non indovinabile, elencati solo a chi accede al progetto.
+- Verifica: `npm run check`, `npm run test` (38/38, +6 test CRM/materiali).
+
 ## Decisioni architetturali mantenute
 
 - Monorepo unico npm: `apps/web` Angular, `apps/api` Express/Drizzle, `packages/shared`.

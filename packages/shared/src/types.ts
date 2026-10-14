@@ -73,8 +73,16 @@ export interface CampaignDto {
 export interface AnalysisDto { id: string; projectId: string; kind: AnalysisKind; data: Record<string, string[]>; createdAt: string; }
 
 export interface LeadDto {
-  id: string; name: string; email: string; phone: string | null; company: string | null; service: LeadService;
-  message: string; status: LeadStatus; notes: string | null; source: string; clientId: string | null; createdAt: string;
+  id: string; name: string; email: string | null; phone: string | null; company: string | null; service: LeadService;
+  message: string | null; status: LeadStatus; notes: string | null; source: string; clientId: string | null; createdAt: string;
+  placeId: string | null; score: number | null; category: string | null; address: string | null; website: string | null;
+  mapsUrl: string | null; outreachMessage: string | null; waLink: string | null;
+  priceCents: number | null; offeredService: string | null; contactedAt: string | null; closedAt: string | null;
+}
+
+export interface ProjectFileDto {
+  id: string; projectId: string; name: string; contentType: string; sizeBytes: number; url: string;
+  uploadedById: string | null; uploadedByName: string | null; uploadedByRole: Role | null; createdAt: string;
 }
 
 export interface AuditDto { id: string; actorId: string | null; actorName: string | null; action: string; entity: string; entityId: string | null; meta: Record<string, unknown>; createdAt: string; }

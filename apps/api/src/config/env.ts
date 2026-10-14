@@ -19,7 +19,11 @@ const envSchema = z.object({
   AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(50),
   // Notifiche al team su Telegram (opzionali)
   TELEGRAM_BOT_TOKEN: z.string().optional(),
-  TELEGRAM_CHAT_ID: z.string().optional()
+  TELEGRAM_CHAT_ID: z.string().optional(),
+  // Integrazione n8n (lead da prospezione): token condiviso, almeno 24 caratteri
+  LEADS_INGEST_TOKEN: z.string().min(24).optional(),
+  // Vercel Blob per i materiali dei progetti
+  BLOB_READ_WRITE_TOKEN: z.string().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;

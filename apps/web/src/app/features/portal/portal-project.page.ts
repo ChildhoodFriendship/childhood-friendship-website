@@ -8,10 +8,11 @@ import { ToastService } from '../../core/toast.service';
 import { BadgeComponent } from '../../shared/badge.component';
 import { documentStatus, percent, phaseLabel, projectStatus } from '../../shared/labels';
 import { MessagesThreadComponent } from '../../shared/messages-thread.component';
+import { ProjectFilesComponent } from '../../shared/project-files.component';
 
 @Component({
   selector: 'cf-portal-project-page',
-  imports: [DatePipe, RouterLink, BadgeComponent, MessagesThreadComponent],
+  imports: [DatePipe, RouterLink, BadgeComponent, MessagesThreadComponent, ProjectFilesComponent],
   template: `
     <div class="page" style="max-width: 1080px">
       @if (project(); as p) {
@@ -57,6 +58,8 @@ import { MessagesThreadComponent } from '../../shared/messages-thread.component'
           <section class="stack-sm">
             <h2>Messaggi</h2>
             <cf-messages-thread [projectId]="p.id" />
+            <cf-project-files [projectId]="p.id" [readonly]="!!p.archivedAt" title="I tuoi materiali"
+              hint="Caricaci logo, foto, testi e documenti utili al progetto (max 25 MB ciascuno)." />
           </section>
           <aside class="stack">
             <section class="card stack-sm">

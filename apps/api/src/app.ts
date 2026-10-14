@@ -21,6 +21,8 @@ import { projectScope } from './modules/projects/access.js';
 import { projectsRouter } from './modules/projects/projects.routes.js';
 import { tasksRouter } from './modules/tasks/tasks.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
+import { filesRouter } from './modules/files/files.routes.js';
+import { integrationsRouter } from './modules/leads/integrations.routes.js';
 
 export function createApp(ctx: AppContext): Express {
   const app = express();
@@ -38,12 +40,14 @@ export function createApp(ctx: AppContext): Express {
     windowMs: 60_000, limit: ctx.env.NODE_ENV === 'test' ? 10_000 : 300, standardHeaders: 'draft-8', legacyHeaders: false,
     message: { error: { code: 'rate_limited', message: 'Troppe richieste, rallenta.' } }
   }));
-  api.use(csrf(isProd, (path) => path.startsWith('/public/')));
+  // /integrations usa un token Bearer (n8n), non cookie: niente CSRF
+  api.use(csrf(isProd, (path) => path.startsWith('/public/') || path.startsWith('/integrations/')));
   api.use(authenticate(ctx));
 
   api.get('/health', (_req, res) => { res.json({ ok: true }); });
   api.use('/public/leads', publicLeadsRouter(ctx));
   api.use('/auth', authRouter(ctx));
+  api.use('/integrations', integrationsRouter(ctx));
 
   api.use(requireAuth);
   api.use('/dashboard', dashboardRouter(ctx));
@@ -64,6 +68,7 @@ export function createApp(ctx: AppContext): Express {
   nested.use('/appointments', appointmentsRouter(ctx));
   nested.use('/marketing', marketingRouter(ctx));
   nested.use('/ai', aiRouter(ctx));
+  nested.use('/files', filesRouter(ctx));
   api.use('/projects/:projectId', nested);
 
   app.use('/api', api);
