@@ -18,6 +18,12 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Web: portale tipizzato con i DTO dedicati; rimosso il modulo admin Salone (mock in localStorage, backend già eliminato in `bb16cf8`).
 - Verifica 2026-10-14: `npm run check`, `npm run test` (29/29, +3 test RBAC) e `npm run build` passati.
 
+## 2026-10-14 — content — nuovi prezzi e script utenti senza password di default
+
+- Landing: "Siti web e landing page" da 400 €, web app da 800 €, app mobile da 1.200 €.
+- `create-client-user.ts`: rimossi email/password di default (password solo da `--password` o `CLIENT_PASSWORD`); nuovo script `npm run client:create`.
+- Produzione: password di admin e cliente Sissy ruotate (la vecchia password cliente era nel codice).
+
 ## Decisioni architetturali mantenute
 
 - Monorepo unico npm: `apps/web` Angular, `apps/api` Express/Drizzle, `packages/shared`.

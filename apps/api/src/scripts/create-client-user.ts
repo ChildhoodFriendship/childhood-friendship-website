@@ -1,3 +1,8 @@
+/**
+ * Crea (o reimposta) l'utente di un cliente esistente.
+ * Uso: npm run client:create -- --email <email> --name <nome> --clientName <ragione sociale>
+ * La password si passa con --password o CLIENT_PASSWORD (mai valori predefiniti nel codice).
+ */
 import { parseArgs } from 'node:util';
 import { eq, sql } from 'drizzle-orm';
 import { passwordSchema } from '@cf/shared/schemas';
@@ -15,10 +20,18 @@ const { values } = parseArgs({
   }
 });
 
-const email = (values.email ?? 'sissy@sissyhairstyle.it').toLowerCase();
-const name = values.name ?? 'Silvia (Sissy)';
-const clientName = values.clientName ?? 'Sissy HairStyle';
-const rawPassword = values.password ?? process.env['CLIENT_PASSWORD'] ?? 'Sissy2026!';
+if (!values.email || !values.name || !values.clientName) {
+  console.error('Uso: npm run client:create -- --email <email> --name <nome> --clientName <cliente> [--password <pw> | CLIENT_PASSWORD]');
+  process.exit(1);
+}
+const email = values.email.toLowerCase();
+const name = values.name;
+const clientName = values.clientName;
+const rawPassword = values.password ?? process.env['CLIENT_PASSWORD'];
+if (!rawPassword) {
+  console.error('Password mancante: usa --password oppure CLIENT_PASSWORD');
+  process.exit(1);
+}
 
 const check = passwordSchema.safeParse(rawPassword);
 if (!check.success) {

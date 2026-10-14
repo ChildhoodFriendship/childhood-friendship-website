@@ -11,19 +11,19 @@ interface Service {
 
 const SERVICES: readonly Service[] = [
   {
-    id: 'siti', title: 'Siti web', line: 'Il primo incontro con il tuo brand. Deve lasciare il segno.',
+    id: 'siti', title: 'Siti web e landing page', line: 'Il primo incontro con il tuo brand. Deve lasciare il segno.',
     body: 'Progettiamo e sviluppiamo siti veloci, leggibili e riconoscibili, pensati per trasformare una visita in un contatto.',
-    includes: ['Design su misura', 'SEO tecnica', 'Caricamento rapido', 'Form e misurazione'], from: 'da 200 €'
+    includes: ['Design su misura', 'SEO tecnica', 'Caricamento rapido', 'Form e misurazione'], from: 'da 400 €'
   },
   {
     id: 'webapp', title: 'Web app', line: 'Gestionali, portali e piattaforme costruiti sui tuoi processi.',
     body: 'Software che toglie lavoro invece di aggiungerne: dashboard, aree riservate, integrazioni con i sistemi che usi già.',
-    includes: ['Analisi dei processi', 'Area clienti e ruoli', 'Integrazioni API', 'Database e backup'], from: 'da 600 €'
+    includes: ['Analisi dei processi', 'Area clienti e ruoli', 'Integrazioni API', 'Database e backup'], from: 'da 800 €'
   },
   {
     id: 'mobile', title: 'App mobile', line: 'Nella tasca dei tuoi clienti, sempre pronta.',
     body: 'App per iOS e Android con un solo codice: accesso utenti, notifiche e dati sincronizzati con il resto del tuo business.',
-    includes: ['iOS e Android', 'Login e profili', 'Notifiche push', 'Pubblicazione sugli store'], from: 'da 700 €'
+    includes: ['iOS e Android', 'Login e profili', 'Notifiche push', 'Pubblicazione sugli store'], from: 'da 1.200 €'
   },
   {
     id: 'cura', title: 'Cura e crescita', line: 'Il lancio è l\'inizio. Restiamo.',
