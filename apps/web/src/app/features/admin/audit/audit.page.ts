@@ -5,7 +5,7 @@ import type { AuditDto, Paginated } from '@cf/shared/types';
 import { Api } from '../../../core/api';
 import { ToastService } from '../../../core/toast.service';
 
-const ENTITIES = ['user', 'invite', 'client', 'project', 'task', 'document', 'credential', 'appointment', 'marketing_campaign', 'marketing_analysis', 'lead'];
+const ENTITIES = ['user', 'invite', 'client', 'project', 'task', 'document', 'credential', 'file', 'lead', 'marketing_campaign', 'marketing_analysis', 'lead'];
 
 @Component({
   selector: 'cf-audit-page',

@@ -11,6 +11,7 @@ import { defined, emptyToNull, parse } from '../../lib/validate.js';
 import { isTeam, requireAdmin, requireTeam } from '../../middleware/auth.js';
 import { currentProject, projectScope } from './access.js';
 import { ProjectsService, toPortalDto } from './projects.service.js';
+import { checkPublicUrl } from '../../lib/safe-url.js';
 
 export function projectsRouter(ctx: AppContext): Router {
   const router = Router();
@@ -78,57 +79,27 @@ export function projectsRouter(ctx: AppContext): Router {
   router.post('/:projectId/health-check', requireTeam, scope, async (req, res) => {
     const project = currentProject(res);
 
-    let siteOnline = false;
-    let siteStatus: number | null = null;
-    let siteLatencyMs: number | null = null;
-    let siteError: string | null = null;
-
-    if (project.targetUrl) {
+    /** Controllo di raggiungibilità: solo indirizzi pubblici, nessun redirect seguito (anti-SSRF). */
+    const probe = async (raw: string | null) => {
+      if (!raw) return { online: false, status: null as number | null, latencyMs: null as number | null, error: null as string | null };
+      const checked = await checkPublicUrl(raw);
+      if ('error' in checked) return { online: false, status: null, latencyMs: null, error: checked.error };
       const start = performance.now();
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const urlToFetch = project.targetUrl.startsWith('http') ? project.targetUrl : `https://${project.targetUrl}`;
-        const resp = await fetch(urlToFetch, {
-          method: 'GET',
-          signal: controller.signal,
+        const resp = await fetch(checked.url, {
+          method: 'GET', redirect: 'manual', signal: AbortSignal.timeout(6000),
           headers: { 'User-Agent': 'ChildhoodFriendship-Monitor/1.0' }
         });
-        clearTimeout(timeoutId);
-        siteLatencyMs = Math.round(performance.now() - start);
-        siteStatus = resp.status;
-        siteOnline = resp.ok || (resp.status >= 200 && resp.status < 400);
+        await resp.body?.cancel();
+        return { online: resp.status >= 200 && resp.status < 400, status: resp.status, latencyMs: Math.round(performance.now() - start), error: null };
       } catch (err) {
-        siteLatencyMs = Math.round(performance.now() - start);
-        siteOnline = false;
-        siteError = (err as Error).name === 'AbortError' ? 'Timeout (>6s)' : 'Host non raggiungibile';
+        return { online: false, status: null, latencyMs: Math.round(performance.now() - start), error: (err as Error).name === 'TimeoutError' ? 'Timeout (>6s)' : 'Host non raggiungibile' };
       }
-    }
-
-    let stagingOnline = false;
-    let stagingStatus: number | null = null;
-    let stagingLatencyMs: number | null = null;
-
-    if (project.stagingUrl) {
-      const start = performance.now();
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const urlToFetch = project.stagingUrl.startsWith('http') ? project.stagingUrl : `https://${project.stagingUrl}`;
-        const resp = await fetch(urlToFetch, {
-          method: 'GET',
-          signal: controller.signal,
-          headers: { 'User-Agent': 'ChildhoodFriendship-Monitor/1.0' }
-        });
-        clearTimeout(timeoutId);
-        stagingLatencyMs = Math.round(performance.now() - start);
-        stagingStatus = resp.status;
-        stagingOnline = resp.ok || (resp.status >= 200 && resp.status < 400);
-      } catch {
-        stagingLatencyMs = Math.round(performance.now() - start);
-        stagingOnline = false;
-      }
-    }
+    };
+    const site = await probe(project.targetUrl);
+    const staging = await probe(project.stagingUrl);
+    const siteOnline = site.online, siteStatus = site.status, siteLatencyMs = site.latencyMs, siteError = site.error;
+    const stagingOnline = staging.online, stagingStatus = staging.status, stagingLatencyMs = staging.latencyMs;
 
     let dbConnected = false;
     let dbLatencyMs = 0;

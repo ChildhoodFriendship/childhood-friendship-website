@@ -182,13 +182,6 @@ export const credentialPatchSchema = credentialInputSchema.partial();
 
 /* ---------- Appuntamenti ---------- */
 
-export const appointmentInputSchema = z.object({
-  title: trimmed(200).min(1),
-  startsAt: isoDateTime,
-  kind: optText(60),
-  notes: optText(2000)
-});
-export const appointmentPatchSchema = appointmentInputSchema.partial();
 
 /* ---------- Marketing ---------- */
 
@@ -325,7 +318,6 @@ export type DocumentCreateInput = z.input<typeof documentCreateSchema>;
 export type DocumentPatch = z.input<typeof documentPatchSchema>;
 export type DocumentReviewInput = z.input<typeof documentReviewSchema>;
 export type CredentialInput = z.input<typeof credentialInputSchema>;
-export type AppointmentInput = z.input<typeof appointmentInputSchema>;
 export type PlatformInput = z.input<typeof platformInputSchema>;
 export type ContentInput = z.input<typeof contentInputSchema>;
 export type CampaignInput = z.input<typeof campaignInputSchema>;

@@ -2,21 +2,20 @@ import { Router } from 'express';
 import { and, asc, count, desc, eq, gte, inArray, isNull, lt, lte } from 'drizzle-orm';
 import { PROJECT_STATUSES, type ProjectStatus } from '@cf/shared/catalog';
 import type { AppContext } from '../../context.js';
-import { appointments, auditLog, documents, leads, projects, tasks, users } from '../../db/schema.js';
+import { documents, leads, projects, tasks } from '../../db/schema.js';
 import { serialize } from '../../lib/serialize.js';
 import { requireTeam } from '../../middleware/auth.js';
-import { auditColumns } from '../audit/audit.routes.js';
 
 export function dashboardRouter(ctx: AppContext): Router {
   const router = Router();
   const { db } = ctx;
 
-  router.get('/', requireTeam, async (req, res) => {
+  router.get('/', requireTeam, async (_req, res) => {
     const today = new Date().toISOString().slice(0, 10);
     const in30 = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
     const active = isNull(projects.archivedAt);
 
-    const [byStatus, deadlines, overdue, inReview, newLeads, upcoming, activity] = await Promise.all([
+    const [byStatus, deadlines, overdue, inReview, newLeads] = await Promise.all([
       db.select({ status: projects.status, n: count() }).from(projects).where(active).groupBy(projects.status),
       db.select({ projectId: projects.id, projectName: projects.name, deadline: projects.deadline }).from(projects)
         .where(and(active, gte(projects.deadline, today), lte(projects.deadline, in30))).orderBy(asc(projects.deadline)).limit(10),
@@ -26,13 +25,7 @@ export function dashboardRouter(ctx: AppContext): Router {
       db.select({ documentId: documents.id, projectId: projects.id, projectName: projects.name, title: documents.title, status: documents.status })
         .from(documents).innerJoin(projects, eq(projects.id, documents.projectId))
         .where(and(active, inArray(documents.status, ['in_revisione', 'modifiche_richieste']))).orderBy(desc(documents.updatedAt)).limit(15),
-      db.select({ n: count() }).from(leads).where(eq(leads.status, 'nuovo')),
-      db.select({ id: appointments.id, projectId: projects.id, projectName: projects.name, title: appointments.title, startsAt: appointments.startsAt })
-        .from(appointments).innerJoin(projects, eq(projects.id, appointments.projectId))
-        .where(and(active, gte(appointments.startsAt, new Date()))).orderBy(asc(appointments.startsAt)).limit(8),
-      req.user!.role === 'admin'
-        ? db.select(auditColumns).from(auditLog).leftJoin(users, eq(users.id, auditLog.actorId)).orderBy(desc(auditLog.createdAt)).limit(15)
-        : Promise.resolve([])
+      db.select({ n: count() }).from(leads).where(eq(leads.status, 'nuovo'))
     ]);
 
     const projectsByStatus = Object.fromEntries(PROJECT_STATUSES.map((s) => [s, 0])) as Record<ProjectStatus, number>;
@@ -43,9 +36,7 @@ export function dashboardRouter(ctx: AppContext): Router {
       upcomingDeadlines: deadlines,
       overdueTasks: overdue,
       documentsInReview: inReview,
-      newLeads: Number(newLeads[0]?.n ?? 0),
-      upcomingAppointments: upcoming,
-      recentActivity: activity
+      newLeads: Number(newLeads[0]?.n ?? 0)
     }));
   });
 

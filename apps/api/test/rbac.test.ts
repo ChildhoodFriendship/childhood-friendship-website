@@ -178,12 +178,4 @@ describe('dati interni nascosti al cliente', () => {
     expect(p.progress.documentsTotal).toBe(visibleDocs.size);
   });
 
-  it('appuntamenti senza note interne', async () => {
-    const created = await admin.post(`/api/projects/${projectA}/appointments`, { title: 'Call di allineamento', startsAt: '2030-01-10T10:00:00.000Z', notes: 'Cliente lento sui pagamenti' });
-    expect(created.status).toBe(201);
-    expect((await admin.get(`/api/projects/${projectA}/appointments`)).body[0].notes).toBe('Cliente lento sui pagamenti');
-    const mine = (await clientA.get(`/api/projects/${projectA}/appointments`)).body as Record<string, unknown>[];
-    expect(mine[0]!['title']).toBe('Call di allineamento');
-    expect(mine[0]).not.toHaveProperty('notes');
-  });
 });

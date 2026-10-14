@@ -174,16 +174,6 @@ export const credentials = pgTable('credentials', {
   updatedAt: updatedAt()
 }, (t) => [index('credentials_project_idx').on(t.projectId)]);
 
-export const appointments = pgTable('appointments', {
-  id: id(),
-  projectId: uuid().notNull().references(() => projects.id, { onDelete: 'cascade' }),
-  title: text().notNull(),
-  startsAt: ts().notNull(),
-  kind: text(),
-  notes: text(),
-  createdAt: createdAt()
-}, (t) => [index('appointments_project_idx').on(t.projectId, t.startsAt)]);
-
 /* ---------- Marketing ---------- */
 
 export const marketingPlatforms = pgTable('marketing_platforms', {

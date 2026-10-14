@@ -46,3 +46,14 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Admin e portale restano route lazy della stessa app web.
 - Postgres relazionale e validazione/tipi condivisi sono preferiti a storage documentale o app separate.
 - Inviti, RBAC, credenziali cifrate, audit e migrazioni versionate sono vincoli di sicurezza.
+
+## 2026-10-14 — security — pulizia repo, hardening e zero trust
+
+- Rimossi: modulo appuntamenti (API, schema, DTO, UI; migrazione `0002_rimuovi_appuntamenti.sql`), "Attività recenti" in dashboard, `docs/wiki_example`, `IDEA.md`.
+- Anti-SSRF: `lib/safe-url.ts` (solo http/https su porte standard, niente credenziali, DNS verificato contro reti private/link-local/metadata); health-check progetto senza redirect automatici e con timeout.
+- API: body JSON limitato a 1 MB.
+- `vercel.json`: Content-Security-Policy (script solo `'self'`, Blob consentito per immagini/upload), COOP/CORP, HSTS preload; `inlineCritical: false` per compatibilità CSP, sourcemap disattivate in produzione.
+- Dipendenze: `npm audit` 0 vulnerabilità (override esbuild nel ramo drizzle-kit); CI con `npm audit --omit=dev` e CLI Vercel con versione fissata.
+- Database produzione: l'app usa il ruolo `cf_app` (solo DML, nessun DDL, nessun accesso ad altri DB); l'owner serve solo per le migrazioni (secret CI). Rimosso `SISSY_DATABASE_URL` da Vercel.
+- Da fare a mano: ruotare la password di `neondb_owner` (comparsa nella storia git) e aggiornare il secret `DATABASE_URL` di GitHub.
+- Verifica 2026-10-14: `npm run check`, `npm run test` (39/39, +2 test anti-SSRF) e `npm run build` passati.

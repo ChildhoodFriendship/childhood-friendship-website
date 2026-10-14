@@ -3,8 +3,13 @@
   "version": "0.2.0",
   "private": true,
   "description": "Childhood Friendship — sito pubblico, area admin e portale clienti",
-  "workspaces": ["packages/*", "apps/*"],
-  "engines": { "node": ">=22" },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev:web": "npm run start -w @cf/web",
     "dev:api": "npm run dev -w @cf/api",
@@ -14,5 +19,10 @@
     "db:generate": "npm run db:generate -w @cf/api",
     "db:migrate": "npm run db:migrate -w @cf/api",
     "admin:create": "npm run admin:create -w @cf/api"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.10"
+    }
   }
 }

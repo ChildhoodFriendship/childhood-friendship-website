@@ -53,10 +53,8 @@ export interface MessageDto { id: string; projectId: string; authorId: string; a
 
 export interface CredentialDto { id: string; service: string; url: string | null; username: string | null; hasSecret: boolean; notes: string | null; updatedAt: string; }
 
-export interface AppointmentDto { id: string; projectId: string; title: string; startsAt: string; kind: string | null; notes: string | null; }
-/** Il cliente non vede assegnatari dei task né note interne degli appuntamenti. */
+/** Il cliente non vede gli assegnatari dei task. */
 export type PortalTaskDto = Omit<TaskDto, 'assigneeId'>;
-export type PortalAppointmentDto = Omit<AppointmentDto, 'notes'>;
 
 export interface TargetDto { age?: string | null; sex?: 'maschio' | 'femmina' | 'tutti' | null; audience?: string | null; }
 export interface PlatformDto { id: string; projectId: string; kind: PlatformKind; name: string; profileUrl: string | null; enabled: boolean; frequency: { posts?: number; stories?: number; reels?: number }; }
@@ -93,8 +91,6 @@ export interface DashboardDto {
   overdueTasks: { taskId: string; projectId: string; projectName: string; title: string; dueDate: string }[];
   documentsInReview: { documentId: string; projectId: string; projectName: string; title: string; status: DocumentStatus }[];
   newLeads: number;
-  upcomingAppointments: { id: string; projectId: string; projectName: string; title: string; startsAt: string }[];
-  recentActivity: AuditDto[];
 }
 
 export interface AiUsageDto { usedToday: number; dailyLimit: number; enabled: boolean; }

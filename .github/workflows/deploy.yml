@@ -23,6 +23,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Audit dipendenze runtime
+        run: npm audit --omit=dev --audit-level=moderate
       - run: npm run check
       - run: npm test
       - run: npm run build
@@ -51,4 +53,4 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           CREDENTIALS_KEY: ${{ secrets.CREDENTIALS_KEY }}
       - name: Deploy produzione
-        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+        run: npx --yes vercel@64.0.2 deploy --prod --yes --token "$VERCEL_TOKEN"

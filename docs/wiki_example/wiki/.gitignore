@@ -1,7 +1,0 @@
-# Never commit secrets or local exports
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-secrets/

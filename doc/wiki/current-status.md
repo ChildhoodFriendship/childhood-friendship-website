@@ -1,6 +1,6 @@
 # Stato corrente
 
-> Snapshot documentale: 2026-10-14 · branch osservato: `fix/portale-privacy`.
+> Snapshot documentale: 2026-10-14 · branch osservato: `refactor/platform`.
 
 ## Sistema
 
@@ -8,7 +8,7 @@
 - Web Angular 22 con landing pubblica, area admin e portale clienti.
 - API Express + Drizzle; PGlite in locale, Postgres/Neon previsto in produzione.
 - Auth a sessione con access/refresh token, inviti, ruoli `admin`/`staff`/`client`, CSRF e audit.
-- Portale cliente: dati interni di progetto, assegnatari, task di documenti interni e note appuntamenti non esposti (DTO `Portal*`).
+- Portale cliente: dati interni di progetto, assegnatari e task di documenti interni non esposti (DTO `Portal*`).
 - Listino in landing: siti web e landing page da 400 €, web app da 800 €, app mobile da 1.200 €, cura da 20 €/mese.
 - Landing con scena Three.js caricata in differita, portfolio 3D, contatti e route `/caveau`.
 
@@ -17,7 +17,7 @@
 | Controllo | Esito registrato |
 |---|---|
 | `npm run check` | passato per shared, API e web il 2026-10-14 |
-| `npm run test` | 38/38 test API passati il 2026-10-14 |
+| `npm run test` | 39/39 test API passati il 2026-10-14 |
 | `npm run build` | passato web + API il 2026-10-14; scena 3D e feature restano lazy |
 | Smoke test Chromium | passato nello snapshot precedente; non rieseguito in questa migrazione |
 
@@ -29,13 +29,15 @@ Il smoke test browser resta un'evidenza precedente; la migrazione documentale no
 - Primo deploy Vercel + Neon: completato (produzione `childhood-friendship-website-pi.vercel.app`, deploy automatico da `refactor/platform`, DB Neon verificato il 2026-10-14).
 - Notifiche Telegram al team (lead sito, messaggi e revisioni del cliente): completate.
 - CRM unico (form sito + prospezione n8n) e materiali del cliente su Vercel Blob: completati.
+- Pulizia repo e hardening (CSP, anti-SSRF, ruolo DB `cf_app` a privilegi minimi, appuntamenti rimossi): completati.
 - Notifiche email transazionali: da pianificare.
 - Tariffe, abbonamenti e cashflow: esclusi dalla v1.
 
 ## Punti aperti e limiti
 
 - Inviti senza email transazionale: i link vengono copiati e inviati manualmente.
-- CSP del sito statico non ancora impostata; rate limit in memoria per istanza.
+- Rate limit in memoria per istanza (non condiviso tra istanze serverless).
+- Password `neondb_owner` da ruotare: compare nella storia git (repo privato).
 - Test automatici frontend non presenti; la copertura UI è affidata a smoke test/Playwright.
 - Fluidità in browser reale e alcuni layout mobile della landing 3D da verificare.
 - Portfolio con card/mock grafici dove mancano screenshot reali.

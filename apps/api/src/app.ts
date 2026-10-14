@@ -7,7 +7,6 @@ import { authenticate, requireAuth } from './middleware/auth.js';
 import { csrf } from './middleware/csrf.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 import { aiRouter, aiUsageRouter } from './modules/ai/ai.routes.js';
-import { appointmentsRouter } from './modules/appointments/appointments.routes.js';
 import { auditRouter } from './modules/audit/audit.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { clientsRouter } from './modules/clients/clients.routes.js';
@@ -31,7 +30,7 @@ export function createApp(ctx: AppContext): Express {
   app.disable('x-powered-by');
   app.set('trust proxy', ctx.env.TRUST_PROXY);
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } }, crossOriginResourcePolicy: { policy: 'same-origin' } }));
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 
   const api = Router();
@@ -65,7 +64,6 @@ export function createApp(ctx: AppContext): Express {
   nested.use('/documents', documentsRouter(ctx));
   nested.use('/messages', messagesRouter(ctx));
   nested.use('/credentials', credentialsRouter(ctx));
-  nested.use('/appointments', appointmentsRouter(ctx));
   nested.use('/marketing', marketingRouter(ctx));
   nested.use('/ai', aiRouter(ctx));
   nested.use('/files', filesRouter(ctx));
