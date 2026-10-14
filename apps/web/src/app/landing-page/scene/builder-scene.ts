@@ -295,21 +295,17 @@ export class BuilderScene {
     this.screenSig = '';
   }
 
-  /** Logo Legame in 3D: due anelli squadrati che si agganciano davvero. */
+  /**
+   * Logo Legame in 3D, fedele al logo piatto (shared/logo.component.ts): stesse proporzioni
+   * (anelli 96 + tratto 24, raggio 28, sfalsati di 44 unità SVG) e stesso intreccio:
+   * il viola passa sopra in alto a destra, il chiaro sopra in basso a sinistra.
+   */
   private buildRings(): void {
-    const ring = (size: number, thick: number, r: number) => {
-      const shape = roundedRect(size, size, r);
-      shape.holes.push(roundedRect(size - thick * 2, size - thick * 2, Math.max(0.01, r - thick)));
-      const geo = new THREE.ExtrudeGeometry(shape, { depth: thick * 0.9, bevelEnabled: true, bevelSize: thick * 0.18, bevelThickness: thick * 0.18, bevelSegments: 4, curveSegments: 24 });
-      geo.center();
-      return geo;
-    };
-    const geo = ring(0.6, 0.11, 0.18);
+    const S = 0.005;                         // 1 unità SVG del logo piatto -> scena (anello esterno 120 = 0.6)
     this.ringMat = new THREE.MeshPhysicalMaterial({ color: VIOLET, metalness: 0.1, roughness: 0.15, transmission: 0.35, thickness: 0.3, clearcoat: 1, emissive: VIOLET, emissiveIntensity: 0.25 });
-    const a = new THREE.Mesh(geo, this.ringMat);
-    const b = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: CHALK, metalness: 0.2, roughness: 0.25, clearcoat: 1 }));
-    b.rotation.y = Math.PI / 2;
-    b.position.set(0.245, -0.245, 0);
+    const a = new THREE.Mesh(legameRing(1, S), this.ringMat);
+    const b = new THREE.Mesh(legameRing(-1, S), new THREE.MeshPhysicalMaterial({ color: CHALK, metalness: 0.2, roughness: 0.25, clearcoat: 1 }));
+    b.position.set(44 * S, -44 * S, 0);      // come nel logo piatto: il chiaro in basso a destra
     this.rings.add(a, b);
     this.scene.add(this.portalLight);
   }
@@ -1058,15 +1054,52 @@ export class BuilderScene {
   }
 }
 
-function roundedRect(w: number, h: number, r: number): THREE.Shape {
-  const s = new THREE.Shape();
-  const x = -w / 2, y = -h / 2;
-  s.moveTo(x + r, y);
-  s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
-  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
-  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
-  return s;
+/**
+ * Anello del logo Legame: profilo morbido (quasi quadrato) spazzato lungo il rettangolo arrotondato
+ * del logo piatto e piegato in profondità lungo la diagonale, così i due anelli si intrecciano
+ * come nel logo: `dir` = +1 davanti in alto a destra, -1 davanti in basso a sinistra.
+ */
+function legameRing(dir: 1 | -1, S: number): THREE.BufferGeometry {
+  const half = 48 * S, r = 28 * S, hw = 12 * S, hd = 9 * S, weave = 12.5 * S, soft = 22 * S;
+  const path = new THREE.Path();
+  path.moveTo(-half + r, -half);
+  path.lineTo(half - r, -half); path.absarc(half - r, -half + r, r, -Math.PI / 2, 0, false);
+  path.lineTo(half, half - r); path.absarc(half - r, half - r, r, 0, Math.PI / 2, false);
+  path.lineTo(-half + r, half); path.absarc(-half + r, half - r, r, Math.PI / 2, Math.PI, false);
+  path.lineTo(-half, -half + r); path.absarc(-half + r, -half + r, r, Math.PI, Math.PI * 1.5, false);
+  const N = 256, M = 36;
+  const center = path.getSpacedPoints(N).slice(0, N)
+    .map((p) => new THREE.Vector3(p.x, p.y, dir * weave * Math.tanh((p.x + p.y) / soft)));
+  const profile: [number, number][] = [];
+  for (let j = 0; j < M; j++) {
+    const a = (j / M) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+    profile.push([Math.sign(ca) * Math.abs(ca) ** 0.32 * hw, Math.sign(sa) * Math.abs(sa) ** 0.32 * hd]);
+  }
+  const pos = new Float32Array(N * M * 3);
+  const t = new THREE.Vector3(), n = new THREE.Vector3(), b = new THREE.Vector3(), v = new THREE.Vector3();
+  for (let i = 0; i < N; i++) {
+    t.subVectors(center[(i + 1) % N]!, center[(i - 1 + N) % N]!).normalize();
+    n.set(t.y, -t.x, 0).normalize();         // verso l'esterno (percorso antiorario)
+    b.crossVectors(n, t).normalize();         // circa +z, segue la piega
+    for (let j = 0; j < M; j++) {
+      v.copy(center[i]!).addScaledVector(n, profile[j]![0]).addScaledVector(b, profile[j]![1]);
+      pos.set([v.x, v.y, v.z], (i * M + j) * 3);
+    }
+  }
+  const index: number[] = [];
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < M; j++) {
+      const i2 = (i + 1) % N, j2 = (j + 1) % M;
+      const p00 = i * M + j, p10 = i2 * M + j, p11 = i2 * M + j2, p01 = i * M + j2;
+      index.push(p00, p10, p01, p10, p11, p01);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setIndex(index);
+  geo.computeVertexNormals();
+  geo.computeBoundingSphere();
+  return geo;
 }
 
 /** Opacità di tutti i materiali di un modello (la dissolvenza in particelle li fa svanire). */
