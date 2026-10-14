@@ -50,7 +50,5 @@ jobs:
         run: npm run db:migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          CREDENTIALS_KEY: ${{ secrets.CREDENTIALS_KEY }}
       - name: Deploy produzione
         run: npx --yes vercel@64.0.2 deploy --prod --yes --token "$VERCEL_TOKEN"
