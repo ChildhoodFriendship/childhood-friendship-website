@@ -14,6 +14,9 @@ const PAD = { top: 12, right: 8, bottom: 26, left: 44 };
         @for (s of series(); track s.name) { <li><span class="sw" [style.background]="s.color"></span>{{ s.name }}</li> }
       </ul>
     }
+    @if (isEmpty()) {
+      <div class="empty" [style.min-height.px]="height() * 0.6"><span class="muted">{{ emptyText() }}</span></div>
+    } @else {
     <div class="wrap">
       <svg [attr.viewBox]="'0 0 ' + W + ' ' + height()" role="img" [attr.aria-label]="label()">
         @for (t of ticks(); track t) {
@@ -41,6 +44,7 @@ const PAD = { top: 12, right: 8, bottom: 26, left: 44 };
         </div>
       }
     </div>
+    }
     <table class="sr-only">
       <caption>{{ label() }}</caption>
       <tr><th>Periodo</th>@for (s of series(); track s.name) { <th>{{ s.name }}</th> }</tr>
@@ -67,6 +71,7 @@ const PAD = { top: 12, right: 8, bottom: 26, left: 44 };
       border: 1px solid var(--cf-color-border); border-radius: 8px; padding: 8px 10px; font-size: .78rem; display: grid; gap: 3px;
       white-space: nowrap; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); z-index: 2; }
     .tip span { color: var(--cf-color-text-muted); } .tip b { color: var(--cf-color-text); margin-left: 4px; }
+    .empty { display: grid; place-items: center; border: 1px dashed var(--cf-color-border); border-radius: 8px; font-size: .85rem; }
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -78,6 +83,7 @@ export class BarChartComponent {
   readonly height = input<number>(200);
   readonly showLabels = input<boolean>(false);
   readonly format = input<(v: number) => string>((v) => String(Math.round(v)));
+  readonly emptyText = input<string>('Ancora nessun dato in questo periodo.');
 
   protected readonly W = W;
   protected readonly PAD = PAD;
@@ -85,6 +91,7 @@ export class BarChartComponent {
 
   protected readonly plotH = computed(() => this.height() - PAD.top - PAD.bottom);
   private readonly totals = computed(() => this.labels().map((_, i) => this.series().reduce((a, s) => a + (s.values[i] ?? 0), 0)));
+  protected readonly isEmpty = computed(() => this.totals().every((t) => t === 0));
   private readonly max = computed(() => niceMax(Math.max(0, ...this.totals())));
   protected readonly ticks = computed(() => { const m = this.max(); return [0, m / 2, m]; });
 

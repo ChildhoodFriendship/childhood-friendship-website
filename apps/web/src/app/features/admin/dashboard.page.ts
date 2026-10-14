@@ -59,7 +59,8 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
           </section>
           <section class="card">
             <div class="card-head"><h2>Chiuso per mese</h2><span class="muted small">valore dei lead chiusi</span></div>
-            <cf-bar-chart label="Valore chiuso per mese" [labels]="monthLabels()" [series]="revenueSeries()" [format]="euroShort" [showLabels]="true" />
+            <cf-bar-chart label="Valore chiuso per mese" [labels]="monthLabels()" [series]="revenueSeries()" [format]="euroShort" [showLabels]="true"
+              emptyText="Nessun progetto chiuso negli ultimi 6 mesi. Segna «progetto chiuso» e il prezzo nella pagina Lead." />
           </section>
           <section class="card">
             <div class="card-head"><h2>Funnel lead</h2><span class="muted small">tutte le fonti</span></div>
@@ -77,7 +78,8 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
           </section>
           <section class="card">
             <div class="card-head"><h2>Task completati</h2><span class="muted small">ultime 8 settimane · {{ tasks8() }} totali</span></div>
-            <cf-bar-chart label="Task completati per settimana" [labels]="taskLabels()" [series]="taskSeries()" [showLabels]="true" [height]="180" />
+            <cf-bar-chart label="Task completati per settimana" [labels]="taskLabels()" [series]="taskSeries()" [showLabels]="true" [height]="180"
+              emptyText="Nessun task completato nelle ultime 8 settimane." />
           </section>
         </div>
 
@@ -136,7 +138,7 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
     .funnel a:hover .f-label { color: var(--cf-color-violet-light); }
     .f-label { font-size: .85rem; color: var(--cf-color-text-muted); }
     .f-track { height: 14px; border-radius: 4px; background: var(--cf-surface-2, rgba(255,255,255,.04)); overflow: hidden; }
-    .f-bar { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: ${C_SITO}; }
+    .f-bar { display: block; height: 100%; border-radius: 0 4px 4px 0; background: ${C_SITO}; }
     .f-bar.lost { background: var(--cf-color-text-muted); opacity: .5; }
     .f-val { text-align: right; font-size: .9rem; }
     .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }

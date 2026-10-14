@@ -57,3 +57,12 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Database produzione: l'app usa il ruolo `cf_app` (solo DML, nessun DDL, nessun accesso ad altri DB); l'owner serve solo per le migrazioni (secret CI). Rimosso `SISSY_DATABASE_URL` da Vercel.
 - Da fare a mano: ruotare la password di `neondb_owner` (comparsa nella storia git) e aggiornare il secret `DATABASE_URL` di GitHub.
 - Verifica 2026-10-14: `npm run check`, `npm run test` (39/39, +2 test anti-SSRF) e `npm run build` passati.
+
+## 2026-10-15 — feature — dashboard admin con grafici; CI di deploy funzionante
+
+- `/api/dashboard`: lead per stato, lead per settimana (sito/prospezione, 12 settimane), chiuso per mese (6 mesi, da `closedAt` + `priceCents`), valore pipeline, task completati (8 settimane).
+- Web: KPI (pipeline, chiuso, conversione = convertiti / (convertiti + persi)), istogrammi SVG senza librerie (`shared/bar-chart.component.ts`, tooltip, tabella per screen reader, stato vuoto), funnel lead cliccabile (`/admin/lead?stato=`).
+- Palette grafici validata sul fondo scuro: viola `#8B5CF6` (sito) + ambra `#D97706` (prospezione).
+- CI: migrazioni con solo `DATABASE_URL` (rimossi `JWT_SECRET`/`CREDENTIALS_KEY` dai secret GitHub), timeout 15 minuti per job, `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` aggiornati: push su `main` = migrazioni + deploy.
+- Ruotati i segreti dello store Neon (password `neondb_owner`); l'app usa `cf_app`, non toccato. Migrazione `0002` applicata in produzione.
+- Verifica: `npm run check`, `npm run test` (40/40), CI verde.
