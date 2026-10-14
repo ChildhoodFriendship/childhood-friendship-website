@@ -16,7 +16,10 @@ const envSchema = z.object({
   AI_MODEL: z.string().default('gemini-2.5-flash'),
   AI_BASE_URL: z.string().optional(),
   AI_API_KEY: z.string().optional(),
-  AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(50)
+  AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(50),
+  // Notifiche al team su Telegram (opzionali)
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_CHAT_ID: z.string().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;

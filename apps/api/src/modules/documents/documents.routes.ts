@@ -11,6 +11,7 @@ import { serialize } from '../../lib/serialize.js';
 import { parse } from '../../lib/validate.js';
 import { isTeam, requireAdmin, requireTeam } from '../../middleware/auth.js';
 import { assertWritable, currentProject } from '../projects/access.js';
+import { notifyTeam } from '../../lib/notify.js';
 
 const uuidParam = z.uuid('ID non valido');
 const summary = {
@@ -122,6 +123,15 @@ export function documentsRouter(ctx: AppContext): Router {
       }
     });
     await audit(db, req, { action: `document.${status}`, entity: 'document', entityId: doc.id, projectId: project.id, meta: { comment: input.comment ?? null } });
+    if (!isTeam(req)) {
+      await notifyTeam(ctx.env, {
+        title: status === 'approvato' ? `✅ ${req.user!.name} ha approvato un documento` : `✏️ ${req.user!.name} chiede modifiche`,
+        lines: [`📄 ${doc.title}`, `📁 ${project.name}`],
+        quote: input.comment ?? null,
+        path: `/admin/progetti/${project.id}/documenti/${doc.id}`,
+        buttonLabel: '📄 Apri il documento'
+      });
+    }
     res.json(toDto(await loadDoc(req, project.id)));
   });
 

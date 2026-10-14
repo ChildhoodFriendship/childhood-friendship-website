@@ -24,6 +24,13 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - `create-client-user.ts`: rimossi email/password di default (password solo da `--password` o `CLIENT_PASSWORD`); nuovo script `npm run client:create`.
 - Produzione: password di admin e cliente Sissy ruotate (la vecchia password cliente era nel codice).
 
+## 2026-10-14 — feature — notifiche Telegram al team
+
+- Nuovo `apps/api/src/lib/notify.ts`: avvisi sul bot Telegram elitespaceweb (HTML escapato, bottone verso la piattaforma, timeout 3,5 s, mai bloccante).
+- Eventi: nuovo lead dal form del sito, messaggio scritto da un cliente, documento approvato o con modifiche richieste dal cliente.
+- Config opzionale `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` (impostate su Vercel produzione); no-op in test o se mancano.
+- Verifica: `npm run check`, `npm run test` (32/32, +3 test notify).
+
 ## Decisioni architetturali mantenute
 
 - Monorepo unico npm: `apps/web` Angular, `apps/api` Express/Drizzle, `packages/shared`.

@@ -7,6 +7,7 @@ import { messages, users } from '../../db/schema.js';
 import { serialize } from '../../lib/serialize.js';
 import { parse } from '../../lib/validate.js';
 import { assertWritable, currentProject } from '../projects/access.js';
+import { notifyTeam } from '../../lib/notify.js';
 
 const columns = {
   id: messages.id, projectId: messages.projectId, authorId: messages.authorId, authorName: users.name,
@@ -38,6 +39,15 @@ export function messagesRouter(ctx: AppContext): Router {
     const { body } = parse(messageInputSchema, req.body);
     const [row] = await db.insert(messages).values({ projectId: project.id, authorId: req.user!.id, body }).returning({ id: messages.id });
     const [full] = await db.select(columns).from(messages).innerJoin(users, eq(users.id, messages.authorId)).where(eq(messages.id, row!.id));
+    if (req.user!.role === 'client') {
+      await notifyTeam(ctx.env, {
+        title: `💬 Messaggio da ${req.user!.name}`,
+        lines: [`📁 ${project.name}`],
+        quote: body,
+        path: `/admin/progetti/${project.id}/messaggi`,
+        buttonLabel: '💬 Rispondi'
+      });
+    }
     res.status(201).json(serialize(full!));
   });
 

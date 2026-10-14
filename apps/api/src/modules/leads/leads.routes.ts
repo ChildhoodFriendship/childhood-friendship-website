@@ -11,6 +11,7 @@ import { badRequest, notFound } from '../../lib/http-error.js';
 import { omit, serialize } from '../../lib/serialize.js';
 import { defined, parse } from '../../lib/validate.js';
 import { requireAdmin, requireTeam } from '../../middleware/auth.js';
+import { notifyTeam } from '../../lib/notify.js';
 
 const uuidParam = z.uuid('ID non valido');
 const toDto = (l: typeof leads.$inferSelect) => serialize(omit(l, 'ipHash', 'updatedAt'));
@@ -29,6 +30,14 @@ export function publicLeadsRouter(ctx: AppContext): Router {
     await ctx.db.insert(leads).values({
       name: input.name, email: input.email, phone: input.phone ?? null, company: input.company ?? null,
       service: input.service, message: input.message, source: 'sito', ipHash: req.ip ? sha256(req.ip).slice(0, 16) : null
+    });
+    const services: Record<string, string> = { landing: 'Sito web / landing page', webapp: 'Web app', mobile: 'App mobile', manutenzione: 'Manutenzione', altro: 'Altro' };
+    await notifyTeam(ctx.env, {
+      title: '🆕 Nuovo lead dal sito',
+      lines: [`👤 ${input.name}${input.company ? ` · ${input.company}` : ''}`, `🧩 ${services[input.service] ?? input.service}`, `✉️ ${input.email}`, input.phone ? `📞 ${input.phone}` : null],
+      quote: input.message,
+      path: '/admin/lead',
+      buttonLabel: '📋 Apri i lead'
     });
     res.status(202).json({ ok: true });
   });
