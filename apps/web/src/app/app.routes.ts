@@ -13,6 +13,18 @@ export const routes: Routes = [
     loadComponent: () => import('./landing-page/caveau/caveau.page').then((m) => m.CaveauPage)
   },
   {
+    path: 'privacy',
+    title: 'Informativa privacy — Childhood Friendship',
+    data: { doc: 'privacy' },
+    loadComponent: () => import('./legal/legal.page').then((m) => m.LegalPage)
+  },
+  {
+    path: 'cookie',
+    title: 'Cookie policy — Childhood Friendship',
+    data: { doc: 'cookie' },
+    loadComponent: () => import('./legal/legal.page').then((m) => m.LegalPage)
+  },
+  {
     path: 'login',
     title: 'Accedi — Childhood Friendship',
     canMatch: [guestGuard],

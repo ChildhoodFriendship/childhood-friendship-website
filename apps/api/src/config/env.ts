@@ -26,7 +26,9 @@ const envSchema = z.object({
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
   // Email transazionali (Resend): mittente su dominio verificato, es. "Childhood Friendship <noreply@dominio.it>"
   RESEND_API_KEY: z.string().optional(),
-  MAIL_FROM: z.string().optional()
+  MAIL_FROM: z.string().optional(),
+  // Cron giornaliero di Vercel (conservazione dei dati): Vercel lo invia come "Authorization: Bearer <CRON_SECRET>"
+  CRON_SECRET: z.string().min(24).optional()
 });
 
 export type Env = z.infer<typeof envSchema>;

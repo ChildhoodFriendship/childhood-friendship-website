@@ -44,7 +44,6 @@ export function messagesRouter(ctx: AppContext): Router {
       await notifyTeam(ctx.env, {
         title: `💬 Messaggio da ${req.user!.name}`,
         lines: [`📁 ${project.name}`],
-        quote: body,
         path: `/admin/progetti/${project.id}/messaggi`,
         buttonLabel: '💬 Rispondi'
       });

@@ -2,6 +2,7 @@ import { rateLimit, type IncrementResponse, type Options, type RateLimitRequestH
 import { lt, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { rateLimits } from '../db/schema.js';
+import { pseudonym } from './privacy.js';
 
 /**
  * Contatori del rate limit su Postgres: condivisi tra tutte le istanze serverless,
@@ -15,8 +16,11 @@ export class DbRateLimitStore implements Store {
 
   init(options: Options): void { this.windowMs = options.windowMs; }
 
+  /** La chiave (di norma l'IP) non viene mai salvata in chiaro. */
+  private k(key: string): string { return `${this.prefix}:${pseudonym(key)}`; }
+
   async increment(key: string): Promise<IncrementResponse> {
-    const k = `${this.prefix}:${key}`;
+    const k = this.k(key);
     const reset = new Date(Date.now() + this.windowMs);
     const [row] = await this.db.insert(rateLimits).values({ key: k, hits: 1, resetAt: reset })
       .onConflictDoUpdate({
@@ -33,11 +37,11 @@ export class DbRateLimitStore implements Store {
   }
 
   async decrement(key: string): Promise<void> {
-    await this.db.update(rateLimits).set({ hits: sql`greatest(${rateLimits.hits} - 1, 0)` }).where(sql`${rateLimits.key} = ${`${this.prefix}:${key}`}`);
+    await this.db.update(rateLimits).set({ hits: sql`greatest(${rateLimits.hits} - 1, 0)` }).where(sql`${rateLimits.key} = ${this.k(key)}`);
   }
 
   async resetKey(key: string): Promise<void> {
-    await this.db.delete(rateLimits).where(sql`${rateLimits.key} = ${`${this.prefix}:${key}`}`);
+    await this.db.delete(rateLimits).where(sql`${rateLimits.key} = ${this.k(key)}`);
   }
 }
 

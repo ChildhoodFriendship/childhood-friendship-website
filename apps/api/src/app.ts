@@ -22,9 +22,12 @@ import { tasksRouter } from './modules/tasks/tasks.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { filesRouter } from './modules/files/files.routes.js';
 import { integrationsRouter } from './modules/leads/integrations.routes.js';
+import { setPseudonymKey } from './lib/privacy.js';
+import { retentionRouter } from './modules/retention/retention.js';
 
 export function createApp(ctx: AppContext): Express {
   const app = express();
+  setPseudonymKey(ctx.env.JWT_SECRET);
   const isProd = ctx.env.NODE_ENV === 'production';
 
   app.disable('x-powered-by');
@@ -40,13 +43,14 @@ export function createApp(ctx: AppContext): Express {
     message: { error: { code: 'rate_limited', message: 'Troppe richieste, rallenta.' } }
   }));
   // /integrations usa un token Bearer (n8n), non cookie: niente CSRF
-  api.use(csrf(isProd, (path) => path.startsWith('/public/') || path.startsWith('/integrations/')));
+  api.use(csrf(isProd, (path) => path.startsWith('/public/') || path.startsWith('/integrations/') || path.startsWith('/internal/')));
   api.use(authenticate(ctx));
 
   api.get('/health', (_req, res) => { res.json({ ok: true }); });
   api.use('/public/leads', publicLeadsRouter(ctx));
   api.use('/auth', authRouter(ctx));
   api.use('/integrations', integrationsRouter(ctx));
+  api.use('/internal', retentionRouter(ctx));
 
   api.use(requireAuth);
   api.use('/dashboard', dashboardRouter(ctx));

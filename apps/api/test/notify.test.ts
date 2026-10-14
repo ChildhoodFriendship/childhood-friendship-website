@@ -24,7 +24,7 @@ describe('notifiche Telegram al team', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200 });
     vi.stubGlobal('fetch', fetchMock);
     const env = loadEnv({ ...base, NODE_ENV: 'production', TELEGRAM_BOT_TOKEN: 'TOK', TELEGRAM_CHAT_ID: '42' });
-    await notifyTeam(env, { title: 'Messaggio da <Mario>', lines: ['📁 Sito & app'], quote: 'Ciao', path: '/admin/lead' });
+    await notifyTeam(env, { title: 'Messaggio da <Mario>', lines: ['📁 Sito & app'], path: '/admin/lead' });
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0] as [string, { body: string }];
     expect(url).toBe('https://api.telegram.org/botTOK/sendMessage');

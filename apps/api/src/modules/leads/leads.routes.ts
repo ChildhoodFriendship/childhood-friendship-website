@@ -6,7 +6,7 @@ import type { AppContext } from '../../context.js';
 import { sharedLimiter } from '../../lib/rate-limit.js';
 import { clients, leads } from '../../db/schema.js';
 import { audit } from '../../lib/audit.js';
-import { sha256 } from '../../lib/crypto.js';
+import { PRIVACY_POLICY_VERSION } from '../../lib/privacy.js';
 import { badRequest, notFound } from '../../lib/http-error.js';
 import { omit, serialize } from '../../lib/serialize.js';
 import { defined, parse } from '../../lib/validate.js';
@@ -14,7 +14,7 @@ import { requireAdmin, requireTeam } from '../../middleware/auth.js';
 import { notifyTeam } from '../../lib/notify.js';
 
 const uuidParam = z.uuid('ID non valido');
-const toDto = (l: typeof leads.$inferSelect) => serialize(omit(l, 'ipHash', 'updatedAt'));
+const toDto = (l: typeof leads.$inferSelect) => serialize(omit(l, 'updatedAt'));
 
 /** Form contatti del sito pubblico (sostituisce Formspree). */
 export function publicLeadsRouter(ctx: AppContext): Router {
@@ -27,13 +27,13 @@ export function publicLeadsRouter(ctx: AppContext): Router {
     if (input.website) { res.status(202).json({ ok: true }); return; }
     await ctx.db.insert(leads).values({
       name: input.name, email: input.email, phone: input.phone ?? null, company: input.company ?? null,
-      service: input.service, message: input.message, source: 'sito', ipHash: req.ip ? sha256(req.ip).slice(0, 16) : null
+      service: input.service, message: input.message, source: 'sito',
+      privacyVersion: PRIVACY_POLICY_VERSION, privacyAcceptedAt: new Date()
     });
     const services: Record<string, string> = { landing: 'Sito web / landing page', webapp: 'Web app', mobile: 'App mobile', manutenzione: 'Manutenzione', altro: 'Altro' };
     await notifyTeam(ctx.env, {
       title: '🆕 Nuovo lead dal sito',
-      lines: [`👤 ${input.name}${input.company ? ` · ${input.company}` : ''}`, `🧩 ${services[input.service] ?? input.service}`, `✉️ ${input.email}`, input.phone ? `📞 ${input.phone}` : null],
-      quote: input.message,
+      lines: [`${services[input.service] ?? input.service}`],
       path: '/admin/lead',
       buttonLabel: '📋 Apri i lead'
     });

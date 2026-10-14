@@ -71,7 +71,7 @@
   align-items: center;
   color: var(--cf-color-violet-light);
   display: flex;
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
   gap: 0.65rem;
@@ -89,7 +89,7 @@
 }
 
 h1 {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
   font-size: clamp(3.7rem, 7.2vw, 6.5rem);
   font-weight: 800;
   letter-spacing: -0.085em;
@@ -105,7 +105,7 @@ h1 em {
 
 .hero-description {
   color: var(--cf-color-text-muted);
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
   font-size: 1.06rem;
   line-height: 1.7;
   max-width: 480px;
@@ -124,7 +124,7 @@ h1 em {
   border: 1px solid transparent;
   border-radius: 999px;
   display: inline-flex;
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
   font-size: 0.82rem;
   font-weight: 700;
   gap: 0.6rem;
@@ -166,7 +166,7 @@ h1 em {
 
 .text-link {
   color: var(--cf-color-text);
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
   font-size: 0.82rem;
   font-weight: 700;
   text-decoration: none;

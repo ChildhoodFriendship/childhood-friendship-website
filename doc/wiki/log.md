@@ -77,3 +77,13 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - CI: `actions/checkout`/`setup-node`/`upload-artifact` v7, runner `ubuntu-24.04` fissato, e2e nel job di verifica.
 - Branch `feature/3d-vault-hero` e `hermes/wiki-migration` obsoleti: archiviati come tag `archive/*` ed eliminati.
 - Verifica: `npm run check`, `npm run test` (47/47), `npm run e2e` (4/4).
+
+## 2026-10-15 — security — GDPR: informativa, cookie, minimizzazione e conservazione
+
+- Pagine `/privacy` e `/cookie` (`apps/web/src/app/legal/`): titolari «Lorenzo e Mirko», contatto `lorenzo@cfofficial.it`, Padova. Link nel footer; nessuna P.IVA indicata. Testi da far validare a un professionista.
+- Form contatti: presa visione dell'informativa (base 6.1.b) con link; il lead salva `privacy_version` e `privacy_accepted_at` (migrazione `0006`).
+- Minimizzazione: tolto l'hash IP dai lead (migrazione `0005`, azzerati anche i vecchi SHA-256 nel registro attività); IP del registro e chiavi del rate limit solo come HMAC con chiave segreta (`lib/privacy.ts`); le notifiche Telegram non contengono più messaggi, commenti o recapiti.
+- Font ospitati in locale (@fontsource): nessuna richiesta a Google, CSP senza domini esterni. Solo cookie tecnici (cf_at, cf_rt, XSRF-TOKEN): nessun banner necessario.
+- Conservazione automatica (`modules/retention`): cron Vercel giornaliero su `/api/internal/retention` con `CRON_SECRET` (impostato in produzione). Lead dal sito 24 mesi, prospezione 12 mesi, sessioni 30 giorni, inviti 90 giorni, registro 24 mesi; i clienti non vengono mai cancellati.
+- Verifica: `npm run check`, `npm run test` (52/52), `npm run e2e` (6/6, incluso «nessuna richiesta esterna dalla landing»).
+- Da valutare: database Neon in us-east-1 (USA). Per ridurre i trasferimenti extra UE conviene spostarlo in una regione UE (es. Francoforte).

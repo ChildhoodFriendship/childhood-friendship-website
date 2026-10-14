@@ -9,11 +9,16 @@
 .brand-name { font-size: .86rem; letter-spacing: -.02em; }
 .brand-name strong { font-weight: 700; }
 .site-footer p, .footer-meta { color: var(--cf-color-text-muted); font-size: .7rem; }
+.footer-info { display: grid; gap: .2rem; text-align: center; }
+.footer-info p { margin: 0; }
+.footer-meta { display: flex; flex-wrap: wrap; gap: .4rem .9rem; align-items: center; justify-content: flex-end; }
+.site-footer a:not(.brand) { color: var(--cf-color-text-muted); text-decoration: underline; text-underline-offset: 3px; }
+.site-footer a:not(.brand):hover { color: var(--cf-color-text); }
 
 @media (max-width: 800px) {
   /* mobile: compatto e centrato */
   .site-footer { align-items: center; flex-direction: column; gap: .45rem; padding-block: 1.25rem 1.5rem; text-align: center; }
-  .site-footer p, .footer-meta { margin: 0; }
+  .site-footer p, .footer-meta { margin: 0; justify-content: center; }
   .brand-mark { height: 1.7rem; width: 1.7rem; }
 }
 

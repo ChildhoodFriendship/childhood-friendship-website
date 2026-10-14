@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
   --cf-color-black: #0A0A0A;
@@ -12,7 +11,7 @@
   --cf-color-danger: #F87171;
   --cf-color-success: #4ADE80;
   color-scheme: dark;
-  font-family: 'Manrope', Arial, sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', Arial, sans-serif;
   background: var(--cf-color-black);
   color: var(--cf-color-text);
 }
@@ -25,7 +24,7 @@
   --cf-sun: #FFC93C;
   --cf-berry: #FF7AA8;
   --cf-violet: #7C3AED;
-  --cf-display: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif;
+  --cf-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Manrope Variable', system-ui, sans-serif;
   --cf-hand: 'Caveat', 'Comic Sans MS', cursive;
 }
 

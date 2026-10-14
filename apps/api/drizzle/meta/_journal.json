@@ -36,6 +36,20 @@
       "when": 1792017025458,
       "tag": "0004_progetto_tipo_preventivo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792018845149,
+      "tag": "0005_lead_senza_ip",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792018850989,
+      "tag": "0006_lead_consenso_privacy",
+      "breakpoints": true
     }
   ]
 }

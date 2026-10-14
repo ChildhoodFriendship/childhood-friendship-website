@@ -68,7 +68,7 @@
                   </div>
                   <label class="consent">
                     <input type="checkbox" [checked]="answers().privacy" (change)="set('privacy', $any($event.target).checked)">
-                    <span>Acconsento al trattamento dei dati per essere ricontattato (GDPR art. 6.1.b).</span>
+                    <span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa privacy</a>: i miei dati servono solo a rispondermi e a prepararmi un preventivo.</span>
                   </label>
                   <input class="honeypot" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" [value]="answers().website" (input)="set('website', value($event))">
                 }

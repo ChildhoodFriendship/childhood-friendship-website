@@ -1,15 +1,12 @@
 import type { Env } from '../config/env.js';
 
 const esc = (s: unknown): string => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const cut = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 export interface TeamNotice {
   /** Riga di titolo, già senza HTML (verrà escapata). */
   title: string;
   /** Righe di dettaglio in chiaro (verranno escapate). */
   lines?: (string | null | undefined)[];
-  /** Testo lungo (messaggio, commento), mostrato in citazione. */
-  quote?: string | null;
   /** Percorso dell'app (es. /admin/lead) per il bottone "Apri". */
   path?: string;
   buttonLabel?: string;
@@ -17,13 +14,13 @@ export interface TeamNotice {
 
 /**
  * Notifica il team sul bot Telegram (elitespaceweb).
- * Mai bloccante per l'utente: timeout breve, errori solo loggati. No-op in test o senza configurazione.
+ * Minimizzazione dei dati: solo titoli e riferimenti, mai il contenuto di messaggi, commenti o contatti
+ * (quelli restano nella piattaforma). Mai bloccante per l'utente: timeout breve, errori solo loggati. No-op in test o senza configurazione.
  */
 export async function notifyTeam(env: Env, notice: TeamNotice): Promise<void> {
   if (env.NODE_ENV === 'test' || !env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return;
   const parts = [`<b>${esc(notice.title)}</b>`];
   for (const l of notice.lines ?? []) if (l) parts.push(esc(l));
-  if (notice.quote?.trim()) parts.push(`<blockquote>${esc(cut(notice.quote.trim(), 700))}</blockquote>`);
   const body: Record<string, unknown> = {
     chat_id: env.TELEGRAM_CHAT_ID,
     text: parts.join('\n'),

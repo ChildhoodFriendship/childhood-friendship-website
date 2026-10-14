@@ -135,7 +135,6 @@ export function documentsRouter(ctx: AppContext): Router {
       await notifyTeam(ctx.env, {
         title: status === 'approvato' ? `✅ ${req.user!.name} ha approvato un documento` : `✏️ ${req.user!.name} chiede modifiche`,
         lines: [`📄 ${doc.title}`, `📁 ${project.name}`],
-        quote: input.comment ?? null,
         path: `/admin/progetti/${project.id}/documenti/${doc.id}`,
         buttonLabel: '📄 Apri il documento'
       });

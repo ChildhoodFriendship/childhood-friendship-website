@@ -85,6 +85,8 @@ export interface LeadDto {
   placeId: string | null; score: number | null; category: string | null; address: string | null; website: string | null;
   mapsUrl: string | null; outreachMessage: string | null; waLink: string | null;
   priceCents: number | null; offeredService: string | null; contactedAt: string | null; closedAt: string | null;
+  /** Consenso dal form del sito: versione dell'informativa e data. */
+  privacyVersion: string | null; privacyAcceptedAt: string | null;
 }
 
 export interface ProjectFileDto {

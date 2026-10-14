@@ -17,9 +17,9 @@
 | Controllo | Esito registrato |
 |---|---|
 | `npm run check` | passato per shared, API e web il 2026-10-14 |
-| `npm run test` | 47/47 test API passati il 2026-10-15 |
+| `npm run test` | 52/52 test API passati il 2026-10-15 |
 | `npm run build` | passato web + API il 2026-10-14; scena 3D e feature restano lazy |
-| `npm run e2e` | 4/4 test Playwright passati il 2026-10-15 (anche in CI) |
+| `npm run e2e` | 6/6 test Playwright passati il 2026-10-15 (anche in CI) |
 | Smoke test Chromium | passato nello snapshot precedente; non rieseguito in questa migrazione |
 
 Il smoke test browser resta un'evidenza precedente; la migrazione documentale non modifica il runtime.
@@ -35,6 +35,8 @@ Il smoke test browser resta un'evidenza precedente; la migrazione documentale no
 - Tariffe, abbonamenti e cashflow: esclusi dalla v1.
 
 ## Punti aperti e limiti
+
+- Privacy: informativa e cookie policy pubblicate ma da far validare; database Neon negli USA (valutare regione UE).
 
 - Email transazionali pronte ma disattivate finché non si configurano `RESEND_API_KEY` e `MAIL_FROM` (dominio verificato).
 - Rate limit globale in memoria per istanza; login, refresh e form pubblico condivisi su Postgres.

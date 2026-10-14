@@ -250,7 +250,9 @@ export const leads = pgTable('leads', {
   notes: text(),
   source: text().notNull().default('sito'),
   clientId: uuid().references(() => clients.id, { onDelete: 'set null' }),
-  ipHash: text(),
+  /** Versione dell'informativa accettata dal form del sito e momento dell'accettazione (accountability GDPR). */
+  privacyVersion: text(),
+  privacyAcceptedAt: ts(),
   /* Prospezione automatica (n8n) */
   placeId: text(),
   score: integer(),

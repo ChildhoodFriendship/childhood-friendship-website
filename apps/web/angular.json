@@ -30,6 +30,12 @@
               }
             ],
             "styles": [
+              "@fontsource-variable/manrope/index.css",
+              "@fontsource-variable/bricolage-grotesque/standard.css",
+              "@fontsource/dm-mono/latin-400.css",
+              "@fontsource/dm-mono/latin-500.css",
+              "@fontsource/caveat/latin-500.css",
+              "@fontsource/caveat/latin-700.css",
               "src/styles.css",
               "src/styles/app.css"
             ]

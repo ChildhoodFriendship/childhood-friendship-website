@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import type { Database } from '../db/client.js';
 import { auditLog } from '../db/schema.js';
-import { sha256 } from './crypto.js';
+import { pseudonymIp } from './privacy.js';
 
 export interface AuditEntry {
   action: string;
@@ -21,7 +21,7 @@ export async function audit(db: Database, req: Request, entry: AuditEntry): Prom
       entityId: entry.entityId ?? null,
       projectId: entry.projectId ?? null,
       meta: entry.meta ?? {},
-      ipHash: req.ip ? sha256(req.ip).slice(0, 16) : null
+      ipHash: pseudonymIp(req.ip)
     });
   } catch (err) {
     console.error('[audit] scrittura fallita', err);

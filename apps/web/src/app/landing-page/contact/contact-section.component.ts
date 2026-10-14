@@ -165,7 +165,7 @@ export class ContactSectionComponent {
       case 'who': return a.name.trim().length >= 2 ? '' : 'Dicci almeno il tuo nome.';
       case 'contact':
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email.trim())) return 'Inserisci un’email valida.';
-        return a.privacy ? '' : 'Serve il consenso per poterti ricontattare.';
+        return a.privacy ? '' : 'Conferma di aver letto l\'informativa privacy per inviare la richiesta.';
     }
   }
 
