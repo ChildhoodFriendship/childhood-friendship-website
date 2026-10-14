@@ -57,7 +57,8 @@ import { ModalComponent } from '../../../shared/modal.component';
     <cf-modal [(open)]="inviteOpen" title="Nuovo invito">
       @if (link(); as l) {
         <div class="stack">
-          <p>Invia questo link: valido 72 ore, monouso. <strong>Non verrà più mostrato.</strong></p>
+          @if (emailSent()) { <p class="alert alert-success">Email di invito inviata. Il link resta copiabile qui sotto, ma <strong>non verrà più mostrato</strong>.</p> }
+          @else { <p>Invia questo link: valido 72 ore, monouso. <strong>Non verrà più mostrato.</strong></p> }
           <div class="row"><input class="input grow mono" [value]="l" readonly aria-label="Link invito" /><button class="btn" (click)="copy(l)">Copia</button></div>
         </div>
       } @else {
@@ -96,6 +97,7 @@ export class UsersPage implements OnInit {
   protected readonly pendingInvites = computed(() => this.invites().filter((i) => !i.acceptedAt));
   protected readonly inviteOpen = signal(false);
   protected readonly link = signal<string | null>(null);
+  protected readonly emailSent = signal(false);
   protected email = '';
   protected role: Role = 'staff';
   protected clientId = '';
@@ -134,6 +136,7 @@ export class UsersPage implements OnInit {
     try {
       const r = await this.api.post<InviteCreatedDto>('/users/invites', { email: this.email.trim(), role: this.role, clientId: this.role === 'client' ? this.clientId || null : null });
       this.link.set(r.acceptUrl);
+      this.emailSent.set(r.emailSent);
       this.invites.update((l) => [r, ...l]);
     } catch (err) { this.toast.error(err); }
   }

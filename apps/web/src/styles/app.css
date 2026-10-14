@@ -127,6 +127,7 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, .65); backdrop-filter: blur(2
 @keyframes cf-shimmer { to { background-position: -200% 0; } }
 .alert { padding: 12px 14px; border-radius: var(--cf-radius-sm); border: 1px solid var(--cf-color-border); background: var(--cf-surface-2); }
 .alert-error { border-color: rgba(248, 113, 113, .4); color: #FCA5A5; }
+.alert-success { border-color: rgba(74, 222, 128, .4); color: #86EFAC; }
 .alert-warn { border-color: rgba(251, 191, 36, .4); color: #FDE68A; }
 
 /* Contenuto Markdown renderizzato */

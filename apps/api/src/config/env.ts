@@ -23,7 +23,10 @@ const envSchema = z.object({
   // Integrazione n8n (lead da prospezione): token condiviso, almeno 24 caratteri
   LEADS_INGEST_TOKEN: z.string().min(24).optional(),
   // Vercel Blob per i materiali dei progetti
-  BLOB_READ_WRITE_TOKEN: z.string().optional()
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  // Email transazionali (Resend): mittente su dominio verificato, es. "Childhood Friendship <noreply@dominio.it>"
+  RESEND_API_KEY: z.string().optional(),
+  MAIL_FROM: z.string().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;

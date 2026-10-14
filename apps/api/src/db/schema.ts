@@ -291,6 +291,13 @@ export const auditLog = pgTable('audit_log', {
   createdAt: createdAt()
 }, (t) => [index('audit_entity_idx').on(t.entity, t.entityId), index('audit_created_idx').on(t.createdAt)]);
 
+/** Contatori del rate limit condivisi tra istanze (vedi lib/rate-limit.ts). */
+export const rateLimits = pgTable('rate_limits', {
+  key: text().primaryKey(),
+  hits: integer().notNull().default(0),
+  resetAt: timestamp({ withTimezone: true, mode: 'date' }).notNull()
+});
+
 export const aiUsage = pgTable('ai_usage', {
   id: id(),
   userId: uuid().notNull().references(() => users.id, { onDelete: 'cascade' }),

@@ -12,6 +12,7 @@ import { parse } from '../../lib/validate.js';
 import { isTeam, requireAdmin, requireTeam } from '../../middleware/auth.js';
 import { assertWritable, currentProject } from '../projects/access.js';
 import { notifyTeam } from '../../lib/notify.js';
+import { appUrl, notifyClient } from '../../lib/mailer.js';
 
 const uuidParam = z.uuid('ID non valido');
 const summary = {
@@ -104,6 +105,13 @@ export function documentsRouter(ctx: AppContext): Router {
     if (doc.status === 'in_revisione') throw badRequest('Documento già in revisione');
     await db.update(documents).set({ status: 'in_revisione', reviewComment: null, reviewedAt: null, reviewedById: null }).where(eq(documents.id, doc.id));
     await audit(db, req, { action: 'document.submitted', entity: 'document', entityId: doc.id, projectId: project.id });
+    await notifyClient(db, ctx.mailer, project.clientId, {
+      subject: `Documento da approvare: «${doc.title}»`,
+      heading: 'C\'è un documento da rivedere',
+      paragraphs: [`Abbiamo preparato «${doc.title}» per il progetto «${project.name}».`, 'Aprilo, controllalo e approvalo oppure chiedi le modifiche: ci arriva subito.'],
+      url: appUrl(ctx.env, `portale/progetti/${project.id}/documenti/${doc.id}`),
+      cta: 'Apri il documento'
+    });
     res.json(toDto(await loadDoc(req, project.id)));
   });
 

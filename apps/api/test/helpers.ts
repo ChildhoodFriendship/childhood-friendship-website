@@ -10,6 +10,7 @@ import { hashPassword, SecretBox } from '../src/lib/crypto.js';
 import type { AppContext } from '../src/context.js';
 import type { AiProvider } from '../src/modules/ai/provider.js';
 import type { FileStorage } from '../src/lib/storage.js';
+import type { Mailer } from '../src/lib/mailer.js';
 
 export const PASSWORD = 'Password-Sicura-123';
 
@@ -17,7 +18,7 @@ export interface TestEnv { app: Express; ctx: AppContext; handle: DbHandle }
 
 export const INGEST_TOKEN = 'test-ingest-token-0123456789abcdef';
 
-export async function setup(ai: AiProvider | null = null, storage: FileStorage | null = null): Promise<TestEnv> {
+export async function setup(ai: AiProvider | null = null, storage: FileStorage | null = null, mailer: Mailer | null = null): Promise<TestEnv> {
   const env = loadEnv({
     NODE_ENV: 'test',
     DATABASE_URL: 'pglite:memory',
@@ -29,7 +30,7 @@ export async function setup(ai: AiProvider | null = null, storage: FileStorage |
   });
   const handle = await createDb(env.DATABASE_URL);
   await runMigrations(handle.db, env.DATABASE_URL);
-  const ctx: AppContext = { env, db: handle.db, box: new SecretBox(env.CREDENTIALS_KEY), ai, storage };
+  const ctx: AppContext = { env, db: handle.db, box: new SecretBox(env.CREDENTIALS_KEY), ai, storage, mailer };
   return { app: createApp(ctx), ctx, handle };
 }
 

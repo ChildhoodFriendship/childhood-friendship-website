@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { and, count, desc, eq, ilike, or, type SQL } from 'drizzle-orm';
-import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { leadListQuerySchema, leadPatchSchema, leadPublicSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
+import { sharedLimiter } from '../../lib/rate-limit.js';
 import { clients, leads } from '../../db/schema.js';
 import { audit } from '../../lib/audit.js';
 import { sha256 } from '../../lib/crypto.js';
@@ -19,10 +19,8 @@ const toDto = (l: typeof leads.$inferSelect) => serialize(omit(l, 'ipHash', 'upd
 /** Form contatti del sito pubblico (sostituisce Formspree). */
 export function publicLeadsRouter(ctx: AppContext): Router {
   const router = Router();
-  const limiter = rateLimit({
-    windowMs: 60 * 60_000, limit: ctx.env.NODE_ENV === 'test' ? 1000 : 5, standardHeaders: 'draft-8', legacyHeaders: false,
-    message: { error: { code: 'rate_limited', message: 'Hai già inviato diverse richieste. Riprova più tardi o scrivici via email.' } }
-  });
+  const limiter = sharedLimiter(ctx.db, 'public-leads', 60 * 60_000, ctx.env.NODE_ENV === 'test' ? 1000 : 5,
+    'Hai già inviato diverse richieste. Riprova più tardi o scrivici via email.');
   router.post('/', limiter, async (req, res) => {
     const input = parse(leadPublicSchema, req.body);
     // Honeypot compilato: rispondiamo OK senza salvare (non diamo segnali ai bot)

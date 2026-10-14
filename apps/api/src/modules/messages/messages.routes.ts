@@ -8,6 +8,7 @@ import { serialize } from '../../lib/serialize.js';
 import { parse } from '../../lib/validate.js';
 import { assertWritable, currentProject } from '../projects/access.js';
 import { notifyTeam } from '../../lib/notify.js';
+import { appUrl, notifyClient } from '../../lib/mailer.js';
 
 const columns = {
   id: messages.id, projectId: messages.projectId, authorId: messages.authorId, authorName: users.name,
@@ -46,6 +47,15 @@ export function messagesRouter(ctx: AppContext): Router {
         quote: body,
         path: `/admin/progetti/${project.id}/messaggi`,
         buttonLabel: '💬 Rispondi'
+      });
+    } else {
+      await notifyClient(db, ctx.mailer, project.clientId, {
+        subject: `Nuovo messaggio su «${project.name}»`,
+        heading: 'Hai un nuovo messaggio',
+        paragraphs: [`${req.user!.name} ti ha scritto sul progetto «${project.name}».`],
+        quote: body,
+        url: appUrl(ctx.env, `portale/progetti/${project.id}`),
+        cta: 'Leggi e rispondi'
       });
     }
     res.status(201).json(serialize(full!));

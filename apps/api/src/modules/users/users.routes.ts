@@ -6,6 +6,7 @@ import type { AppContext } from '../../context.js';
 import { clients, invites, sessions, users } from '../../db/schema.js';
 import { audit } from '../../lib/audit.js';
 import { randomToken, sha256 } from '../../lib/crypto.js';
+import { appUrl, renderMail } from '../../lib/mailer.js';
 import { badRequest, conflict, notFound } from '../../lib/http-error.js';
 import { serialize } from '../../lib/serialize.js';
 import { defined, parse } from '../../lib/validate.js';
@@ -80,7 +81,25 @@ export function usersRouter(ctx: AppContext): Router {
       expiresAt: invites.expiresAt, acceptedAt: invites.acceptedAt, createdAt: invites.createdAt
     });
     await audit(db, req, { action: 'invite.created', entity: 'invite', entityId: invite!.id, meta: { email: input.email, role: input.role } });
-    res.status(201).json({ ...serialize(invite!), acceptUrl: `${env.APP_URL.replace(/\/$/, '')}/invito/${token}` });
+    const acceptUrl = appUrl(env, `invito/${token}`);
+    const hours = env.INVITE_TTL_HOURS;
+    const emailSent = ctx.mailer ? await ctx.mailer.send({
+      to: [input.email],
+      ...renderMail({
+        subject: input.role === 'client' ? 'Il tuo accesso all\'area clienti Childhood Friendship' : 'Invito al team Childhood Friendship',
+        heading: input.role === 'client' ? 'Benvenuto nell\'area clienti' : 'Sei stato invitato nel team',
+        paragraphs: [
+          `${req.user!.name} ti ha invitato su Childhood Friendship.`,
+          input.role === 'client'
+            ? 'Dall\'area clienti segui l\'avanzamento del tuo progetto, approvi i documenti, carichi i materiali e ci scrivi.'
+            : 'Dalla piattaforma gestisci progetti, clienti e lead.',
+          `Il link è personale e scade tra ${hours >= 48 ? `${Math.round(hours / 24)} giorni` : `${hours} ore`}.`
+        ],
+        url: acceptUrl,
+        cta: 'Crea il tuo accesso'
+      })
+    }) : false;
+    res.status(201).json({ ...serialize(invite!), acceptUrl, emailSent });
   });
 
   router.delete('/invites/:id', requireAdmin, async (req, res) => {

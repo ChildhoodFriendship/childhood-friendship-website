@@ -13,7 +13,12 @@ export interface SessionUser {
 
 export interface UserDto extends SessionUser { isActive: boolean; lastLoginAt: string | null; createdAt: string; }
 export interface InviteDto { id: string; email: string; role: Role; clientId: string | null; expiresAt: string; acceptedAt: string | null; createdAt: string; }
-export interface InviteCreatedDto extends InviteDto { /** Link da inviare: mostrato una sola volta. */ acceptUrl: string; }
+export interface InviteCreatedDto extends InviteDto {
+  /** Link da inviare: mostrato una sola volta. */
+  acceptUrl: string;
+  /** true se il link è già stato inviato via email all'invitato. */
+  emailSent: boolean;
+}
 
 export interface ClientDto {
   id: string; name: string; vatNumber: string | null; address: string | null; openingHours: string | null;

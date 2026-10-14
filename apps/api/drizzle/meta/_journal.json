@@ -22,6 +22,13 @@
       "when": 1792000335143,
       "tag": "0002_rimuovi_appuntamenti",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792016742598,
+      "tag": "0003_rate_limit_condiviso",
+      "breakpoints": true
     }
   ]
 }

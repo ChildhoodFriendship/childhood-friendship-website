@@ -1,9 +1,9 @@
 import { Router, type Response } from 'express';
-import { rateLimit } from 'express-rate-limit';
 import { acceptInviteSchema, changePasswordSchema, loginSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
 import { audit } from '../../lib/audit.js';
 import { parse } from '../../lib/validate.js';
+import { sharedLimiter } from '../../lib/rate-limit.js';
 import { ACCESS_COOKIE, REFRESH_COOKIE, requireAuth } from '../../middleware/auth.js';
 import { AuthService, type IssuedTokens } from './auth.service.js';
 import { z } from 'zod';
@@ -13,22 +13,11 @@ export function authRouter(ctx: AppContext): Router {
   const service = new AuthService(ctx);
   const secure = ctx.env.NODE_ENV === 'production';
 
-  const loginLimiter = rateLimit({
-    windowMs: 15 * 60_000,
-    limit: ctx.env.NODE_ENV === 'test' ? 1000 : 10,
-    standardHeaders: 'draft-8',
-    legacyHeaders: false,
-    message: { error: { code: 'rate_limited', message: 'Troppi tentativi. Riprova tra qualche minuto.' } }
-  });
+  const isTest = ctx.env.NODE_ENV === 'test';
+  const loginLimiter = sharedLimiter(ctx.db, 'login', 15 * 60_000, isTest ? 1000 : 10, 'Troppi tentativi. Riprova tra qualche minuto.');
 
   // Il refresh avviene in automatico ogni ~15 minuti per scheda: limite più ampio del login
-  const refreshLimiter = rateLimit({
-    windowMs: 15 * 60_000,
-    limit: ctx.env.NODE_ENV === 'test' ? 1000 : 120,
-    standardHeaders: 'draft-8',
-    legacyHeaders: false,
-    message: { error: { code: 'rate_limited', message: 'Troppe richieste di sessione.' } }
-  });
+  const refreshLimiter = sharedLimiter(ctx.db, 'refresh', 15 * 60_000, isTest ? 1000 : 120, 'Troppe richieste di sessione.');
 
   const setCookies = (res: Response, t: IssuedTokens) => {
     res.cookie(ACCESS_COOKIE, t.accessToken, { httpOnly: true, secure, sameSite: 'lax', path: '/api', maxAge: t.accessMaxAgeMs });
