@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PHASES, getDocumentTypeDef } from '@cf/shared/catalog';
-import type { DocumentSummaryDto, PortalAppointmentDto, PortalProjectDto, PortalTaskDto } from '@cf/shared/types';
+import type { DocumentSummaryDto, PortalProjectDto, PortalTaskDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
 import { BadgeComponent } from '../../shared/badge.component';
@@ -69,12 +69,6 @@ import { ProjectFilesComponent } from '../../shared/project-files.component';
                 <a class="line" [routerLink]="['documenti', d.id]"><span class="grow truncate">{{ d.title }}</span><cf-badge [label]="ds.label" [tone]="ds.tone" /></a>
               } @empty { <p class="muted small">I documenti appariranno qui man mano.</p> }
             </section>
-            <section class="card stack-sm">
-              <h3>Appuntamenti</h3>
-              @for (a of upcoming(); track a.id) {
-                <div class="line"><span class="grow">{{ a.title }}</span><span class="small mono">{{ a.startsAt | date: 'd MMM, HH:mm' }}</span></div>
-              } @empty { <p class="muted small">Nessun appuntamento in programma.</p> }
-            </section>
           </aside>
         </div>
       } @else if (error()) {
@@ -108,11 +102,9 @@ export class PortalProjectPage {
   protected readonly project = signal<PortalProjectDto | null>(null);
   protected readonly docs = signal<DocumentSummaryDto[]>([]);
   protected readonly tasks = signal<PortalTaskDto[]>([]);
-  protected readonly appointments = signal<PortalAppointmentDto[]>([]);
   protected readonly error = signal<string | null>(null);
 
   protected readonly toReview = computed(() => this.docs().filter((d) => d.status === 'in_revisione'));
-  protected readonly upcoming = computed(() => this.appointments().filter((a) => new Date(a.startsAt) >= new Date()));
   protected readonly phases = computed(() => {
     const list = PHASES.map((phase) => {
       const t = this.tasks().filter((x) => x.phase === phase);
@@ -129,18 +121,16 @@ export class PortalProjectPage {
 
   private async load(id: string): Promise<void> {
     try {
-      const [p, docs, tasks, appts] = await Promise.all([
+      const [p, docs, tasks] = await Promise.all([
         this.api.get<PortalProjectDto>(`/projects/${id}`),
         this.api.get<DocumentSummaryDto[]>(`/projects/${id}/documents`),
-        this.api.get<PortalTaskDto[]>(`/projects/${id}/tasks`),
-        this.api.get<PortalAppointmentDto[]>(`/projects/${id}/appointments`)
+        this.api.get<PortalTaskDto[]>(`/projects/${id}/tasks`)
       ]);
       this.project.set(p);
       // Mostriamo al cliente solo documenti già avviati, ordinati per fase
       this.docs.set(docs.filter((d) => d.status !== 'bozza' || d.version > 1)
         .sort((a, b) => PHASES.indexOf(getDocumentTypeDef(a.type)?.phase ?? 'realizzazione') - PHASES.indexOf(getDocumentTypeDef(b.type)?.phase ?? 'realizzazione')));
       this.tasks.set(tasks);
-      this.appointments.set(appts);
     } catch (err) {
       this.error.set((err as Error).message);
       this.toast.error(err);

@@ -60,22 +60,8 @@ import { documentStatus, projectStatus } from '../../shared/labels';
               <a class="line" [routerLink]="['/admin/progetti', doc.projectId, 'documenti', doc.documentId]"><span class="grow truncate">{{ doc.title }} <span class="muted">· {{ doc.projectName }}</span></span><cf-badge [label]="ds.label" [tone]="ds.tone" /></a>
             } @empty { <p class="muted">Nessun documento in attesa del cliente.</p> }
           </section>
-          <section class="card">
-            <h2>Prossimi appuntamenti</h2>
-            @for (a of d.upcomingAppointments; track a.id) {
-              <a class="line" [routerLink]="['/admin/progetti', a.projectId]"><span class="grow truncate">{{ a.title }} <span class="muted">· {{ a.projectName }}</span></span><span class="mono small">{{ a.startsAt | date: 'd MMM HH:mm' }}</span></a>
-            } @empty { <p class="muted">Nessun appuntamento in agenda.</p> }
-          </section>
         </div>
 
-        @if (auth.isAdmin()) {
-          <section class="card">
-            <div class="row-between"><h2>Attività recente</h2><a routerLink="/admin/log" class="small">Vedi tutto</a></div>
-            @for (a of d.recentActivity; track a.id) {
-              <div class="line"><span class="grow truncate"><strong>{{ a.actorName ?? 'Sistema' }}</strong><span class="muted mono small gap">{{ a.action }}</span></span><span class="muted small">{{ a.createdAt | date: 'd MMM HH:mm' }}</span></div>
-            } @empty { <p class="muted">Nessuna attività registrata.</p> }
-          </section>
-        }
       } @else if (!error()) {
         <div class="grid">@for (i of [1, 2, 3, 4]; track i) { <div class="card skeleton" style="height: 96px"></div> }</div>
       }

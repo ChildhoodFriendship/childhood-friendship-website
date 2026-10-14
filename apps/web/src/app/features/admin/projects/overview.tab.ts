@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { INDEXING_STATUSES, PROJECT_STATUSES } from '@cf/shared/catalog';
-import type { AppointmentDto, ClientDto, ProjectDto, ProjectHealthCheckDto } from '@cf/shared/types';
+import type { ClientDto, ProjectDto, ProjectHealthCheckDto } from '@cf/shared/types';
 import { Api } from '../../../core/api';
 import { AuthService } from '../../../core/auth.service';
 import { ToastService } from '../../../core/toast.service';
@@ -135,23 +135,6 @@ const urlPattern = /^https?:\/\/.+/;
         }
 
         <section class="card stack-sm">
-          <h3>Appuntamenti</h3>
-          @for (a of appointments(); track a.id) {
-            <div class="appt" [class.past]="isPast(a)">
-              <div class="grow"><strong>{{ a.title }}</strong><br /><span class="muted small">{{ a.startsAt | date: 'EEE d MMM y, HH:mm' }}{{ a.kind ? ' · ' + a.kind : '' }}</span></div>
-              <button class="btn btn-ghost btn-sm icon-btn" (click)="removeAppointment(a)" aria-label="Elimina appuntamento">✕</button>
-            </div>
-          } @empty { <p class="muted small">Nessun appuntamento.</p> }
-          <form class="stack-sm" [formGroup]="apptForm" (ngSubmit)="addAppointment()">
-            <input class="input" formControlName="title" placeholder="Es. Call di allineamento" aria-label="Titolo appuntamento" />
-            <div class="row">
-              <input class="input grow" type="datetime-local" formControlName="startsAt" aria-label="Data e ora" />
-              <button class="btn btn-sm" [disabled]="apptForm.invalid || archived()">Aggiungi</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="card stack-sm">
           <h3>Zona pericolosa</h3>
           @if (archived()) {
             <button class="btn" (click)="toggleArchive(false)">Ripristina progetto</button>
@@ -167,8 +150,6 @@ const urlPattern = /^https?:\/\/.+/;
   styles: `
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
     @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
-    .appt { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--cf-color-border); }
-    .appt.past { opacity: .55; }
     .monitor-card { border: 1px solid rgba(59, 130, 246, 0.25); background: rgba(59, 130, 246, 0.03); }
     .monitor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 6px 0; }
     .monitor-item { padding: 10px 12px; border-radius: var(--cf-radius-sm); background: var(--cf-color-surface); border: 1px solid var(--cf-color-border); display: flex; flex-direction: column; gap: 4px; }
@@ -198,7 +179,6 @@ export class OverviewTab {
   protected readonly indexingStatus = indexingStatus;
   protected readonly archived = this.store.archived;
   protected readonly client = signal<ClientDto | null>(null);
-  protected readonly appointments = signal<AppointmentDto[]>([]);
   protected readonly saving = signal(false);
   protected readonly health = signal<ProjectHealthCheckDto | null>(null);
   protected readonly checkingHealth = signal(false);
@@ -243,7 +223,6 @@ export class OverviewTab {
     marketingEnabled: [false],
     marketingBudget: [0]
   });
-  protected readonly apptForm = this.fb.group({ title: ['', Validators.required], startsAt: ['', Validators.required] });
 
   constructor() {
     effect(() => {
@@ -269,17 +248,11 @@ export class OverviewTab {
   private async loadSide(p: ProjectDto): Promise<void> {
     this.health.set(null);
     try {
-      const [client, appts] = await Promise.all([
-        this.api.get<ClientDto>(`/clients/${p.clientId}`),
-        this.api.get<AppointmentDto[]>(`/projects/${p.id}/appointments`)
-      ]);
-      this.client.set(client);
-      this.appointments.set(appts);
+      this.client.set(await this.api.get<ClientDto>(`/clients/${p.clientId}`));
     } catch (err) { this.toast.error(err); }
   }
 
   protected reset(): void { const p = this.store.project(); if (p) this.patchForm(p); }
-  protected isPast(a: AppointmentDto): boolean { return new Date(a.startsAt) < new Date(); }
 
   protected async save(): Promise<void> {
     if (this.form.invalid) { this.form.markAllAsTouched(); this.toast.error('Controlla i campi evidenziati (gli URL devono iniziare con https://)'); return; }
@@ -296,23 +269,6 @@ export class OverviewTab {
       this.reset();
       this.toast.success('Progetto aggiornato');
     } catch (err) { this.toast.error(err); } finally { this.saving.set(false); }
-  }
-
-  protected async addAppointment(): Promise<void> {
-    const v = this.apptForm.getRawValue();
-    try {
-      const a = await this.api.post<AppointmentDto>(`/projects/${this.store.id()}/appointments`, { title: v.title, startsAt: new Date(v.startsAt).toISOString() });
-      this.appointments.update((list) => [...list, a].sort((x, y) => x.startsAt.localeCompare(y.startsAt)));
-      this.apptForm.reset();
-    } catch (err) { this.toast.error(err); }
-  }
-
-  protected async removeAppointment(a: AppointmentDto): Promise<void> {
-    if (!(await this.confirm.ask(`Eliminare "${a.title}"?`, { danger: true, confirmLabel: 'Elimina' }))) return;
-    try {
-      await this.api.delete(`/projects/${this.store.id()}/appointments/${a.id}`);
-      this.appointments.update((list) => list.filter((x) => x.id !== a.id));
-    } catch (err) { this.toast.error(err); }
   }
 
   protected async toggleArchive(archive: boolean): Promise<void> {
