@@ -18,11 +18,15 @@
     "test": "npm run test -w @cf/api",
     "db:generate": "npm run db:generate -w @cf/api",
     "db:migrate": "npm run db:migrate -w @cf/api",
-    "admin:create": "npm run admin:create -w @cf/api"
+    "admin:create": "npm run admin:create -w @cf/api",
+    "e2e": "playwright test"
   },
   "overrides": {
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.10"
     }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }

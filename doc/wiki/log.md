@@ -66,3 +66,14 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - CI: migrazioni con solo `DATABASE_URL` (rimossi `JWT_SECRET`/`CREDENTIALS_KEY` dai secret GitHub), timeout 15 minuti per job, `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` aggiornati: push su `main` = migrazioni + deploy.
 - Ruotati i segreti dello store Neon (password `neondb_owner`); l'app usa `cf_app`, non toccato. Migrazione `0002` applicata in produzione.
 - Verifica: `npm run check`, `npm run test` (40/40), CI verde.
+
+## 2026-10-15 — feature — preventivo progetto, email, rate limit condiviso, e2e
+
+- Progetti: campo `type` (sito/landing, web app, app mobile, manutenzione, altro) e `quote_items` (voci con prezzo, canone mensile) — migrazione `0004`; card «Tipo e preventivo» nei dettagli con prezzo base dal listino e voci suggerite. Il preventivo è nascosto al cliente (`PORTAL_HIDDEN_PROJECT_FIELDS`).
+- Bug corretto: gli schemi PATCH (progetto, task, piattaforme, contenuti, campagne) applicavano i default, quindi un aggiornamento parziale riscriveva stato/online/marketing/task completati. Ora `patchOf()` toglie i default; test di regressione.
+- Rate limit di login, refresh e form pubblico su Postgres (`rate_limits`, migrazione `0003` con grant a `cf_app`): vale su tutte le istanze serverless. Il limite globale resta in memoria.
+- Email via Resend (`RESEND_API_KEY`, `MAIL_FROM`): invito, messaggio del team al cliente, documento da approvare. Senza chiave sono disattivate e l'invito mostra solo il link.
+- Test end-to-end Playwright (`e2e/`, `npm run e2e`): server con PGlite in memoria + build web; login, dashboard e funnel, Lead, preventivo. In locale: `E2E_CHANNEL=chrome npm run e2e`.
+- CI: `actions/checkout`/`setup-node`/`upload-artifact` v7, runner `ubuntu-24.04` fissato, e2e nel job di verifica.
+- Branch `feature/3d-vault-hero` e `hermes/wiki-migration` obsoleti: archiviati come tag `archive/*` ed eliminati.
+- Verifica: `npm run check`, `npm run test` (47/47), `npm run e2e` (4/4).

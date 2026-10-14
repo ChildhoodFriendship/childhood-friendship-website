@@ -26,3 +26,7 @@ assets-src/
 
 # Log locali
 *.log
+
+# Risultati dei test end-to-end
+test-results/
+playwright-report/

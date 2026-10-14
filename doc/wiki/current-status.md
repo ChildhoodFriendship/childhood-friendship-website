@@ -17,8 +17,9 @@
 | Controllo | Esito registrato |
 |---|---|
 | `npm run check` | passato per shared, API e web il 2026-10-14 |
-| `npm run test` | 39/39 test API passati il 2026-10-14 |
+| `npm run test` | 47/47 test API passati il 2026-10-15 |
 | `npm run build` | passato web + API il 2026-10-14; scena 3D e feature restano lazy |
+| `npm run e2e` | 4/4 test Playwright passati il 2026-10-15 (anche in CI) |
 | Smoke test Chromium | passato nello snapshot precedente; non rieseguito in questa migrazione |
 
 Il smoke test browser resta un'evidenza precedente; la migrazione documentale non modifica il runtime.
@@ -35,10 +36,10 @@ Il smoke test browser resta un'evidenza precedente; la migrazione documentale no
 
 ## Punti aperti e limiti
 
-- Inviti senza email transazionale: i link vengono copiati e inviati manualmente.
-- Rate limit in memoria per istanza (non condiviso tra istanze serverless).
+- Email transazionali pronte ma disattivate finché non si configurano `RESEND_API_KEY` e `MAIL_FROM` (dominio verificato).
+- Rate limit globale in memoria per istanza; login, refresh e form pubblico condivisi su Postgres.
 - Password `neondb_owner` da ruotare: compare nella storia git (repo privato).
-- Test automatici frontend non presenti; la copertura UI è affidata a smoke test/Playwright.
+- Test e2e Playwright solo sui flussi admin principali; portale cliente non ancora coperto.
 - Fluidità in browser reale e alcuni layout mobile della landing 3D da verificare.
 - Portfolio con card/mock grafici dove mancano screenshot reali.
 - La configurazione del provider contatti/AI e i servizi esterni richiedono verifica nell'ambiente target.
