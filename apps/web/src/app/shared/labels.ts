@@ -35,7 +35,7 @@ export const LEAD_SERVICE_LABELS: Record<string, string> = { landing: 'Landing p
 
 export function euro(cents: number | null | undefined): string {
   // useGrouping 'always': in italiano "1.200 €" (di default le 4 cifre non vengono separate)
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: 'always' }).format((cents ?? 0) / 100);
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: 'always' as unknown as boolean }).format((cents ?? 0) / 100);
 }
 
 export function percent(done: number, total: number): number {
