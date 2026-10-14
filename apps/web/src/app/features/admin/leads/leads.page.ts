@@ -173,6 +173,8 @@ export class LeadsPage implements OnInit {
     const qp = this.route.snapshot.queryParamMap;
     this.q = qp.get('q') ?? '';
     this.source = qp.get('origine') ?? '';
+    const stato = qp.get('stato');
+    if (stato && (LEAD_STATUSES as readonly string[]).includes(stato)) this.status = stato as LeadStatus;
     void this.load();
   }
 

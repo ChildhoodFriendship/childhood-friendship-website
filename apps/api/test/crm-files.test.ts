@@ -68,6 +68,17 @@ describe('CRM unico: lead da n8n', () => {
     expect(stats).toMatchObject({ tot: 2, nuovi: 1, chiusi: 1, fatturatoCents: 40000 });
     expect((await clientA.get('/api/leads')).status).toBe(403);
   });
+
+  it('la dashboard riporta funnel, lead per settimana e chiuso per mese', async () => {
+    const d = (await admin.get('/api/dashboard')).body;
+    expect(d.leadsByStatus).toMatchObject({ nuovo: 1, convertito: 1 });
+    expect(d.leadsWeekly).toHaveLength(12);
+    expect(d.leadsWeekly.at(-1)).toMatchObject({ prospezione: 2 });
+    expect(d.revenueMonthly).toHaveLength(6);
+    expect(d.revenueMonthly.at(-1)).toMatchObject({ cents: 40000, deals: 1 });
+    expect(d.tasksWeekly).toHaveLength(8);
+    expect(d.pipelineValueCents).toBe(0);
+  });
 });
 
 describe('materiali del progetto', () => {

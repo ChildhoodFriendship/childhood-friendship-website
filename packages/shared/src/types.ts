@@ -91,6 +91,16 @@ export interface DashboardDto {
   overdueTasks: { taskId: string; projectId: string; projectName: string; title: string; dueDate: string }[];
   documentsInReview: { documentId: string; projectId: string; projectName: string; title: string; status: DocumentStatus }[];
   newLeads: number;
+  /** Lead per stato (tutte le fonti). */
+  leadsByStatus: Record<LeadStatus, number>;
+  /** Lead arrivati per settimana (lunedì ISO), ultime 12 settimane, divisi per fonte. */
+  leadsWeekly: { week: string; sito: number; prospezione: number }[];
+  /** Valore dei lead chiusi per mese (YYYY-MM), ultimi 6 mesi. */
+  revenueMonthly: { month: string; cents: number; deals: number }[];
+  /** Valore stimato dei lead aperti con prezzo indicato. */
+  pipelineValueCents: number;
+  /** Task completati per settimana, ultime 8 settimane. */
+  tasksWeekly: { week: string; completed: number }[];
 }
 
 export interface AiUsageDto { usedToday: number; dailyLimit: number; enabled: boolean; }
