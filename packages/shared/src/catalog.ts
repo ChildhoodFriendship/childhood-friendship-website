@@ -142,8 +142,27 @@ export type LeadStatus = (typeof LEAD_STATUSES)[number];
 export const LEAD_SERVICES = ['landing', 'webapp', 'mobile', 'manutenzione', 'altro'] as const;
 export type LeadService = (typeof LEAD_SERVICES)[number];
 
+/** Tipo di progetto: stesso elenco dei servizi richiesti dai lead. */
+export const PROJECT_TYPES = LEAD_SERVICES;
+export type ProjectType = LeadService;
+export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
+  landing: 'Sito web / landing page', webapp: 'Web app', mobile: 'App mobile', manutenzione: 'Manutenzione', altro: 'Altro'
+};
+/** Prezzi di partenza del listino (centesimi). La manutenzione è mensile. */
+export const PROJECT_TYPE_BASE_PRICE_CENTS: Record<ProjectType, number> = {
+  landing: 40_000, webapp: 80_000, mobile: 120_000, manutenzione: 2_000, altro: 0
+};
+/** Voci suggerite per tipo, da aggiungere con un clic al preventivo. */
+export const PROJECT_TYPE_SUGGESTED_PARTS: Record<ProjectType, readonly string[]> = {
+  landing: ['Design e sviluppo pagine', 'Testi e SEO di base', 'Modulo contatti', 'Dominio e hosting (anno)', 'Pagina aggiuntiva'],
+  webapp: ['Analisi e progettazione', 'Area riservata e login', 'Pannello di amministrazione', 'Integrazioni e API', 'Database e backup'],
+  mobile: ['Design delle schermate', 'App iOS e Android', 'Notifiche push', 'Backend e database', 'Pubblicazione sugli store'],
+  manutenzione: ['Aggiornamenti e sicurezza', 'Backup', 'Piccole modifiche', 'Supporto prioritario'],
+  altro: ['Consulenza', 'Formazione', 'Sviluppo su misura']
+};
+
 export const AI_FEATURES = ['document', 'suggestions', 'swot', 'pestel', 'campaign_post', 'task_due_date'] as const;
 export type AiFeature = (typeof AI_FEATURES)[number];
 
 /** Campi del progetto che il cliente non deve ricevere dall'API. */
-export const PORTAL_HIDDEN_PROJECT_FIELDS = ['stagingUrl', 'repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus'] as const;
+export const PORTAL_HIDDEN_PROJECT_FIELDS = ['stagingUrl', 'repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus', 'quoteItems'] as const;

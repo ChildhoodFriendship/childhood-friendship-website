@@ -94,6 +94,9 @@ export const projects = pgTable('projects', {
   name: text().notNull(),
   description: text(),
   status: projectStatusEnum().notNull().default('pianificazione'),
+  type: leadServiceEnum().notNull().default('altro'),
+  /** Preventivo interno: [{ id, name, priceCents, monthly }] */
+  quoteItems: jsonb().$type<{ id: string; name: string; priceCents: number; monthly: boolean }[]>().notNull().default([]),
   isOnline: boolean().notNull().default(false),
   indexingStatus: indexingStatusEnum().notNull().default('non_indicizzato'),
   targetUrl: text(),

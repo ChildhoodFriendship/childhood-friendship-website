@@ -148,7 +148,32 @@ describe('archiviazione', () => {
 });
 
 describe('dati interni nascosti al cliente', () => {
-  const hidden = ['stagingUrl', 'repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus'];
+  const hidden = ['stagingUrl', 'repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus', 'quoteItems'];
+
+  it('tipo e preventivo: salvati dal team, prezzi nascosti al cliente', async () => {
+    const items = [
+      { id: 'base', name: 'Prezzo base Sito web / landing page', priceCents: 40000 },
+      { id: 'cura', name: 'Manutenzione', priceCents: 2000, monthly: true }
+    ];
+    const r = await admin.patch(`/api/projects/${projectA}`, { type: 'landing', quoteItems: items });
+    expect(r.status).toBe(200);
+    expect(r.body.type).toBe('landing');
+    expect(r.body.quoteItems).toEqual([{ ...items[0], monthly: false }, items[1]]);
+    const mine = (await clientA.get(`/api/projects/${projectA}`)).body;
+    expect(mine.type).toBe('landing');
+    expect(mine).not.toHaveProperty('quoteItems');
+    expect(JSON.stringify(mine)).not.toContain('40000');
+    expect((await admin.patch(`/api/projects/${projectA}`, { quoteItems: [{ id: 'x', name: '', priceCents: 100 }] })).status).toBe(400);
+    expect((await admin.patch(`/api/projects/${projectA}`, { type: 'astronave' })).status).toBe(400);
+    expect((await clientA.patch(`/api/projects/${projectA}`, { quoteItems: [] })).status).toBe(403);
+  });
+
+  it('PATCH parziale: i campi non inviati restano invariati', async () => {
+    await admin.patch(`/api/projects/${projectA}`, { status: 'in_sviluppo', isOnline: true, marketingEnabled: true });
+    const r = await admin.patch(`/api/projects/${projectA}`, { name: 'Sito Alfa' });
+    expect(r.body).toMatchObject({ status: 'in_sviluppo', isOnline: true, marketingEnabled: true, type: 'landing' });
+    expect(r.body.quoteItems).toHaveLength(2);
+  });
 
   it('progetto senza repo, staging, budget e indicizzazione', async () => {
     expect((await admin.patch(`/api/projects/${projectA}`, {

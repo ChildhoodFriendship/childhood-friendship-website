@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   CAMPAIGN_STATUSES, DOCUMENT_TYPES, DOCUMENT_TYPE_KEYS, INDEXING_STATUSES, LEAD_SERVICES, LEAD_STATUSES,
-  MARKETING_CONTENT_STATUSES, MARKETING_CONTENT_TYPES, PHASES, PLATFORM_KINDS, PROJECT_STATUSES, ROLES,
+  MARKETING_CONTENT_STATUSES, MARKETING_CONTENT_TYPES, PHASES, PLATFORM_KINDS, PROJECT_STATUSES, PROJECT_TYPES, ROLES,
   type DocumentTypeDef
 } from './catalog.js';
 
@@ -11,6 +11,15 @@ const isoDate = z.iso.date();
 const isoDateTime = z.iso.datetime({ offset: true });
 const optUrl = z.union([z.url({ protocol: /^https?$/ }).max(500), z.literal('')]).optional().nullable();
 const cents = z.number().int().min(0).max(1_000_000_000);
+
+/**
+ * Schema di PATCH: tutti i campi opzionali e SENZA i default dell'input,
+ * altrimenti un aggiornamento parziale riscriverebbe i campi assenti con il valore di default.
+ */
+function patchOf<T extends z.ZodRawShape>(shape: T) {
+  const stripped = Object.fromEntries(Object.entries(shape).map(([k, v]) => [k, v instanceof z.ZodDefault ? v.removeDefault() : v]));
+  return z.object(stripped).partial() as unknown as z.ZodObject<{ [K in keyof T]: z.ZodOptional<T[K] extends z.ZodDefault<infer I extends z.ZodType> ? I : T[K]> }>;
+}
 
 /* ---------- Auth ---------- */
 
@@ -74,11 +83,22 @@ export const clientPatchSchema = clientInputSchema.partial();
 
 /* ---------- Progetti ---------- */
 
+/** Voce del preventivo di un progetto. */
+export const quoteItemSchema = z.object({
+  id: z.string().trim().min(1).max(40),
+  name: trimmed(120).min(1, 'Nome della voce richiesto'),
+  priceCents: cents,
+  /** true = canone mensile (es. manutenzione), escluso dal totale una tantum. */
+  monthly: z.boolean().default(false)
+});
+
 export const projectInputSchema = z.object({
   clientId: z.uuid(),
   name: trimmed(200).min(1, 'Nome richiesto'),
   description: optText(5000),
   status: z.enum(PROJECT_STATUSES).default('pianificazione'),
+  type: z.enum(PROJECT_TYPES).default('altro'),
+  quoteItems: z.array(quoteItemSchema).max(50, 'Massimo 50 voci').default([]),
   isOnline: z.boolean().default(false),
   indexingStatus: z.enum(INDEXING_STATUSES).default('non_indicizzato'),
   targetUrl: optUrl,
@@ -91,7 +111,7 @@ export const projectInputSchema = z.object({
   /** Se true genera i 22 documenti e la checklist standard. */
   withTemplate: z.boolean().default(true)
 });
-export const projectPatchSchema = projectInputSchema.omit({ withTemplate: true }).partial();
+export const projectPatchSchema = patchOf(projectInputSchema.omit({ withTemplate: true }).shape);
 
 export const projectListQuerySchema = z.object({
   q: trimmed(100).optional(),
@@ -113,7 +133,7 @@ export const taskInputSchema = z.object({
   documentId: z.uuid().optional().nullable(),
   position: z.number().int().min(0).optional()
 });
-export const taskPatchSchema = taskInputSchema.partial();
+export const taskPatchSchema = patchOf(taskInputSchema.shape);
 
 /* ---------- Documenti ---------- */
 
@@ -198,7 +218,7 @@ export const platformInputSchema = z.object({
   enabled: z.boolean().default(true),
   frequency: z.object({ posts: z.number().int().min(0).max(100), stories: z.number().int().min(0).max(100), reels: z.number().int().min(0).max(100) }).partial().optional()
 });
-export const platformPatchSchema = platformInputSchema.partial();
+export const platformPatchSchema = patchOf(platformInputSchema.shape);
 
 export const contentInputSchema = z.object({
   platformId: z.uuid().optional().nullable(),
@@ -212,7 +232,7 @@ export const contentInputSchema = z.object({
   target: targetSchema.optional(),
   aiGenerated: z.boolean().default(false)
 });
-export const contentPatchSchema = contentInputSchema.partial();
+export const contentPatchSchema = patchOf(contentInputSchema.shape);
 
 export const campaignInputSchema = z.object({
   platformId: z.uuid().optional().nullable(),
@@ -228,7 +248,7 @@ export const campaignInputSchema = z.object({
   metrics: z.object({ impressions: z.number().int().min(0), clicks: z.number().int().min(0), conversions: z.number().int().min(0) }).partial().optional(),
   results: optText(5000)
 }).refine((v) => !v.startDate || !v.endDate || v.startDate <= v.endDate, { message: 'La data di fine precede l\'inizio', path: ['endDate'] });
-export const campaignPatchSchema = z.object(campaignInputSchema.shape).partial();
+export const campaignPatchSchema = patchOf(campaignInputSchema.shape);
 
 /* ---------- Lead (form pubblico) ---------- */
 

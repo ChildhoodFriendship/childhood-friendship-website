@@ -10,12 +10,13 @@ import { ToastService } from '../../../core/toast.service';
 import { ConfirmService } from '../../../shared/confirm.service';
 import { indexingStatus, projectStatus } from '../../../shared/labels';
 import { ProjectStore } from './project.store';
+import { QuoteEditorComponent } from './quote-editor.component';
 
 const urlPattern = /^https?:\/\/.+/;
 
 @Component({
   selector: 'cf-overview-tab',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, QuoteEditorComponent],
   template: `
     <div class="layout">
       <main class="stack">
@@ -119,6 +120,8 @@ const urlPattern = /^https?:\/\/.+/;
             </div>
           </form>
         </section>
+
+        <cf-quote-editor />
       </main>
 
       <aside class="stack">

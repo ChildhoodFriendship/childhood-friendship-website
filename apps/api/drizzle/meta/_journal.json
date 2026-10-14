@@ -29,6 +29,13 @@
       "when": 1792016742598,
       "tag": "0003_rate_limit_condiviso",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792017025458,
+      "tag": "0004_progetto_tipo_preventivo",
+      "breakpoints": true
     }
   ]
 }

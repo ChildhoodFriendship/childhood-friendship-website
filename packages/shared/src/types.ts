@@ -1,7 +1,7 @@
 /** DTO restituiti dall'API (solo tipi: nessun costo nel bundle). */
 import type {
   AnalysisKind, CampaignStatus, DocumentStatus, DocumentType, IndexingStatus, LeadService, LeadStatus,
-  MarketingContentStatus, MarketingContentType, Phase, PlatformKind, ProjectStatus, Role
+  MarketingContentStatus, MarketingContentType, Phase, PlatformKind, ProjectStatus, ProjectType, Role
 } from './catalog.js';
 
 export interface Paginated<T> { items: T[]; total: number; page: number; pageSize: number; }
@@ -29,7 +29,9 @@ export interface ClientDto {
 
 export interface ProjectDto {
   id: string; clientId: string; clientName?: string; name: string; description: string | null;
-  status: ProjectStatus; isOnline: boolean; indexingStatus: IndexingStatus;
+  status: ProjectStatus; type: ProjectType; isOnline: boolean; indexingStatus: IndexingStatus;
+  /** Preventivo interno: voci e prezzi (non visibili al cliente). */
+  quoteItems: QuoteItem[];
   targetUrl: string | null; stagingUrl: string | null; repositoryUrl: string | null;
   startDate: string | null; deadline: string | null;
   marketingEnabled: boolean; marketingBudgetCents: number | null;
@@ -38,7 +40,9 @@ export interface ProjectDto {
 }
 
 /** Vista del progetto per il cliente: senza campi interni (repo, staging, budget, indicizzazione). */
-export type PortalProjectDto = Omit<ProjectDto, 'stagingUrl' | 'repositoryUrl' | 'marketingEnabled' | 'marketingBudgetCents' | 'indexingStatus'>;
+export type PortalProjectDto = Omit<ProjectDto, 'stagingUrl' | 'repositoryUrl' | 'marketingEnabled' | 'marketingBudgetCents' | 'indexingStatus' | 'quoteItems'>;
+
+export interface QuoteItem { id: string; name: string; priceCents: number; monthly: boolean; }
 
 export interface TaskDto {
   id: string; projectId: string; title: string; phase: Phase; done: boolean; dueDate: string | null;
