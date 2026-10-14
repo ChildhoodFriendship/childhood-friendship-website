@@ -1,6 +1,6 @@
 # Stato corrente
 
-> Snapshot documentale: 2026-10-14 · branch osservato: `refactor/platform`.
+> Snapshot documentale: 2026-10-14 · branch osservato: `main`.
 
 ## Sistema
 
@@ -26,7 +26,7 @@ Il smoke test browser resta un'evidenza precedente; la migrazione documentale no
 ## Milestone
 
 - Bootstrap, landing, piattaforma monorepo, API, admin/portale e lead: completati.
-- Primo deploy Vercel + Neon: completato (produzione `childhood-friendship-website-pi.vercel.app`, deploy automatico da `refactor/platform`, DB Neon verificato il 2026-10-14).
+- Primo deploy Vercel + Neon: completato (produzione `childhood-friendship-website-pi.vercel.app`, deploy dalla CI su push in `main` (progetto Vercel non collegato a Git), DB Neon verificato il 2026-10-14).
 - Notifiche Telegram al team (lead sito, messaggi e revisioni del cliente): completate.
 - CRM unico (form sito + prospezione n8n) e materiali del cliente su Vercel Blob: completati.
 - Pulizia repo e hardening (CSP, anti-SSRF, ruolo DB `cf_app` a privilegi minimi, appuntamenti rimossi): completati.
