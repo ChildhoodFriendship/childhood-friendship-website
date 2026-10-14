@@ -3,11 +3,12 @@ import { expect, test } from '@playwright/test';
 test('informativa privacy e cookie raggiungibili dal footer', async ({ page }) => {
   await page.goto('/');
   const footer = page.locator('footer');
-  await expect(footer.getByRole('link', { name: 'lorenzo@cfofficial.it' })).toBeVisible();
+  await expect(footer.getByText('lorenzo@cfofficial.it')).toHaveCount(0);
   await footer.getByRole('link', { name: 'Privacy' }).click();
   await expect(page).toHaveURL(/\/privacy$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Informativa privacy' })).toBeVisible();
   await expect(page.getByText(/Titolari del trattamento: Lorenzo e Mirko/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'lorenzo@cfofficial.it' })).toBeVisible();
   await page.getByRole('navigation', { name: 'Documenti legali' }).getByRole('link', { name: 'Cookie' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Cookie policy' })).toBeVisible();
   await expect(page.getByText(/XSRF-TOKEN/)).toBeVisible();

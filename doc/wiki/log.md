@@ -87,3 +87,9 @@ Formato: `## YYYY-MM-DD â€” tipo â€” oggetto`. Il log Ã¨ append-only.
 - Conservazione automatica (`modules/retention`): cron Vercel giornaliero su `/api/internal/retention` con `CRON_SECRET` (impostato in produzione). Lead dal sito 24 mesi, prospezione 12 mesi, sessioni 30 giorni, inviti 90 giorni, registro 24 mesi; i clienti non vengono mai cancellati.
 - Verifica: `npm run check`, `npm run test` (52/52), `npm run e2e` (6/6, incluso Â«nessuna richiesta esterna dalla landingÂ»).
 - Da valutare: database Neon in us-east-1 (USA). Per ridurre i trasferimenti extra UE conviene spostarlo in una regione UE (es. Francoforte).
+
+
+## 2026-10-15 — chore — n8n unificato, email fuori dal footer
+
+- n8n: «CF Lead Hunter» e «CF CRM - Bot» uniti in un solo workflow (id `cfLeadHunterPDS1`, «CF · Clienti — ricerca automatica e bot Telegram»). Cosa cercare e dove si cambia nel nodo «Configurazione ricerca» (categorie di attività locali, non solo food); messaggio AI adattato al tipo di attività; tolte costanti residue del vecchio CRM sul Pi. Il vecchio workflow bot è disattivato e rinominato «[DA ELIMINARE]». Backup JSON in `~/cfwork` sul Pi.
+- Footer: tolta l'email (resta nelle pagine Privacy e Cookie, dove è richiesta).
