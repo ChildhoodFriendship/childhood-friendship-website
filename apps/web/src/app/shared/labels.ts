@@ -34,7 +34,8 @@ export const phaseLabel = (p: Phase) => PHASE_LABELS[p];
 export const LEAD_SERVICE_LABELS: Record<string, string> = { landing: 'Landing page', webapp: 'Web app', mobile: 'App mobile', manutenzione: 'Manutenzione', altro: 'Altro' };
 
 export function euro(cents: number | null | undefined): string {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format((cents ?? 0) / 100);
+  // useGrouping 'always': in italiano "1.200 €" (di default le 4 cifre non vengono separate)
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: 'always' }).format((cents ?? 0) / 100);
 }
 
 export function percent(done: number, total: number): number {
