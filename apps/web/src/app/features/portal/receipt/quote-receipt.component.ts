@@ -15,6 +15,34 @@ interface DisplayReceiptItem {
   imports: [DatePipe],
   template: `
     <div class="receipt-container">
+      <!-- SOPRA LO SCONTRINO: DA PAGARE con DATA SCADENZA e PAGATO sulla stessa riga anche da mobile -->
+      <div class="payment-boxes-row no-print">
+        <!-- Box Sinistra: DA PAGARE con DATA SCADENZA -->
+        <div class="pay-box pay-box-due">
+          <div class="pay-box-header">
+            <span class="pay-dot dot-due"></span>
+            <span class="pay-box-title">DA PAGARE</span>
+          </div>
+          <div class="pay-box-amount font-mono">{{ formatMoney(remainingToPay()) }} €</div>
+          <div class="pay-box-sub">
+            <span class="due-label">Scadenza:</span>
+            <strong class="due-date">{{ deadlineFormatted() }}</strong>
+          </div>
+        </div>
+
+        <!-- Box Destra: PAGATO -->
+        <div class="pay-box pay-box-paid">
+          <div class="pay-box-header">
+            <span class="pay-dot dot-paid"></span>
+            <span class="pay-box-title">PAGATO</span>
+          </div>
+          <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }} €</div>
+          <div class="pay-box-sub text-green-light">
+            <span>Acconto versato ✓</span>
+          </div>
+        </div>
+      </div>
+
       <div class="receipt-actions no-print">
         <span class="receipt-hint">📄 Copia Scontrino Preventivo</span>
         <button type="button" class="btn btn-sm btn-outline print-btn" (click)="printReceipt()">
@@ -127,34 +155,6 @@ interface DisplayReceiptItem {
         <!-- Taglio carta dentellato inferiore -->
         <div class="tear-edge tear-bottom" aria-hidden="true"></div>
       </article>
-
-      <!-- Sotto lo scontrino: DA PAGARE con DATA SCADENZA e PAGATO sulla stessa riga anche da mobile -->
-      <div class="payment-boxes-row no-print">
-        <!-- Box Sinistra: DA PAGARE con DATA SCADENZA -->
-        <div class="pay-box pay-box-due">
-          <div class="pay-box-header">
-            <span class="pay-dot dot-due"></span>
-            <span class="pay-box-title">DA PAGARE</span>
-          </div>
-          <div class="pay-box-amount font-mono">{{ formatMoney(remainingToPay()) }} €</div>
-          <div class="pay-box-sub">
-            <span class="due-label">Scadenza:</span>
-            <strong class="due-date">{{ deadlineFormatted() }}</strong>
-          </div>
-        </div>
-
-        <!-- Box Destra: PAGATO -->
-        <div class="pay-box pay-box-paid">
-          <div class="pay-box-header">
-            <span class="pay-dot dot-paid"></span>
-            <span class="pay-box-title">PAGATO</span>
-          </div>
-          <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }} €</div>
-          <div class="pay-box-sub text-green-light">
-            <span>Acconto versato ✓</span>
-          </div>
-        </div>
-      </div>
     </div>
   `,
   styles: `
@@ -167,8 +167,138 @@ interface DisplayReceiptItem {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      margin: 16px 0;
+      gap: 14px;
+      margin: 8px 0;
+    }
+
+    /* ========================================================
+       BOX SOPRA LO SCONTRINO: DA PAGARE E PAGATO
+       Disposti rigorosamente SULLA STESSA RIGA ANCHE DA MOBILE
+       ======================================================== */
+    .payment-boxes-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 440px;
+      box-sizing: border-box;
+      margin-bottom: 2px;
+    }
+
+    .pay-box {
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      box-sizing: border-box;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .pay-box:hover {
+      transform: translateY(-2px);
+    }
+
+    .pay-box-due {
+      background: rgba(245, 158, 11, 0.09);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.12);
+    }
+    .pay-box-paid {
+      background: rgba(16, 185, 129, 0.09);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12);
+    }
+
+    .pay-box-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pay-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .dot-due {
+      background: #F59E0B;
+      box-shadow: 0 0 8px #F59E0B;
+    }
+    .dot-paid {
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    .pay-box-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(246, 241, 255, 0.9);
+      white-space: nowrap;
+    }
+
+    .pay-box-amount {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.22rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #F6F1FF;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .text-green {
+      color: #34D399 !important;
+    }
+
+    .pay-box-sub {
+      font-size: 0.74rem;
+      color: rgba(246, 241, 255, 0.72);
+      display: flex;
+      gap: 4px;
+      align-items: baseline;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .due-label {
+      color: rgba(246, 241, 255, 0.6);
+    }
+    .due-date {
+      color: #FDE68A;
+      font-weight: 700;
+      font-family: 'DM Mono', monospace;
+    }
+    .text-green-light {
+      color: #6EE7B7 !important;
+      font-weight: 600;
+    }
+
+    /* Regola esplicita per assicurare che rimangano SULLA STESSA RIGA anche da mobile */
+    @media (max-width: 480px) {
+      .payment-boxes-row {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+      }
+      .pay-box {
+        padding: 10px 10px;
+        gap: 3px;
+        border-radius: 12px;
+      }
+      .pay-box-title {
+        font-size: 0.68rem;
+      }
+      .pay-box-amount {
+        font-size: 1.05rem;
+      }
+      .pay-box-sub {
+        font-size: 0.67rem;
+      }
     }
 
     .receipt-actions {
@@ -422,136 +552,6 @@ interface DisplayReceiptItem {
       font-size: 0.78rem;
       letter-spacing: 0.15em;
       font-weight: 600;
-    }
-
-    /* ========================================================
-       BOX SOTTO LO SCONTRINO: DA PAGARE E PAGATO
-       Disposti rigorosamente SULLA STESSA RIGA ANCHE DA MOBILE
-       ======================================================== */
-    .payment-boxes-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      width: 100%;
-      max-width: 440px;
-      box-sizing: border-box;
-      margin-top: 4px;
-    }
-
-    .pay-box {
-      border-radius: 14px;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      box-sizing: border-box;
-      backdrop-filter: blur(12px);
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    .pay-box:hover {
-      transform: translateY(-2px);
-    }
-
-    .pay-box-due {
-      background: rgba(245, 158, 11, 0.09);
-      border: 1px solid rgba(245, 158, 11, 0.45);
-      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.12);
-    }
-    .pay-box-paid {
-      background: rgba(16, 185, 129, 0.09);
-      border: 1px solid rgba(16, 185, 129, 0.45);
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12);
-    }
-
-    .pay-box-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .pay-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      flex-shrink: 0;
-    }
-    .dot-due {
-      background: #F59E0B;
-      box-shadow: 0 0 8px #F59E0B;
-    }
-    .dot-paid {
-      background: #10B981;
-      box-shadow: 0 0 8px #10B981;
-    }
-
-    .pay-box-title {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.74rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(246, 241, 255, 0.9);
-      white-space: nowrap;
-    }
-
-    .pay-box-amount {
-      font-family: 'DM Mono', monospace;
-      font-size: 1.22rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: #F6F1FF;
-      line-height: 1.15;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .text-green {
-      color: #34D399 !important;
-    }
-
-    .pay-box-sub {
-      font-size: 0.74rem;
-      color: rgba(246, 241, 255, 0.72);
-      display: flex;
-      gap: 4px;
-      align-items: baseline;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .due-label {
-      color: rgba(246, 241, 255, 0.6);
-    }
-    .due-date {
-      color: #FDE68A;
-      font-weight: 700;
-      font-family: 'DM Mono', monospace;
-    }
-    .text-green-light {
-      color: #6EE7B7 !important;
-      font-weight: 600;
-    }
-
-    /* Regola esplicita per assicurare che rimangano SULLA STESSA RIGA anche da mobile */
-    @media (max-width: 480px) {
-      .payment-boxes-row {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 8px;
-      }
-      .pay-box {
-        padding: 10px 10px;
-        gap: 3px;
-        border-radius: 12px;
-      }
-      .pay-box-title {
-        font-size: 0.68rem;
-      }
-      .pay-box-amount {
-        font-size: 1.05rem;
-      }
-      .pay-box-sub {
-        font-size: 0.67rem;
-      }
     }
 
     @media print {
