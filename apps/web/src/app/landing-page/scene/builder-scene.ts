@@ -117,6 +117,7 @@ export class BuilderScene {
   private disposed = false;
   private pendingMode: BuilderMode = 'hero';
   private manifestoEl: HTMLElement | null = null;
+  private contactEl: HTMLElement | null = null;
   private manifestoHidden = false;
   private pinEnd = Infinity;
   private bound = false;
@@ -397,6 +398,7 @@ export class BuilderScene {
     const $ = (id: string) => document.getElementById(id);
     const hero = $(ids.hero), method = $(ids.method), contact = $(ids.contact), services = $(ids.services);
     this.manifestoEl = $(ids.manifesto);
+    this.contactEl = contact;
     this.screenSig = '';
     if (this.opts.reducedMotion) { this.paintScreen(); return; }
     this.bound = true;
@@ -436,7 +438,7 @@ export class BuilderScene {
       });
       this.triggers.push(st);
     }
-    if (method) {
+    if (method && !this.opts.mobile) {
       toShot(this.shots.hero, this.shots.method, method, 'top bottom', 'top top', 'power2.out');
       let step = -1;
       this.triggers.push(ScrollTrigger.create({
@@ -454,7 +456,7 @@ export class BuilderScene {
       }));
     }
     const portfolio = $(ids.portfolio);
-    if (portfolio) {
+    if (portfolio && !this.opts.mobile) {
       const tw = gsap.fromTo(this.port, { v: 0 }, { v: 1, ease: 'power2.inOut', immediateRender: false, scrollTrigger: { trigger: portfolio, start: 'top bottom', end: 'top top', scrub: 1 } });
       if (tw.scrollTrigger) this.triggers.push(tw.scrollTrigger);
       // entrano ai lati del carosello girati verso il centro; le card le "presentano" loro
@@ -479,7 +481,7 @@ export class BuilderScene {
       this.offPortfolio = () => window.removeEventListener('cf:portfolio', onCard);
     }
     if (contact) {
-      toShot(this.shots.method, this.shots.far, contact, 'top bottom', 'top top', 'power2.out');
+      toShot(this.opts.mobile ? this.shots.hero : this.shots.method, this.shots.far, contact, 'top bottom', 'top top', 'power2.out');
       this.bindFinale(contact);
       this.triggers.push(ScrollTrigger.create({
         trigger: contact, start: 'top 55%',
@@ -489,9 +491,13 @@ export class BuilderScene {
           this.setPartner(true, 'welcome', 0);
         },
         onLeaveBack: () => {
-          const last = METHOD_STEPS[METHOD_STEPS.length - 1];
-          this.act(last.mode);
-          this.setPartner(true, last.partner ?? 'welcome', last.pYaw);
+          if (!this.opts.mobile) {
+            const last = METHOD_STEPS[METHOD_STEPS.length - 1];
+            this.act(last.mode);
+            this.setPartner(true, last.partner ?? 'welcome', last.pYaw);
+          } else {
+            this.setPartner(false);
+          }
         }
       }));
     }
@@ -501,8 +507,8 @@ export class BuilderScene {
     ScrollTrigger.addEventListener('refresh', remeasure);
     this.offRefresh = () => ScrollTrigger.removeEventListener('refresh', remeasure);
     requestAnimationFrame(remeasure);
-    // render solo quando una sezione "3D" è a schermo
-    const watch = [hero, method, portfolio, contact].filter((e): e is HTMLElement => !!e);
+    // render solo quando una sezione "3D" è a schermo (su mobile solo hero all'inizio e finale alla fine)
+    const watch = (this.opts.mobile ? [hero, contact] : [hero, method, portfolio, contact]).filter((e): e is HTMLElement => !!e);
     const update = () => { this.visible = watch.some((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }); };
     this.triggers.push(ScrollTrigger.create({ start: 0, end: 'max', onUpdate: update }));
     ScrollTrigger.refresh();
@@ -838,9 +844,30 @@ export class BuilderScene {
     const tick = () => {
       this.raf = requestAnimationFrame(tick);
       const z = this.zoom.v;
+      const fin = this.finale.f;
       // il manifesto vero resta nascosto finché la camera non è del tutto dentro lo schermo
       // (oltre la fine del pin il manifesto copre comunque la finestra: lo si mostra sempre)
       if (this.bound) this.setManifestoHidden(z < 0.999 && window.scrollY < this.pinEnd - 1);
+
+      if (this.opts.mobile) {
+        // Su mobile: elimina i modelli 3D non appena si entra nel manifesto
+        // e falli ricomparire solo quando si arriva alla sezione finale (#finale)
+        const inHero = window.scrollY < (this.pinEnd || window.innerHeight);
+        const contactTop = this.contactEl ? this.contactEl.getBoundingClientRect().top : 99999;
+        const inFinale = fin > 0 || contactTop < window.innerHeight;
+        const show3D = (inHero && z < 0.98) || inFinale;
+
+        this.root.visible = show3D;
+        this.pRoot.visible = inFinale && !!this.partner && (this.partnerIn.v > 0.001 || fin > 0);
+        this.device.visible = inHero && z < 0.98 && this.device.visible;
+        this.rings.visible = show3D;
+
+        if (!show3D) {
+          this.renderer.clear();
+          return;
+        }
+      }
+
       if (!this.visible || document.hidden) return;
       const t = this.clock.getElapsedTime();
       const tdt = Math.min(0.1, t - this.lastT);
@@ -859,7 +886,6 @@ export class BuilderScene {
       const calm = 1 - Math.min(1, z * 1.5);
       this.follow.rotation.y += ((this.pointer.x * 0.18 * calm) - this.follow.rotation.y) * 0.06;
       this.follow.rotation.x += ((-this.pointer.y * 0.03 * calm) - this.follow.rotation.x) * 0.06;
-      const fin = this.finale.f;
       // nel finale il Builder alza lo sguardo verso il portale
       const lookUp = THREE.MathUtils.smoothstep(fin, 0.2, 0.5);
       this.look.x += (THREE.MathUtils.lerp(this.pointer.x * calm, 0, lookUp) - this.look.x) * 0.12;
