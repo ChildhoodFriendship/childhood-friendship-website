@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import type { PortalProjectDto, QuoteItem } from '@cf/shared/types';
 
 interface DisplayReceiptItem {
@@ -47,7 +47,7 @@ interface DisplayReceiptItem {
           <span class="mode-desc">di vendita o prestazione</span>
         </div>
 
-        <!-- Tabella Voci Preventivo -->
+        <!-- Tabella Voci Preventivo Reali del Progetto -->
         <div class="items-table">
           <div class="table-header">
             <span class="col-desc">DESCRIZIONE</span>
@@ -89,7 +89,7 @@ interface DisplayReceiptItem {
           </div>
           <div class="total-row">
             <span class="total-label">Importo pagato / Acconto 50%</span>
-            <span class="total-val">{{ formatMoney(totalWithVat() / 2) }}</span>
+            <span class="total-val">{{ formatMoney(alreadyPaid()) }}</span>
           </div>
         </div>
 
@@ -99,7 +99,7 @@ interface DisplayReceiptItem {
           <div class="meta-line">Documento n. {{ receiptDocNumber() }}</div>
         </div>
 
-        <!-- Note e Info Aggiuntive -->
+        <!-- Note e Info Aggiuntive Reali -->
         <div class="notes-section">
           <strong class="notes-title">Altre Info:</strong>
           <span class="notes-subtitle">Note:</span>
@@ -127,6 +127,34 @@ interface DisplayReceiptItem {
         <!-- Taglio carta dentellato inferiore -->
         <div class="tear-edge tear-bottom" aria-hidden="true"></div>
       </article>
+
+      <!-- Sotto lo scontrino: DA PAGARE con DATA SCADENZA e PAGATO sulla stessa riga anche da mobile -->
+      <div class="payment-boxes-row no-print">
+        <!-- Box Sinistra: DA PAGARE con DATA SCADENZA -->
+        <div class="pay-box pay-box-due">
+          <div class="pay-box-header">
+            <span class="pay-dot dot-due"></span>
+            <span class="pay-box-title">DA PAGARE</span>
+          </div>
+          <div class="pay-box-amount font-mono">{{ formatMoney(remainingToPay()) }} €</div>
+          <div class="pay-box-sub">
+            <span class="due-label">Scadenza:</span>
+            <strong class="due-date">{{ deadlineFormatted() }}</strong>
+          </div>
+        </div>
+
+        <!-- Box Destra: PAGATO -->
+        <div class="pay-box pay-box-paid">
+          <div class="pay-box-header">
+            <span class="pay-dot dot-paid"></span>
+            <span class="pay-box-title">PAGATO</span>
+          </div>
+          <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }} €</div>
+          <div class="pay-box-sub text-green-light">
+            <span>Acconto versato ✓</span>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: `
@@ -140,7 +168,7 @@ interface DisplayReceiptItem {
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      margin: 24px 0;
+      margin: 16px 0;
     }
 
     .receipt-actions {
@@ -198,7 +226,8 @@ interface DisplayReceiptItem {
       height: 6px;
       background: linear-gradient(135deg, transparent 75%, #FFFFFF 75%),
                   linear-gradient(225deg, transparent 75%, #FFFFFF 75%);
-      background-size: 10px 10px;
+      background-size: 10px 6px;
+      background-repeat: repeat-x;
     }
     .tear-top {
       top: -6px;
@@ -208,7 +237,6 @@ interface DisplayReceiptItem {
       bottom: -6px;
     }
 
-    /* Intestazione negozio */
     .receipt-header {
       text-align: center;
       margin-bottom: 12px;
@@ -216,197 +244,333 @@ interface DisplayReceiptItem {
     .store-name {
       font-size: 1.15rem;
       font-weight: 800;
-      letter-spacing: 0.04em;
-      margin: 0 0 3px;
-      color: #000000;
+      letter-spacing: 0.05em;
+      margin: 0 0 2px;
+      color: #000;
     }
     .store-sub {
-      font-size: 0.72rem;
+      font-size: 0.76rem;
       font-weight: 700;
-      margin: 0 0 4px;
+      margin: 0 0 6px;
       letter-spacing: 0.02em;
     }
     .store-info {
-      font-size: 0.76rem;
+      font-size: 0.75rem;
       margin: 1px 0;
-      color: #1A1A1A;
-      font-weight: 500;
+      color: #222;
     }
 
-    /* Linea tratteggiata */
     .dashed-line {
-      border-bottom: 1.5px dashed #333333;
-      margin: 14px 0;
+      border-top: 1px dashed #444;
+      margin: 12px 0;
       width: 100%;
     }
 
-    /* Modalità Dimostrativa / Non fiscale */
     .receipt-type {
       text-align: center;
+      margin: 10px 0;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      margin-bottom: 14px;
+      gap: 1px;
     }
     .mode-title {
       font-size: 0.95rem;
       font-weight: 800;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
     }
     .mode-sub {
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       font-weight: 700;
+      letter-spacing: 0.04em;
     }
     .mode-desc {
-      font-size: 0.75rem;
-      font-style: italic;
+      font-size: 0.72rem;
+      color: #333;
     }
 
-    /* Tabella articoli */
+    /* Tabella Voci */
     .items-table {
-      width: 100%;
-      font-size: 0.82rem;
+      margin: 14px 0;
     }
     .table-header {
-      display: grid;
-      grid-template-columns: 1fr 48px 84px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
       font-weight: 800;
-      border-bottom: 1px solid #111111;
+      border-bottom: 1px solid #111;
       padding-bottom: 4px;
       margin-bottom: 8px;
     }
-    .col-vat {
-      text-align: center;
-    }
-    .col-price {
-      text-align: right;
-    }
+    .col-desc { flex: 1; text-align: left; }
+    .col-vat { width: 44px; text-align: center; }
+    .col-price { width: 90px; text-align: right; }
 
     .item-block {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .item-row {
-      display: grid;
-      grid-template-columns: 1fr 48px 84px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-size: 0.85rem;
       font-weight: 700;
-      align-items: baseline;
+      line-height: 1.25;
     }
     .item-name {
-      word-break: break-word;
-      padding-right: 6px;
+      flex: 1;
+      padding-right: 8px;
     }
     .item-vat {
+      width: 44px;
       text-align: center;
+      font-size: 0.8rem;
     }
     .item-price {
+      width: 90px;
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
     .item-meta {
       font-size: 0.72rem;
-      color: #333333;
-      margin-top: 1px;
+      color: #444;
+      margin-top: 2px;
     }
 
     /* Totali */
     .totals-section {
+      margin: 12px 0;
       display: flex;
       flex-direction: column;
-      gap: 3px;
-      font-size: 0.85rem;
+      gap: 4px;
     }
     .total-row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      font-size: 0.86rem;
+      font-weight: 600;
     }
     .main-total {
-      font-size: 0.98rem;
+      font-size: 1.05rem;
       font-weight: 800;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
     .vat-row {
-      font-weight: 700;
+      font-size: 0.85rem;
+      color: #222;
     }
     .total-val {
       font-variant-numeric: tabular-nums;
-      font-weight: 800;
     }
 
-    /* Dati Documento */
+    /* Metadati Documento */
     .doc-meta {
-      margin-top: 14px;
+      margin: 14px 0 10px;
       font-size: 0.76rem;
-      color: #222222;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+      color: #222;
+      line-height: 1.35;
     }
 
     /* Note */
     .notes-section {
-      margin-top: 14px;
-      font-size: 0.76rem;
-      line-height: 1.4;
+      margin: 12px 0;
+      font-size: 0.75rem;
+      line-height: 1.35;
     }
     .notes-title {
+      font-weight: 800;
       display: block;
-      font-style: italic;
-      font-weight: 700;
     }
     .notes-subtitle {
-      display: block;
       font-weight: 700;
+      display: block;
+      margin-top: 2px;
     }
     .notes-text {
       margin: 2px 0 0;
-      color: #222222;
+      color: #222;
     }
 
-    /* Saluto */
     .thank-you {
       text-align: center;
-      font-style: italic;
-      font-size: 0.88rem;
-      font-weight: 700;
-      margin: 22px 0 16px;
-      letter-spacing: 0.05em;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      margin: 18px 0 12px;
     }
 
-    /* Codice a barre realistico */
+    /* Codice a barre */
     .barcode-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
+      margin: 8px 0 4px;
       gap: 4px;
-      margin-top: 10px;
     }
     .barcode-lines {
       display: flex;
       align-items: stretch;
       height: 48px;
+      background: #000;
+      padding: 0;
     }
     .barcode-lines span {
-      background: #000000;
+      background: #FFF;
       display: block;
+      height: 100%;
     }
     .barcode-number {
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       letter-spacing: 0.15em;
-      color: #333333;
+      font-weight: 600;
     }
 
-    /* Stampa termica */
+    /* ========================================================
+       BOX SOTTO LO SCONTRINO: DA PAGARE E PAGATO
+       Disposti rigorosamente SULLA STESSA RIGA ANCHE DA MOBILE
+       ======================================================== */
+    .payment-boxes-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 440px;
+      box-sizing: border-box;
+      margin-top: 4px;
+    }
+
+    .pay-box {
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      box-sizing: border-box;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .pay-box:hover {
+      transform: translateY(-2px);
+    }
+
+    .pay-box-due {
+      background: rgba(245, 158, 11, 0.09);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.12);
+    }
+    .pay-box-paid {
+      background: rgba(16, 185, 129, 0.09);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12);
+    }
+
+    .pay-box-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pay-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .dot-due {
+      background: #F59E0B;
+      box-shadow: 0 0 8px #F59E0B;
+    }
+    .dot-paid {
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    .pay-box-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(246, 241, 255, 0.9);
+      white-space: nowrap;
+    }
+
+    .pay-box-amount {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.22rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #F6F1FF;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .text-green {
+      color: #34D399 !important;
+    }
+
+    .pay-box-sub {
+      font-size: 0.74rem;
+      color: rgba(246, 241, 255, 0.72);
+      display: flex;
+      gap: 4px;
+      align-items: baseline;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .due-label {
+      color: rgba(246, 241, 255, 0.6);
+    }
+    .due-date {
+      color: #FDE68A;
+      font-weight: 700;
+      font-family: 'DM Mono', monospace;
+    }
+    .text-green-light {
+      color: #6EE7B7 !important;
+      font-weight: 600;
+    }
+
+    /* Regola esplicita per assicurare che rimangano SULLA STESSA RIGA anche da mobile */
+    @media (max-width: 480px) {
+      .payment-boxes-row {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+      }
+      .pay-box {
+        padding: 10px 10px;
+        gap: 3px;
+        border-radius: 12px;
+      }
+      .pay-box-title {
+        font-size: 0.68rem;
+      }
+      .pay-box-amount {
+        font-size: 1.05rem;
+      }
+      .pay-box-sub {
+        font-size: 0.67rem;
+      }
+    }
+
     @media print {
-      .no-print {
-        display: none !important;
+      body * {
+        visibility: hidden;
+      }
+      .receipt, .receipt * {
+        visibility: visible;
       }
       .receipt {
-        box-shadow: none !important;
-        max-width: 100% !important;
-        padding: 0 !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 100%;
+        box-shadow: none;
+        padding: 0;
       }
-      .tear-edge {
+      .no-print {
         display: none !important;
       }
     }
@@ -426,10 +590,26 @@ export class QuoteReceiptComponent {
     { w: 3, g: 2 }, { w: 1, g: 1 }, { w: 2, g: 3 }, { w: 3, g: 2 }
   ];
 
+  protected readonly deadlineFormatted = computed(() => {
+    const p = this.project();
+    if (p.deadline) {
+      try {
+        const d = new Date(p.deadline);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+      } catch {
+        return p.deadline;
+      }
+    }
+    return '30/11/2026';
+  });
+
   protected readonly displayItems = computed<DisplayReceiptItem[]>(() => {
     const p = this.project();
-    const items = (p as any).quoteItems as QuoteItem[] | undefined;
+    const items = p.quoteItems as QuoteItem[] | undefined;
 
+    // Se l'admin ha inserito voci quoteItems per questo progetto, usiamo quelle reali!
     if (items && items.length > 0) {
       return items.map((it) => {
         const euros = (it.priceCents || 0) / 100;
@@ -443,29 +623,26 @@ export class QuoteReceiptComponent {
       });
     }
 
-    // Voci preventivo predefinite basate sul listino Childhood Friendship
+    // Se l'admin non ha ancora valorizzato quoteItems specifiche, usiamo le voci coerenti col tipo impostato dall'admin nel progetto
+    const pType = p.type as string;
+    if (pType === 'mobile' || /app/i.test(p.name)) {
+      return [
+        { name: 'Sviluppo App Mobile iOS e Android', quantity: 1, unitPrice: 1200.0, totalPrice: 1200.0, vatRate: 22 },
+        { name: 'Pannello Gestionale Appuntamenti & Salone', quantity: 1, unitPrice: 800.0, totalPrice: 800.0, vatRate: 22 },
+        { name: 'Integrazione Notifiche Push & Cloud Sync', quantity: 1, unitPrice: 250.0, totalPrice: 250.0, vatRate: 22 }
+      ];
+    }
+    if (pType === 'ecommerce' || /shop|store/i.test(p.name)) {
+      return [
+        { name: 'Sviluppo E-Commerce Catalog & Checkout', quantity: 1, unitPrice: 1400.0, totalPrice: 1400.0, vatRate: 22 },
+        { name: 'Gateway Pagamenti Stripe & PayPal', quantity: 1, unitPrice: 400.0, totalPrice: 400.0, vatRate: 22 },
+        { name: 'Configurazione Cloud SSL & Inventario', quantity: 1, unitPrice: 200.0, totalPrice: 200.0, vatRate: 22 }
+      ];
+    }
     return [
-      {
-        name: 'Sviluppo Sito Web 3D & Responsive',
-        quantity: 1,
-        unitPrice: 400.0,
-        totalPrice: 400.0,
-        vatRate: 22
-      },
-      {
-        name: 'Piattaforma Web App & Portale',
-        quantity: 1,
-        unitPrice: 800.0,
-        totalPrice: 800.0,
-        vatRate: 22
-      },
-      {
-        name: 'Configurazione Cloud, SSL & SEO',
-        quantity: 1,
-        unitPrice: 150.0,
-        totalPrice: 150.0,
-        vatRate: 22
-      }
+      { name: 'Sviluppo Sito Web 3D & Responsive', quantity: 1, unitPrice: 850.0, totalPrice: 850.0, vatRate: 22 },
+      { name: 'Piattaforma Web & Configurazione Cloud', quantity: 1, unitPrice: 400.0, totalPrice: 400.0, vatRate: 22 },
+      { name: 'Ottimizzazione SEO & Indicizzazione Google', quantity: 1, unitPrice: 150.0, totalPrice: 150.0, vatRate: 22 }
     ];
   });
 
@@ -479,6 +656,14 @@ export class QuoteReceiptComponent {
 
   protected readonly totalWithVat = computed(() => {
     return Number((this.subtotal() * 1.22).toFixed(2));
+  });
+
+  protected readonly alreadyPaid = computed(() => {
+    return Number((this.totalWithVat() * 0.5).toFixed(2));
+  });
+
+  protected readonly remainingToPay = computed(() => {
+    return Number((this.totalWithVat() - this.alreadyPaid()).toFixed(2));
   });
 
   protected readonly receiptDate = computed(() => {
