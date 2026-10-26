@@ -7,7 +7,7 @@ import { Api } from '../../core/api';
 import { AuthService } from '../../core/auth.service';
 import { BadgeComponent } from '../../shared/badge.component';
 import { BarChartComponent, type ChartSeries } from '../../shared/bar-chart.component';
-import { LEAD_STATUS_LABELS, documentStatus, euro, projectStatus } from '../../shared/labels';
+import { LEAD_STATUS_LABELS, euro, projectStatus } from '../../shared/labels';
 
 /** Palette validata (dataviz validator, superficie scura #171717): viola CF + ambra. */
 const C_SITO = '#8B5CF6';
@@ -35,10 +35,6 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
             <small class="muted">{{ d.projectsByStatus.lanciato }} lanciati</small>
           </a>
           <a class="card kpi" routerLink="/admin/lead">
-            <span class="muted">Nuovi lead</span><strong>{{ d.newLeads }}</strong>
-            <small class="muted">{{ leadsThisWeek() }} questa settimana</small>
-          </a>
-          <a class="card kpi" routerLink="/admin/lead">
             <span class="muted">Valore pipeline</span><strong>{{ euro(d.pipelineValueCents) }}</strong>
             <small class="muted">lead aperti con prezzo</small>
           </a>
@@ -48,7 +44,7 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
           </div>
           <div class="card kpi">
             <span class="muted">Task in ritardo</span><strong [class.danger]="d.overdueTasks.length">{{ d.overdueTasks.length }}</strong>
-            <small class="muted">{{ d.documentsInReview.length }} documenti in attesa</small>
+            <small class="muted">da completare</small>
           </div>
         </section>
 
@@ -108,13 +104,6 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
               <a class="line" [routerLink]="['/admin/progetti', t.projectId, 'checklist']"><span class="grow truncate">{{ t.title }} <span class="muted">· {{ t.projectName }}</span></span><span class="mono small danger">{{ t.dueDate | date: 'd MMM' }}</span></a>
             } @empty { <p class="muted">Tutto in orario.</p> }
           </section>
-          <section class="card">
-            <h2>Documenti in revisione</h2>
-            @for (doc of d.documentsInReview; track doc.documentId) {
-              @let ds = documentStatus(doc.status);
-              <a class="line" [routerLink]="['/admin/progetti', doc.projectId, 'documenti', doc.documentId]"><span class="grow truncate">{{ doc.title }} <span class="muted">· {{ doc.projectName }}</span></span><cf-badge [label]="ds.label" [tone]="ds.tone" /></a>
-            } @empty { <p class="muted">Nessun documento in attesa del cliente.</p> }
-          </section>
         </div>
 
       } @else if (!error()) {
@@ -138,10 +127,10 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
     .funnel a:hover .f-label { color: var(--cf-color-violet-light); }
     .f-label { font-size: .85rem; color: var(--cf-color-text-muted); }
     .f-track { height: 14px; border-radius: 4px; background: var(--cf-surface-2, rgba(255,255,255,.04)); overflow: hidden; }
-    .f-bar { display: block; height: 100%; border-radius: 0 4px 4px 0; background: ${C_SITO}; }
-    .f-bar.lost { background: var(--cf-color-text-muted); opacity: .5; }
-    .f-val { text-align: right; font-size: .9rem; }
-    .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .f-bar { display: block; height: 100%; background: linear-gradient(90deg, #7C3AED, #A78BFA); border-radius: 4px; transition: width .3s; }
+    .f-bar.lost { background: linear-gradient(90deg, #DC2626, #F87171); }
+    .f-val { text-align: right; font-size: .85rem; }
+    .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
     .pipe { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: var(--cf-surface-2); color: inherit !important; text-decoration: none !important; }
     .pipe strong { font-size: 1.25rem; }
     .line { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--cf-color-border); color: inherit !important; text-decoration: none !important; }
@@ -157,7 +146,6 @@ export class DashboardPage implements OnInit {
   protected readonly leadStatuses = LEAD_STATUSES;
   protected readonly leadLabels = LEAD_STATUS_LABELS;
   protected readonly projectStatus = projectStatus;
-  protected readonly documentStatus = documentStatus;
   protected readonly euro = euro;
   protected readonly euroShort = (cents: number): string => {
     const v = cents / 100;

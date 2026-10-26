@@ -32,13 +32,11 @@ import { ProjectStore } from './project.store';
             <div class="progress-box">
               <div class="row-between small"><span class="muted">Avanzamento</span><strong class="mono">{{ pct() }}%</strong></div>
               <div class="progress"><span [style.width.%]="pct()"></span></div>
-              <span class="muted small">{{ p.progress?.documentsApproved }}/{{ p.progress?.documentsTotal }} documenti approvati</span>
             </div>
           </div>
           <nav class="tabs" aria-label="Sezioni progetto">
             <a [routerLink]="['./']" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Panoramica</a>
             <a routerLink="checklist" routerLinkActive="active">Checklist</a>
-            <a routerLink="documenti" routerLinkActive="active">Documenti</a>
             @if (p.marketingEnabled) { <a routerLink="marketing" routerLinkActive="active">Marketing</a> }
             <a routerLink="messaggi" routerLinkActive="active">Messaggi</a>
             <a routerLink="materiali" routerLinkActive="active">Materiali</a>

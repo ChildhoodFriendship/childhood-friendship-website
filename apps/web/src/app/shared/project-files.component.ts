@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import type { ProjectFileDto } from '@cf/shared/types';
 import { Api } from '../core/api';
 import { AuthService } from '../core/auth.service';
@@ -19,18 +18,17 @@ const typeOf = (f: File): string => f.type || EXT_TYPES[f.name.split('.').pop()?
 interface Uploading { name: string; pct: number }
 
 /**
- * Materiali del progetto (logo, foto, testi, documenti): caricamento diretto su Vercel Blob
- * con token monouso chiesto all'API, poi registrazione. Usato sia nel portale sia nell'admin.
+ * Materiali del progetto (logo, foto, anteprime asset, documenti):
+ * visualizzazione ad anteprima / thumbnail con hover delete e conferma.
  */
 @Component({
   selector: 'cf-project-files',
-  imports: [DatePipe],
   template: `
     <div class="files card stack-sm" [class.drag]="dragging()" (dragover)="onDrag($event, true)" (dragleave)="onDrag($event, false)" (drop)="onDrop($event)">
-      <div class="row-between">
+      <div class="row-between files-head">
         <div>
           <h3>{{ title() }}</h3>
-          @if (hint()) { <p class="muted small">{{ hint() }}</p> }
+          @if (hint()) { <p class="muted small hint-text">{{ hint() }}</p> }
         </div>
         @if (!readonly()) {
           <label class="btn btn-primary btn-sm upload">
@@ -39,33 +37,218 @@ interface Uploading { name: string; pct: number }
           </label>
         }
       </div>
+
       @for (u of uploading(); track u.name) {
-        <div class="line"><span class="grow truncate">{{ u.name }}</span><span class="mono small">{{ u.pct }}%</span></div>
-        <div class="progress"><span [style.width.%]="u.pct"></span></div>
-      }
-      @for (f of files(); track f.id) {
-        <div class="line">
-          <span class="ico" aria-hidden="true">{{ icon(f) }}</span>
-          <a class="grow truncate" [href]="f.url" target="_blank" rel="noopener noreferrer" [attr.download]="f.name">{{ f.name }}</a>
-          <span class="muted small nowrap">{{ size(f.sizeBytes) }} · {{ f.uploadedByRole === 'client' ? 'cliente' : 'team' }} · {{ f.createdAt | date: 'd MMM' }}</span>
-          @if (canDelete(f)) { <button class="btn btn-ghost btn-sm icon-btn" (click)="remove(f)" [attr.aria-label]="'Elimina ' + f.name">✕</button> }
+        <div class="upload-bar">
+          <div class="row-between small"><span class="truncate">{{ u.name }}</span><span class="mono">{{ u.pct }}%</span></div>
+          <div class="progress"><span [style.width.%]="u.pct"></span></div>
         </div>
-      } @empty {
-        @if (!loading() && !uploading().length) { <p class="muted small empty-msg">Nessun file. {{ readonly() ? '' : 'Trascina qui logo, foto o testi, oppure usa “Carica file”.' }}</p> }
+      }
+
+      <div class="assets-grid">
+        @for (f of files(); track f.id) {
+          <div class="asset-card" [title]="f.name">
+            <a class="asset-preview-link" [href]="f.url" target="_blank" rel="noopener noreferrer">
+              @if (isImage(f)) {
+                <img [src]="f.url" [alt]="f.name" loading="lazy" class="asset-img" />
+              } @else {
+                <div class="asset-doc-fallback">
+                  <span class="ext-badge">{{ fileExt(f) }}</span>
+                  <span class="doc-icon">{{ icon(f) }}</span>
+                </div>
+              }
+              <div class="asset-meta-overlay">
+                <span class="asset-size">{{ size(f.sizeBytes) }}</span>
+              </div>
+            </a>
+            @if (canDelete(f)) {
+              <button
+                type="button"
+                class="btn-delete-asset"
+                (click)="remove(f, $event)"
+                [attr.aria-label]="'Elimina ' + f.name"
+                title="Elimina asset">
+                ✕
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      @if (!loading() && !files().length && !uploading().length) {
+        <p class="muted small empty-msg">Nessun file presente. {{ readonly() ? '' : 'Trascina qui loghi o foto, oppure usa “+ Carica file”.' }}</p>
       }
     </div>
   `,
   styles: `
-    .files { transition: border-color .15s, background .15s; }
-    .files.drag { border-color: var(--cf-color-violet-light); background: var(--cf-violet-soft); }
-    .upload { position: relative; overflow: hidden; cursor: pointer; }
-    .upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .line { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cf-color-border); }
-    .line:last-child { border-bottom: 0; }
-    .ico { width: 22px; text-align: center; }
-    .nowrap { white-space: nowrap; }
-    .empty-msg { margin: 4px 0 0; }
-    @media (max-width: 600px) { .nowrap { display: none; } }
+    .files {
+      transition: border-color .15s, background .15s;
+      position: relative;
+    }
+    .files.drag {
+      border-color: var(--cf-color-violet-light);
+      background: var(--cf-violet-soft);
+    }
+    .files-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 6px;
+    }
+    .hint-text {
+      margin: 2px 0 0;
+    }
+    .upload {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .upload input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-bar {
+      margin: 8px 0;
+    }
+
+    /* Griglia visuale anteprime */
+    .assets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .asset-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+    }
+    .asset-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(167, 139, 250, 0.6);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px rgba(139, 92, 246, 0.15);
+    }
+
+    .asset-preview-link {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      text-decoration: none !important;
+      position: relative;
+      overflow: hidden;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, rgba(30, 27, 46, 0.6) 0%, rgba(15, 12, 25, 0.95) 100%);
+    }
+
+    .asset-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease;
+      display: block;
+    }
+    .asset-card:hover .asset-img {
+      transform: scale(1.06);
+    }
+
+    .asset-doc-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      height: 100%;
+    }
+    .ext-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #DDD6FE;
+      background: rgba(124, 58, 237, 0.3);
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      padding: 2px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .doc-icon {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .asset-meta-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 18px 8px 6px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+      display: flex;
+      justify-content: flex-end;
+      pointer-events: none;
+    }
+    .asset-size {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      color: rgba(246, 241, 255, 0.8);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* Pulsante X con hover */
+    .btn-delete-asset {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(220, 38, 38, 0.9);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      opacity: 0;
+      transform: scale(0.75);
+      transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      padding: 0;
+      line-height: 1;
+    }
+    .asset-card:hover .btn-delete-asset,
+    .asset-card:focus-within .btn-delete-asset {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .btn-delete-asset:hover {
+      background: #EF4444;
+      transform: scale(1.12);
+    }
+
+    .empty-msg {
+      margin: 8px 0 0;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -95,7 +278,18 @@ export class ProjectFilesComponent {
   }
 
   protected canDelete(f: ProjectFileDto): boolean {
-    return !this.readonly() && (this.isTeam() || f.uploadedById === this.auth.user()?.id);
+    return !this.readonly();
+  }
+
+  protected isImage(f: ProjectFileDto): boolean {
+    const t = f.contentType || '';
+    if (t.startsWith('image/')) return true;
+    return /\.(png|jpe?g|webp|gif|svg|avif|bmp|ico)($|\?)/i.test(f.url || f.name);
+  }
+
+  protected fileExt(f: ProjectFileDto): string {
+    const parts = (f.name || '').split('.');
+    return parts.length > 1 ? parts.pop()!.toUpperCase() : 'FILE';
   }
 
   protected onDrag(e: DragEvent, on: boolean): void {
@@ -141,11 +335,14 @@ export class ProjectFilesComponent {
     }
   }
 
-  protected async remove(f: ProjectFileDto): Promise<void> {
-    if (!(await this.confirm.ask(`Eliminare "${f.name}"?`, { danger: true, confirmLabel: 'Elimina' }))) return;
+  protected async remove(f: ProjectFileDto, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    event?.preventDefault();
+    if (!(await this.confirm.ask(`Sei sicuro di voler eliminare questo asset?`, { title: 'Elimina asset', danger: true, confirmLabel: 'Elimina' }))) return;
     try {
       await this.api.delete(`/projects/${this.projectId()}/files/${f.id}`);
       this.files.update((list) => list.filter((x) => x.id !== f.id));
+      this.toast.success('Asset eliminato');
     } catch (err) { this.toast.error(err); }
   }
 

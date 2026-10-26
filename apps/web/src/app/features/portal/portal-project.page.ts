@@ -205,21 +205,20 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       letter-spacing: -0.01em;
     }
 
-    /* Centratura del titolo e header in cf-project-files */
+    /* Titolo e upload allineati in cf-project-files (Carica file in alto a destra) */
     :host ::ng-deep .files .row-between {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      justify-content: space-between;
       align-items: center;
-      text-align: center;
-      gap: 12px;
+      gap: 16px;
       margin-bottom: 12px;
     }
     :host ::ng-deep .files h3 {
-      text-align: center;
-      font-size: 1.15rem;
+      font-size: 1.18rem;
       font-weight: 700;
       margin: 0;
-      width: 100%;
+      text-align: left;
     }
 
     /* Griglia layout */
