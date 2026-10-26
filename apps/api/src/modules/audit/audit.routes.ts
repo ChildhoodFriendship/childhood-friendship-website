@@ -8,8 +8,17 @@ import { parse } from '../../lib/validate.js';
 import { requireAdmin } from '../../middleware/auth.js';
 
 export const auditColumns = {
-  id: auditLog.id, actorId: auditLog.actorId, actorName: users.name, action: auditLog.action, entity: auditLog.entity,
-  entityId: auditLog.entityId, meta: auditLog.meta, createdAt: auditLog.createdAt
+  id: auditLog.id,
+  actorId: auditLog.actorId,
+  actorName: users.name,
+  actorRole: users.role,
+  action: auditLog.action,
+  entity: auditLog.entity,
+  entityId: auditLog.entityId,
+  projectId: auditLog.projectId,
+  ipHash: auditLog.ipHash,
+  meta: auditLog.meta,
+  createdAt: auditLog.createdAt
 };
 
 export function auditRouter(ctx: AppContext): Router {

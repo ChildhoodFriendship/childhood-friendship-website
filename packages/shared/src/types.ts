@@ -4,6 +4,8 @@ import type {
   MarketingContentStatus, MarketingContentType, Phase, PlatformKind, ProjectStatus, ProjectType, Role
 } from './catalog.js';
 
+export type { Role } from './catalog.js';
+
 export interface Paginated<T> { items: T[]; total: number; page: number; pageSize: number; }
 export interface ApiErrorBody { error: { code: string; message: string; details?: unknown } }
 
@@ -94,7 +96,18 @@ export interface ProjectFileDto {
   uploadedById: string | null; uploadedByName: string | null; uploadedByRole: Role | null; createdAt: string;
 }
 
-export interface AuditDto { id: string; actorId: string | null; actorName: string | null; action: string; entity: string; entityId: string | null; meta: Record<string, unknown>; createdAt: string; }
+export interface AuditDto {
+  id: string;
+  actorId: string | null;
+  actorName: string | null;
+  actorRole?: Role | null;
+  action: string;
+  entity: string;
+  entityId: string | null;
+  ipHash?: string | null;
+  meta: Record<string, unknown>;
+  createdAt: string;
+}
 
 export interface DashboardDto {
   projectsByStatus: Record<ProjectStatus, number>;

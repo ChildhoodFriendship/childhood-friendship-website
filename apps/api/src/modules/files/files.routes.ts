@@ -89,8 +89,15 @@ export function filesRouter(ctx: AppContext): Router {
     const project = currentProject(res);
     assertWritable(project);
     const file = await load(parse(uuidParam, req.params['fileId']), project.id);
-    if (!isTeam(req) && file.uploadedById !== req.user!.id) throw forbidden('Puoi eliminare solo i file che hai caricato tu');
-    await storage().remove(file.url);
+    const canDelete = isTeam(req) || file.uploadedById === req.user!.id || (req.user?.clientId != null && req.user.clientId === project.clientId);
+    if (!canDelete) throw forbidden('Puoi eliminare solo i file del tuo progetto o caricati da te');
+    if (ctx.storage) {
+      try {
+        await ctx.storage.remove(file.url);
+      } catch (storageErr) {
+        console.warn(`[files] Rimozione blob storage ignorata o fallita (${file.url}):`, storageErr);
+      }
+    }
     await db.delete(projectFiles).where(eq(projectFiles.id, file.id));
     await audit(db, req, { action: 'file.deleted', entity: 'file', entityId: file.id, projectId: project.id, meta: { name: file.name } });
     res.status(204).end();

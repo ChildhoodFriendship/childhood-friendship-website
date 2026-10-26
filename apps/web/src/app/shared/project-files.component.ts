@@ -250,6 +250,12 @@ interface Uploading { name: string; pct: number }
       opacity: 1;
       transform: scale(1);
     }
+    @media (hover: none), (max-width: 640px) {
+      .btn-delete-asset {
+        opacity: 0.92;
+        transform: scale(1);
+      }
+    }
     .btn-delete-asset:hover {
       background: #EF4444;
       transform: scale(1.12);
