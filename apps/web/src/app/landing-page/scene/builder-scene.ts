@@ -851,18 +851,22 @@ export class BuilderScene {
 
       if (this.opts.mobile) {
         // Su mobile: elimina i modelli 3D non appena si entra nel manifesto
-        // e falli ricomparire solo quando si arriva alla sezione finale (#finale)
-        const inHero = window.scrollY < (this.pinEnd || window.innerHeight);
-        const contactTop = this.contactEl ? this.contactEl.getBoundingClientRect().top : 99999;
-        const inFinale = fin > 0 || contactTop < window.innerHeight;
-        const show3D = (inHero && z < 0.98) || inFinale;
+        // e falli ricomparire SOLO quando ricominciano a camminare per tornare in centro nel finale (fin >= 0.03)
+        // Mai mostrare i personaggi mentre escono ai lati o prima dell'inizio del finale!
+        const inHero = window.scrollY < (this.pinEnd || window.innerHeight) && z < 0.98;
+        const inFinale = fin >= 0.03;
+        const show3D = inHero || inFinale;
 
         this.root.visible = show3D;
-        this.pRoot.visible = inFinale && !!this.partner && (this.partnerIn.v > 0.001 || fin > 0);
-        this.device.visible = inHero && z < 0.98 && this.device.visible;
-        this.rings.visible = show3D;
+        this.pRoot.visible = inFinale && !!this.partner;
+        this.device.visible = inHero && this.device.visible;
+        this.rings.visible = (inHero && z < 0.98) || (inFinale && fin >= 0.02);
 
         if (!show3D) {
+          this.root.visible = false;
+          this.pRoot.visible = false;
+          this.device.visible = false;
+          this.rings.visible = false;
           this.renderer.clear();
           return;
         }
