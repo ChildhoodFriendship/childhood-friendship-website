@@ -15,20 +15,18 @@ import { ModalComponent } from '../../../shared/modal.component';
   imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, BadgeComponent, ModalComponent],
   template: `
     <div class="page">
-      <header class="page-header">
-        <div><span class="eyebrow">Gestione</span><h1>Progetti</h1><p>{{ total() }} {{ archived ? 'archiviati' : 'attivi' }}</p></div>
+      <div class="toolbar row-between" style="margin-bottom: 16px;">
+        <div class="row" style="gap: 12px; align-items: center; flex-wrap: wrap;">
+          <label class="sr-only" for="q">Cerca</label>
+          <input id="q" class="input" style="max-width: 320px" placeholder="Cerca progetto o cliente…" [(ngModel)]="q" (ngModelChange)="onSearch()" />
+          <label class="sr-only" for="st">Stato</label>
+          <select id="st" class="select" style="width: auto" [(ngModel)]="status" (ngModelChange)="reload()">
+            <option value="">Tutti gli stati</option>
+            @for (s of statuses; track s) { <option [value]="s">{{ projectStatus(s).label }}</option> }
+          </select>
+          <label class="check"><input type="checkbox" [(ngModel)]="archived" (ngModelChange)="reload()" /> Archiviati</label>
+        </div>
         <button class="btn btn-primary" (click)="openCreate()">+ Nuovo progetto</button>
-      </header>
-
-      <div class="toolbar row">
-        <label class="sr-only" for="q">Cerca</label>
-        <input id="q" class="input grow" style="max-width: 320px" placeholder="Cerca progetto o cliente…" [(ngModel)]="q" (ngModelChange)="onSearch()" />
-        <label class="sr-only" for="st">Stato</label>
-        <select id="st" class="select" style="width: auto" [(ngModel)]="status" (ngModelChange)="reload()">
-          <option value="">Tutti gli stati</option>
-          @for (s of statuses; track s) { <option [value]="s">{{ projectStatus(s).label }}</option> }
-        </select>
-        <label class="check"><input type="checkbox" [(ngModel)]="archived" (ngModelChange)="reload()" /> Archiviati</label>
       </div>
 
       <section class="card card-tight">

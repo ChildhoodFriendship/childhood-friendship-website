@@ -22,7 +22,7 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
   template: `
     <div class="page">
       <header class="page-header">
-        <div><span class="eyebrow">Panoramica</span><h1>Buongiorno, {{ firstName() }}</h1><p>{{ today | date: 'EEEE d MMMM y' }}</p></div>
+        <div><h1>Buongiorno, {{ firstName() }}</h1></div>
         <a class="btn btn-primary" routerLink="/admin/progetti" [queryParams]="{ nuovo: 1 }">+ Nuovo progetto</a>
       </header>
 
@@ -40,7 +40,7 @@ const monthFmt = new Intl.DateTimeFormat('it-IT', { month: 'short' });
           </a>
           <div class="card kpi">
             <span class="muted">Chiuso negli ultimi 6 mesi</span><strong>{{ euro(closedTotal()) }}</strong>
-            <small class="muted">{{ closedDeals() }} progetti · conversione {{ conversion() }}%</small>
+            <small class="muted">{{ closedDeals() }} progetti</small>
           </div>
           <div class="card kpi">
             <span class="muted">Task in ritardo</span><strong [class.danger]="d.overdueTasks.length">{{ d.overdueTasks.length }}</strong>

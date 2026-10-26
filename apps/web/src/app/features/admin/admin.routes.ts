@@ -16,6 +16,7 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./projects/project-detail.page').then((m) => m.ProjectDetailPage),
         children: [
           { path: '', title: t('Progetto'), loadComponent: () => import('./projects/overview.tab').then((m) => m.OverviewTab) },
+          { path: 'preventivo', title: t('Preventivo'), loadComponent: () => import('./projects/quote.tab').then((m) => m.QuoteTab) },
           { path: 'checklist', title: t('Checklist'), loadComponent: () => import('./projects/checklist.tab').then((m) => m.ChecklistTab) },
           { path: 'documenti', title: t('Documenti'), loadComponent: () => import('./projects/documents.tab').then((m) => m.DocumentsTab) },
           { path: 'documenti/:docId', title: t('Documento'), loadComponent: () => import('./projects/document-editor.page').then((m) => m.DocumentEditorPage) },
