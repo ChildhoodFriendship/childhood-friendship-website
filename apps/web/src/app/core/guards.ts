@@ -17,6 +17,7 @@ export function roleGuard(...roles: Role[]): CanMatchFn {
 /** Pagine pubbliche di accesso: se già loggato vai alla tua area. */
 export const guestGuard: CanMatchFn = async () => {
   const auth = inject(AuthService);
+  const router = inject(Router);
   const user = await auth.ensureLoaded();
-  return user ? inject(Router).parseUrl(auth.homeFor(user)) : true;
+  return user ? router.parseUrl(auth.homeFor(user)) : true;
 };
