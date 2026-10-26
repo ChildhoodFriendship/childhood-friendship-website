@@ -20,10 +20,7 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
   template: `
     <section class="card stack quote-card">
       <div class="row-between head-bar">
-        <div>
-          <h2>Preventivo e Condizioni di Pagamento</h2>
-          <p class="muted small">Imposta le voci del preventivo, l'importo già versato dal cliente e la scadenza del saldo.</p>
-        </div>
+        <h2>Preventivo e Condizioni di Pagamento</h2>
         @if (dirty()) {
           <span class="badge-dirty">● Modifiche non salvate</span>
         } @else {

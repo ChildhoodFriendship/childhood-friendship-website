@@ -172,13 +172,7 @@ interface ParsedMessage {
     } @else {
       <!-- MODALITÀ EMBEDDED (Pannello Admin) CON TUTTI I MIGLIORAMENTI -->
       <div class="embedded-chat-card card stack-sm">
-        <div class="chat-header-info embedded-header">
-          <div class="avatar-cf">CF</div>
-          <div>
-            <h4 class="chat-title" style="margin: 0">Messaggi Progetto</h4>
-            <span class="muted small">Conversazione sincronizzata in tempo reale</span>
-          </div>
-        </div>
+        
 
         <div #list class="chat-body embedded-body" role="log" aria-live="polite">
           @if (loading() && !messages().length) {

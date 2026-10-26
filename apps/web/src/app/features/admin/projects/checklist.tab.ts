@@ -16,9 +16,6 @@ import { ProjectStore } from './project.store';
     <div class="stack">
       <form class="card row" (ngSubmit)="add()">
         <input class="input grow" name="title" [(ngModel)]="newTitle" placeholder="Nuovo task…" aria-label="Titolo nuovo task" [disabled]="archived()" />
-        <select class="select" style="width: auto" name="phase" [(ngModel)]="newPhase" aria-label="Fase">
-          @for (p of phases; track p) { <option [value]="p">{{ phaseLabel(p) }}</option> }
-        </select>
         <input class="input" style="width: auto" type="date" name="due" [(ngModel)]="newDue" aria-label="Scadenza" />
         <button class="btn btn-primary" [disabled]="!newTitle.trim() || archived()">Aggiungi</button>
       </form>
