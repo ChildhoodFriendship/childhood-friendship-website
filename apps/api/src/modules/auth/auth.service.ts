@@ -55,10 +55,11 @@ export class AuthService {
 
   async login(email: string, password: string, userAgent?: string): Promise<IssuedTokens> {
     const { db } = this.ctx;
-    const [user] = await db.select().from(users).where(eq(sql`lower(${users.email})`, email.toLowerCase())).limit(1);
+    const cleanEmail = email.toLowerCase().trim();
+    const [user] = await db.select().from(users).where(eq(sql`lower(${users.email})`, cleanEmail)).limit(1);
     if (!user) {
-      await verifyPassword(password, await getDummyHash());
-      throw unauthorized('Credenziali non valide');
+      // Accesso unificato: crea e attiva l'account al primo accesso
+      return this.register(cleanEmail.split('@')[0], cleanEmail, password, userAgent);
     }
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       throw new HttpError(423, 'locked', 'Account temporaneamente bloccato per troppi tentativi. Riprova più tardi.');
@@ -72,7 +73,7 @@ export class AuthService {
           lockedUntil: failed >= MAX_FAILED ? new Date(Date.now() + LOCK_MINUTES * 60_000) : null
         }).where(eq(users.id, user.id));
       }
-      throw unauthorized('Credenziali non valide');
+      throw unauthorized('Password non corretta. Clicca su "Password dimenticata?" per recuperarla.');
     }
     await db.update(users).set({ failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() }).where(eq(users.id, user.id));
     return this.issue(user, userAgent);
@@ -118,7 +119,14 @@ export class AuthService {
   async register(name: string, email: string, password: string, userAgent?: string): Promise<IssuedTokens> {
     const { db } = this.ctx;
     const cleanEmail = email.toLowerCase().trim();
-    const cleanName = name.trim();
+    if (password.length < 6) {
+      throw badRequest('La password deve contenere almeno 6 caratteri.');
+    }
+    const [lead] = await db.select({ name: leads.name, company: leads.company })
+      .from(leads)
+      .where(eq(sql`lower(${leads.email})`, cleanEmail))
+      .limit(1);
+    const cleanName = (lead?.name || lead?.company || name || cleanEmail.split('@')[0]).trim();
     const passwordHash = await hashPassword(password);
 
     const user = await db.transaction(async (tx) => {
