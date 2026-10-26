@@ -99,6 +99,8 @@ export const projectInputSchema = z.object({
   status: z.enum(PROJECT_STATUSES).default('pianificazione'),
   type: z.enum(PROJECT_TYPES).default('altro'),
   quoteItems: z.array(quoteItemSchema).max(50, 'Massimo 50 voci').default([]),
+  paidAmountCents: cents.optional().nullable(),
+  paymentDeadline: isoDate.optional().nullable(),
   isOnline: z.boolean().default(false),
   indexingStatus: z.enum(INDEXING_STATUSES).default('non_indicizzato'),
   targetUrl: optUrl,

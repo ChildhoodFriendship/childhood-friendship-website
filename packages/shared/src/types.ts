@@ -34,6 +34,8 @@ export interface ProjectDto {
   status: ProjectStatus; type: ProjectType; isOnline: boolean; indexingStatus: IndexingStatus;
   /** Preventivo interno: voci e prezzi (non visibili al cliente). */
   quoteItems: QuoteItem[];
+  paidAmountCents?: number | null;
+  paymentDeadline?: string | null;
   targetUrl: string | null; stagingUrl: string | null; repositoryUrl: string | null;
   startDate: string | null; deadline: string | null;
   marketingEnabled: boolean; marketingBudgetCents: number | null;

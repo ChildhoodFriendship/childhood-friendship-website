@@ -15,18 +15,18 @@ import { ModalComponent } from '../../../shared/modal.component';
   imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink, BadgeComponent, ModalComponent],
   template: `
     <div class="page">
-      <div class="toolbar row-between" style="margin-bottom: 16px;">
-        <div class="row" style="gap: 12px; align-items: center; flex-wrap: wrap;">
+      <div class="projects-toolbar">
+        <div class="filters-row">
           <label class="sr-only" for="q">Cerca</label>
-          <input id="q" class="input" style="max-width: 320px" placeholder="Cerca progetto o cliente…" [(ngModel)]="q" (ngModelChange)="onSearch()" />
+          <input id="q" class="input search-input" placeholder="Cerca progetto o cliente…" [(ngModel)]="q" (ngModelChange)="onSearch()" />
           <label class="sr-only" for="st">Stato</label>
-          <select id="st" class="select" style="width: auto" [(ngModel)]="status" (ngModelChange)="reload()">
+          <select id="st" class="select status-select" [(ngModel)]="status" (ngModelChange)="reload()">
             <option value="">Tutti gli stati</option>
             @for (s of statuses; track s) { <option [value]="s">{{ projectStatus(s).label }}</option> }
           </select>
-          <label class="check"><input type="checkbox" [(ngModel)]="archived" (ngModelChange)="reload()" /> Archiviati</label>
+          <label class="check archived-check"><input type="checkbox" [(ngModel)]="archived" (ngModelChange)="reload()" /> Archiviati</label>
         </div>
-        <button class="btn btn-primary" (click)="openCreate()">+ Nuovo progetto</button>
+        <button class="btn btn-primary btn-new" (click)="openCreate()">+ Nuovo progetto</button>
       </div>
 
       <section class="card card-tight">
@@ -88,7 +88,57 @@ import { ModalComponent } from '../../../shared/modal.component';
       </div>
     </cf-modal>
   `,
-  styles: `.late { color: var(--cf-color-danger); }`,
+  styles: `
+    .late { color: var(--cf-color-danger); }
+    .projects-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filters-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: nowrap;
+      flex: 1 1 auto;
+      max-width: 680px;
+    }
+    .search-input {
+      width: 270px;
+      min-width: 200px;
+      flex: 0 1 270px;
+    }
+    .status-select {
+      width: auto;
+      min-width: 145px;
+      flex: 0 0 auto;
+    }
+    .archived-check {
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-new {
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    @media (max-width: 768px) {
+      .filters-row {
+        flex-wrap: wrap;
+        max-width: 100%;
+      }
+      .search-input {
+        width: 100%;
+        flex: 1 1 100%;
+      }
+      .btn-new {
+        width: 100%;
+      }
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectsListPage implements OnInit {

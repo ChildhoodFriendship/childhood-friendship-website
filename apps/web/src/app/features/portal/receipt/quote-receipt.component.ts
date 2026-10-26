@@ -18,15 +18,19 @@ interface DisplayReceiptItem {
       <!-- SOPRA LO SCONTRINO: DA PAGARE con DATA SCADENZA e PAGATO sulla stessa riga anche da mobile -->
       <div class="payment-boxes-row no-print">
         <!-- Box Sinistra: DA PAGARE con DATA SCADENZA -->
-        <div class="pay-box pay-box-due">
+        <div class="pay-box pay-box-due" [class.is-settled]="isFullyPaid()">
           <div class="pay-box-header">
-            <span class="pay-dot dot-due"></span>
-            <span class="pay-box-title">DA PAGARE</span>
+            <span class="pay-dot" [class.dot-due]="!isFullyPaid()" [class.dot-paid]="isFullyPaid()"></span>
+            <span class="pay-box-title">{{ isFullyPaid() ? 'SALDO COMPLETATO' : 'DA PAGARE' }}</span>
           </div>
           <div class="pay-box-amount font-mono">{{ formatMoney(remainingToPay()) }} €</div>
           <div class="pay-box-sub">
-            <span class="due-label">Scadenza:</span>
-            <strong class="due-date">{{ deadlineFormatted() }}</strong>
+            @if (isFullyPaid()) {
+              <span class="text-green-light font-semibold">Nessun importo residuo dovuto ✓</span>
+            } @else {
+              <span class="due-label">Scadenza:</span>
+              <strong class="due-date">{{ deadlineFormatted() }}</strong>
+            }
           </div>
         </div>
 
@@ -38,7 +42,7 @@ interface DisplayReceiptItem {
           </div>
           <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }} €</div>
           <div class="pay-box-sub text-green-light">
-            <span>Acconto versato ✓</span>
+            <span>{{ isFullyPaid() ? 'Saldato interamente 100% ✓' : 'Importo versato ✓' }}</span>
           </div>
         </div>
       </div>
@@ -116,9 +120,15 @@ interface DisplayReceiptItem {
             <span class="total-val">{{ formatMoney(totalWithVat()) }}</span>
           </div>
           <div class="total-row">
-            <span class="total-label">Importo pagato / Acconto 50%</span>
+            <span class="total-label">{{ isFullyPaid() ? 'Importo pagato (Saldato 100%)' : 'Importo pagato (Acconto)' }}</span>
             <span class="total-val">{{ formatMoney(alreadyPaid()) }}</span>
           </div>
+          @if (!isFullyPaid()) {
+            <div class="total-row">
+              <span class="total-label">Residuo da versare (Scad. {{ deadlineFormatted() }})</span>
+              <span class="total-val">{{ formatMoney(remainingToPay()) }}</span>
+            </div>
+          }
         </div>
 
         <!-- Dati Documento & Data -->
@@ -592,14 +602,15 @@ export class QuoteReceiptComponent {
 
   protected readonly deadlineFormatted = computed(() => {
     const p = this.project();
-    if (p.deadline) {
+    const deadlineToUse = p.paymentDeadline || p.deadline;
+    if (deadlineToUse) {
       try {
-        const d = new Date(p.deadline);
+        const d = new Date(deadlineToUse);
         if (!isNaN(d.getTime())) {
           return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
       } catch {
-        return p.deadline;
+        return deadlineToUse;
       }
     }
     return '30/11/2026';
@@ -659,11 +670,19 @@ export class QuoteReceiptComponent {
   });
 
   protected readonly alreadyPaid = computed(() => {
+    const p = this.project();
+    if (p.paidAmountCents !== undefined && p.paidAmountCents !== null) {
+      return Number((p.paidAmountCents / 100).toFixed(2));
+    }
     return Number((this.totalWithVat() * 0.5).toFixed(2));
   });
 
   protected readonly remainingToPay = computed(() => {
-    return Number((this.totalWithVat() - this.alreadyPaid()).toFixed(2));
+    return Math.max(0, Number((this.totalWithVat() - this.alreadyPaid()).toFixed(2)));
+  });
+
+  protected readonly isFullyPaid = computed(() => {
+    return this.totalWithVat() > 0 && this.remainingToPay() <= 0;
   });
 
   protected readonly receiptDate = computed(() => {
