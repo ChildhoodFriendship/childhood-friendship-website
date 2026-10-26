@@ -110,10 +110,6 @@ const urlPattern = /^https?:\/\/.+/;
             <label class="field"><span>URL staging</span><input class="input" formControlName="stagingUrl" placeholder="https://" /></label>
             <label class="field full"><span>Repository</span><input class="input" formControlName="repositoryUrl" placeholder="https://github.com/…" /></label>
             <label class="check"><input type="checkbox" formControlName="isOnline" /> Sito online</label>
-            <label class="check"><input type="checkbox" formControlName="marketingEnabled" /> Gestiamo il marketing</label>
-            @if (form.controls.marketingEnabled.value) {
-              <label class="field"><span>Budget marketing (€)</span><input class="input" type="number" min="0" step="50" formControlName="marketingBudget" /></label>
-            }
             <div class="form-actions full">
               <button type="button" class="btn btn-ghost" [disabled]="!form.dirty" (click)="reset()">Annulla</button>
               <button class="btn btn-primary" [disabled]="saving() || !form.dirty || archived()">Salva</button>
@@ -215,7 +211,7 @@ export class OverviewTab {
   protected readonly form = this.fb.group({
     name: ['', Validators.required],
     description: [''],
-    status: ['pianificazione' as ProjectDto['status']],
+    status: ['in_sviluppo' as ProjectDto['status']],
     indexingStatus: ['non_indicizzato' as ProjectDto['indexingStatus']],
     startDate: [''],
     deadline: [''],

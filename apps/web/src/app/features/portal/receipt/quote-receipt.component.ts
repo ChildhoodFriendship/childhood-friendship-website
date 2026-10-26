@@ -47,13 +47,6 @@ interface DisplayReceiptItem {
         </div>
       </div>
 
-      <div class="receipt-actions no-print">
-        <span class="receipt-hint">📄 Copia Scontrino Preventivo</span>
-        <button type="button" class="btn btn-sm btn-outline print-btn" (click)="printReceipt()">
-          🖨️ Stampa / Salva PDF
-        </button>
-      </div>
-
       <!-- Scontrino termico fedele alla copia fisica -->
       <article class="receipt">
         <!-- Taglio carta dentellato superiore -->

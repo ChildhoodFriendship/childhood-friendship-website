@@ -5,9 +5,9 @@ import {
 
 export type BadgeTone = 'violet' | 'green' | 'amber' | 'red' | 'blue' | 'neutral';
 
-export const projectStatus = (s: ProjectStatus) => ({ label: PROJECT_STATUS_LABELS[s], tone: ({
-  pianificazione: 'blue', in_sviluppo: 'violet', in_revisione: 'amber', lanciato: 'green', in_pausa: 'neutral'
-} as const)[s] as BadgeTone });
+export const projectStatus = (s: ProjectStatus) => ({ label: PROJECT_STATUS_LABELS[s] ?? String(s), tone: (({
+  in_sviluppo: 'violet', lanciato: 'green'
+} as const)[s] ?? 'neutral') as BadgeTone });
 
 export const documentStatus = (s: DocumentStatus) => ({ label: DOCUMENT_STATUS_LABELS[s], tone: ({
   bozza: 'neutral', in_revisione: 'amber', approvato: 'green', modifiche_richieste: 'red'

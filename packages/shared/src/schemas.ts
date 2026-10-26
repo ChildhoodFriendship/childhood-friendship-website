@@ -96,7 +96,7 @@ export const projectInputSchema = z.object({
   clientId: z.uuid(),
   name: trimmed(200).min(1, 'Nome richiesto'),
   description: optText(5000),
-  status: z.enum(PROJECT_STATUSES).default('pianificazione'),
+  status: z.enum(PROJECT_STATUSES).default('in_sviluppo'),
   type: z.enum(PROJECT_TYPES).default('altro'),
   quoteItems: z.array(quoteItemSchema).max(50, 'Massimo 50 voci').default([]),
   paidAmountCents: cents.optional().nullable(),

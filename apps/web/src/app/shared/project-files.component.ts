@@ -126,18 +126,18 @@ interface Uploading { name: string; pct: number }
       margin: 8px 0;
     }
 
-    /* Griglia visuale anteprime */
+    /* Griglia visuale anteprime (dimensioni dimezzate, compatte ed eleganti) */
     .assets-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+      gap: 8px;
       margin-top: 10px;
     }
 
     .asset-card {
       position: relative;
       aspect-ratio: 1 / 1;
-      border-radius: 14px;
+      border-radius: 9px;
       overflow: hidden;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -147,7 +147,7 @@ interface Uploading { name: string; pct: number }
     .asset-card:hover {
       transform: translateY(-2px);
       border-color: rgba(167, 139, 250, 0.6);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px rgba(139, 92, 246, 0.15);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(139, 92, 246, 0.15);
     }
 
     .asset-preview-link {
@@ -185,18 +185,18 @@ interface Uploading { name: string; pct: number }
     }
     .ext-badge {
       font-family: 'DM Mono', monospace;
-      font-size: 0.72rem;
+      font-size: 0.58rem;
       font-weight: 700;
       color: #DDD6FE;
       background: rgba(124, 58, 237, 0.3);
       border: 1px solid rgba(167, 139, 250, 0.4);
-      padding: 2px 7px;
-      border-radius: 6px;
+      padding: 1px 4px;
+      border-radius: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
     }
     .doc-icon {
-      font-size: 1.8rem;
+      font-size: 1.15rem;
       line-height: 1;
     }
 
@@ -205,7 +205,7 @@ interface Uploading { name: string; pct: number }
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 18px 8px 6px;
+      padding: 10px 4px 2px;
       background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
       display: flex;
       justify-content: flex-end;
@@ -213,20 +213,20 @@ interface Uploading { name: string; pct: number }
     }
     .asset-size {
       font-family: 'DM Mono', monospace;
-      font-size: 0.68rem;
+      font-size: 0.58rem;
       color: rgba(246, 241, 255, 0.8);
       background: rgba(0, 0, 0, 0.5);
-      padding: 1px 5px;
-      border-radius: 4px;
+      padding: 0 3px;
+      border-radius: 3px;
     }
 
     /* Pulsante X con hover */
     .btn-delete-asset {
       position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 28px;
-      height: 28px;
+      top: 3px;
+      right: 3px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: rgba(220, 38, 38, 0.9);
       color: #FFFFFF;
@@ -234,14 +234,14 @@ interface Uploading { name: string; pct: number }
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 9px;
       font-weight: 700;
       cursor: pointer;
       opacity: 0;
       transform: scale(0.75);
       transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s;
       z-index: 10;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
       padding: 0;
       line-height: 1;
     }

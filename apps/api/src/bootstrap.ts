@@ -16,6 +16,7 @@ export async function buildContext(): Promise<{ ctx: AppContext; handle: DbHandl
     await handle.db.execute(sql`
       ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "paid_amount_cents" integer;
       ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "payment_deadline" text;
+      UPDATE "projects" SET "status" = 'in_sviluppo' WHERE "status"::text NOT IN ('in_sviluppo', 'lanciato');
     `);
   } catch (err) {
     console.warn('[db] Auto-migration columns warning:', err);

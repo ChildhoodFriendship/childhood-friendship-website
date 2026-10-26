@@ -38,7 +38,6 @@ import { ProjectStore } from './project.store';
             <a [routerLink]="['./']" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Panoramica</a>
             <a routerLink="preventivo" routerLinkActive="active">Preventivo</a>
             <a routerLink="checklist" routerLinkActive="active">Checklist</a>
-            @if (p.marketingEnabled) { <a routerLink="marketing" routerLinkActive="active">Marketing</a> }
             <a routerLink="messaggi" routerLinkActive="active">Messaggi</a>
             <a routerLink="materiali" routerLinkActive="active">Materiali</a>
             <a routerLink="accessi" routerLinkActive="active">Accessi</a>

@@ -6,15 +6,12 @@
 export const ROLES = ['admin', 'staff', 'client'] as const;
 export type Role = (typeof ROLES)[number];
 
-export const PROJECT_STATUSES = ['pianificazione', 'in_sviluppo', 'in_revisione', 'lanciato', 'in_pausa'] as const;
+export const PROJECT_STATUSES = ['in_sviluppo', 'lanciato'] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-  pianificazione: 'Pianificazione',
   in_sviluppo: 'In sviluppo',
-  in_revisione: 'In revisione',
-  lanciato: 'Lanciato',
-  in_pausa: 'In pausa'
+  lanciato: 'Lanciato'
 };
 
 export const INDEXING_STATUSES = ['non_indicizzato', 'in_indicizzazione', 'indicizzato', 'errore'] as const;
