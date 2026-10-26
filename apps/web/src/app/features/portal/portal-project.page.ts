@@ -43,6 +43,12 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
                 IN SVILUPPO
               </span>
 
+              @if (p.stagingUrl) {
+                <a class="btn-preview-link" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" title="Apri anteprima staging">
+                  Anteprima ↗
+                </a>
+              }
+
               @if (p.deadline) {
                 <span class="deadline-pill">
                   🗓️ Consegna: {{ p.deadline | date: 'd MMMM y' }}
@@ -50,20 +56,9 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
               }
             }
           </div>
-
-          <!-- Link staging solo se NON è live (deve sparire se è live) -->
-          @if (!isLive(p) && p.stagingUrl) {
-            <div class="staging-row">
-              <a class="staging-pill" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" title="Apri anteprima staging">
-                <span class="staging-badge">🧪 ANTEPRIMA STAGING</span>
-                <span class="staging-url">{{ p.stagingUrl }}</span>
-                <span class="staging-arrow">↗</span>
-              </a>
-            </div>
-          }
         </header>
 
-        <!-- Box DA PAGARE e PAGATO posizionati sotto al link di staging -->
+        <!-- Box DA PAGARE e PAGATO -->
         <div class="payment-boxes-wrapper">
           <cf-payment-boxes [project]="p" />
         </div>
@@ -264,7 +259,8 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
     }
 
-    .btn-live-link {
+    .btn-live-link,
+    .btn-preview-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -278,7 +274,8 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       text-decoration: none !important;
       transition: all 0.2s ease;
     }
-    .btn-live-link:hover {
+    .btn-live-link:hover,
+    .btn-preview-link:hover {
       background: rgba(124, 58, 237, 0.35);
       border-color: #C4B5FD;
     }
