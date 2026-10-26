@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { and, count, desc, eq, ilike, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { leadListQuerySchema, leadPatchSchema, leadPublicSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
@@ -59,7 +59,8 @@ export function leadsRouter(ctx: AppContext): Router {
     }
     const where = conds.length ? and(...conds) : undefined;
     const [{ total } = { total: 0 }] = await db.select({ total: count() }).from(leads).where(where);
-    const rows = await db.select().from(leads).where(where).orderBy(desc(leads.createdAt)).limit(q.pageSize).offset((q.page - 1) * q.pageSize);
+    const wonOrder = sql`CASE WHEN ${leads.status} = 'convertito' THEN 1 ELSE 0 END`;
+    const rows = await db.select().from(leads).where(where).orderBy(asc(wonOrder), desc(leads.createdAt)).limit(q.pageSize).offset((q.page - 1) * q.pageSize);
     res.json({ items: rows.map(toDto), total: Number(total), page: q.page, pageSize: q.pageSize });
   });
 

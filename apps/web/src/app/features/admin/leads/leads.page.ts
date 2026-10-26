@@ -34,15 +34,14 @@ const SERVICES = ['Sito vetrina', 'Landing page', 'Sito + menu digitale', 'Ordin
       </section>
 
       <div class="filters">
-        <div class="chips" role="group" aria-label="Origine">
+        <div class="chips" role="group" aria-label="Origine e Filtri">
           @for (s of sources; track s.value) {
-            <button type="button" class="chip" [class.on]="source === s.value" (click)="source = s.value; load()">{{ s.label }}</button>
+            <button type="button" class="chip" [class.on]="source === s.value && status !== 'convertito'" (click)="setSource(s.value)">{{ s.label }}</button>
           }
+          <button type="button" class="chip chip-won" [class.on]="status === 'convertito'" (click)="toggleConverted()">
+            Convertiti
+          </button>
         </div>
-        <select class="select" style="width: auto" [(ngModel)]="status" (ngModelChange)="load()" aria-label="Filtra per stato">
-          <option value="">Tutti gli stati</option>
-          @for (s of statuses; track s) { <option [value]="s">{{ leadStatus(s).label }}</option> }
-        </select>
         <input class="input grow" type="search" [(ngModel)]="q" (ngModelChange)="search()" placeholder="Cerca nome, categoria, indirizzo, servizio…" aria-label="Cerca" />
       </div>
 
@@ -117,6 +116,7 @@ const SERVICES = ['Sito vetrina', 'Landing page', 'Sito + menu digitale', 'Ordin
     .chips { display: flex; gap: 6px; }
     .chip { border: 1px solid var(--cf-color-border); background: var(--cf-color-surface); color: var(--cf-color-text); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
     .chip.on { background: var(--cf-color-violet); border-color: var(--cf-color-violet); color: #fff; }
+    .chip.chip-won.on { background: var(--cf-color-success); border-color: var(--cf-color-success); color: #fff; }
     .lead.won { border-color: rgba(34, 197, 94, .45); }
     .top { align-items: flex-start; gap: 12px; flex-wrap: wrap; }
     .name { gap: 8px; align-items: center; }
@@ -169,6 +169,31 @@ export class LeadsPage implements OnInit {
   private page = 1;
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
+  protected setSource(s: string): void {
+    this.source = s;
+    if (this.status === 'convertito') this.status = '';
+    void this.load();
+  }
+
+  protected toggleConverted(): void {
+    if (this.status === 'convertito') {
+      this.status = '';
+    } else {
+      this.status = 'convertito';
+    }
+    void this.load();
+  }
+
+  private sortLeads(list: LeadDto[]): LeadDto[] {
+    if (this.status === 'convertito') return list;
+    return [...list].sort((a, b) => {
+      const aWon = a.status === 'convertito' ? 1 : 0;
+      const bWon = b.status === 'convertito' ? 1 : 0;
+      if (aWon !== bWon) return aWon - bWon;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }
+
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParamMap;
     this.q = qp.get('q') ?? '';
@@ -182,7 +207,7 @@ export class LeadsPage implements OnInit {
     if (!append) this.page = 1;
     try {
       const r = await this.api.get<Paginated<LeadDto>>('/leads', { status: this.status, source: this.source, q: this.q, page: this.page, pageSize: 30 });
-      this.items.update((l) => (append ? [...l, ...r.items] : r.items));
+      this.items.update((l) => this.sortLeads(append ? [...l, ...r.items] : r.items));
       this.total.set(r.total);
     } catch (err) { this.toast.error(err); }
   }
@@ -192,7 +217,7 @@ export class LeadsPage implements OnInit {
     this.searchTimer = setTimeout(() => void this.load(), 300);
   }
 
-  private replace(l: LeadDto): void { this.items.update((list) => list.map((x) => (x.id === l.id ? l : x))); }
+  private replace(l: LeadDto): void { this.items.update((list) => this.sortLeads(list.map((x) => (x.id === l.id ? l : x)))); }
 
   protected async patch(l: LeadDto, patch: LeadPatch): Promise<void> {
     try { this.replace(await this.api.patch<LeadDto>(`/leads/${l.id}`, patch)); } catch (err) { this.toast.error(err); }
