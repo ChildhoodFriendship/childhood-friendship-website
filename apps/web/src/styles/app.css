@@ -104,8 +104,17 @@
 .progress { height: 6px; border-radius: 999px; background: var(--cf-color-surface-raised); overflow: hidden; }
 .progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--cf-color-violet), var(--cf-color-violet-light)); border-radius: inherit; transition: width .3s; }
 
+/* Scrollbar pulita ed eliminazione freccette native Windows */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.24); }
+::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
+* { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.16) transparent; }
+
 /* Tabs */
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cf-color-border); overflow-x: auto; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cf-color-border); overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.tabs::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
 .tabs a, .tabs button { padding: 10px 14px; color: var(--cf-color-text-muted); font-weight: 600; font-size: 13px; border: 0; background: none; cursor: pointer;
   border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; text-decoration: none !important; }
 .tabs a:hover, .tabs button:hover { color: var(--cf-color-text); }

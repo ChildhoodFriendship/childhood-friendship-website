@@ -109,12 +109,12 @@ const urlPattern = /^https?:\/\/.+/;
             <label class="field"><span>Indicizzazione</span>
               <select class="select" formControlName="indexingStatus">@for (s of indexing; track s) { <option [value]="s">{{ indexingStatus(s).label }}</option> }</select>
             </label>
-            <label class="field"><span>Inizio</span><input class="input" type="date" formControlName="startDate" /></label>
+            
             <label class="field"><span>Consegna</span><input class="input" type="date" formControlName="deadline" /></label>
             <label class="field"><span>URL produzione</span><input class="input" formControlName="targetUrl" placeholder="https://" /></label>
             <label class="field"><span>URL staging</span><input class="input" formControlName="stagingUrl" placeholder="https://" /></label>
             <label class="field full"><span>Repository</span><input class="input" formControlName="repositoryUrl" placeholder="https://github.com/…" /></label>
-            <label class="check"><input type="checkbox" formControlName="isOnline" /> Sito online</label>
+            
             <div class="form-actions full">
               <div class="client-link-side">
                 @if (client(); as c) {
@@ -216,6 +216,9 @@ export class OverviewTab {
       this.health.set(res);
       if (res.targetUrl) {
         this.form.controls.isOnline.setValue(res.siteOnline);
+        if (p.isOnline !== res.siteOnline) {
+          void this.store.update({ isOnline: res.siteOnline });
+        }
       }
       if (res.siteOnline && res.dbConnected) {
         this.toast.success(`Tutto operativo! Sito (${res.siteLatencyMs} ms) e Database (${res.dbLatencyMs} ms) online.`);

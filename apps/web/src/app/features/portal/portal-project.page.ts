@@ -460,7 +460,8 @@ export class PortalProjectPage {
   }
 
   protected isLive(p: PortalProjectDto): boolean {
-    return p.isOnline || p.status === 'lanciato';
+    if (p.status !== 'lanciato') return false;
+    return p.targetUrl ? p.isOnline : true;
   }
 
   private async load(id: string): Promise<void> {
