@@ -46,7 +46,13 @@ import { ProjectStore } from './project.store';
                 (click)="onTrashClick(p)"
                 [title]="p.archivedAt ? 'Gestisci archiviazione o eliminazione' : 'Archivia o elimina progetto'"
                 aria-label="Cestino progetto">
-                🗑️
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 6h18"/>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
               </button>
             </div>
           </div>
@@ -80,24 +86,25 @@ import { ProjectStore } from './project.store';
       padding-top: 6px;
     }
     .btn-trash-header {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.45);
       border-radius: 8px;
       width: 32px;
       height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
       cursor: pointer;
       transition: all 0.15s ease;
-      color: rgba(248, 250, 252, 0.7);
+      color: #EF4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.18);
     }
     .btn-trash-header:hover {
-      background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.4);
-      color: #EF4444;
-      transform: scale(1.05);
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.7);
+      color: #F87171;
+      transform: scale(1.08);
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
     }
     .btn-restore-link {
       background: none;

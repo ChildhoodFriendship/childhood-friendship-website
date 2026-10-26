@@ -116,8 +116,19 @@ const urlPattern = /^https?:\/\/.+/;
             <label class="field full"><span>Repository</span><input class="input" formControlName="repositoryUrl" placeholder="https://github.com/…" /></label>
             <label class="check"><input type="checkbox" formControlName="isOnline" /> Sito online</label>
             <div class="form-actions full">
-              <button type="button" class="btn btn-ghost" [disabled]="!form.dirty" (click)="reset()">Annulla</button>
-              <button class="btn btn-primary" [disabled]="saving() || !form.dirty || archived()">Salva</button>
+              <div class="client-link-side">
+                @if (client(); as c) {
+                  <a routerLink="/admin/clienti" [queryParams]="{ id: c.id }" class="client-chip-link" title="Apri scheda cliente">
+                    <span class="client-chip-label">Cliente:</span>
+                    <strong class="client-chip-name">{{ c.name }}</strong>
+                    <span class="client-chip-arrow">↗</span>
+                  </a>
+                }
+              </div>
+              <div class="buttons-side">
+                <button type="button" class="btn btn-ghost" [disabled]="!form.dirty" (click)="reset()">Annulla</button>
+                <button class="btn btn-primary" [disabled]="saving() || !form.dirty || archived()">Salva</button>
+              </div>
             </div>
           </form>
         </section>
@@ -125,26 +136,43 @@ const urlPattern = /^https?:\/\/.+/;
 
       </main>
 
-      <aside class="stack">
-        @if (client(); as c) {
-          <section class="card stack-sm">
-            <div class="row-between"><h3>Cliente</h3><a routerLink="/admin/clienti" [queryParams]="{ id: c.id }" class="small">Scheda</a></div>
-            <strong>{{ c.name }}</strong>
-            @if (c.vatNumber) { <span class="muted small">P.IVA {{ c.vatNumber }}</span> }
-            @if (c.contactName) { <span>{{ c.contactName }}</span> }
-            @if (c.contactEmail) { <a [href]="'mailto:' + c.contactEmail">{{ c.contactEmail }}</a> }
-            @if (c.contactPhone) { <a [href]="'tel:' + c.contactPhone">{{ c.contactPhone }}</a> }
-            @if (c.openingHours) { <span class="muted small">Orari: {{ c.openingHours }}</span> }
-          </section>
-        }
-
-        
-      </aside>
+      
     </div>
   `,
   styles: `
-    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
-    @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+    .layout { display: flex; flex-direction: column; gap: 16px; }
+    .form-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .buttons-side { display: flex; gap: 8px; align-items: center; }
+    .client-chip-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(167, 139, 250, 0.1);
+      border: 1px solid rgba(167, 139, 250, 0.35);
+      color: #F6F1FF !important;
+      text-decoration: none !important;
+      font-size: 0.88rem;
+      transition: all 0.15s ease;
+    }
+    .client-chip-link:hover {
+      background: rgba(124, 58, 237, 0.25);
+      border-color: #C4B5FD;
+      transform: translateY(-1px);
+    }
+    .client-chip-label {
+      color: rgba(246, 241, 255, 0.65);
+      font-weight: 500;
+    }
+    .client-chip-name {
+      color: #DDD6FE;
+      font-weight: 700;
+    }
+    .client-chip-arrow {
+      color: #A78BFA;
+      font-size: 0.9rem;
+    }
     .monitor-card { border: 1px solid rgba(59, 130, 246, 0.25); background: rgba(59, 130, 246, 0.03); }
     .monitor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 6px 0; }
     .monitor-item { padding: 10px 12px; border-radius: var(--cf-radius-sm); background: var(--cf-color-surface); border: 1px solid var(--cf-color-border); display: flex; flex-direction: column; gap: 4px; }
