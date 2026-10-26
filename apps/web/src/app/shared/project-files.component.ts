@@ -19,7 +19,7 @@ interface Uploading { name: string; pct: number }
 
 /**
  * Materiali del progetto (logo, foto, anteprime asset, documenti):
- * visualizzazione ad anteprima / thumbnail con hover delete e conferma.
+ * visualizzazione con gli ultimi 4 asset visibili e freccia per espandere/collassare la sezione.
  */
 @Component({
   selector: 'cf-project-files',
@@ -46,7 +46,7 @@ interface Uploading { name: string; pct: number }
       }
 
       <div class="assets-grid">
-        @for (f of files(); track f.id) {
+        @for (f of visibleFiles(); track f.id) {
           <div class="asset-card" [title]="f.name">
             <a class="asset-preview-link" [href]="f.url" target="_blank" rel="noopener noreferrer">
               @if (isImage(f)) {
@@ -74,6 +74,15 @@ interface Uploading { name: string; pct: number }
           </div>
         }
       </div>
+
+      @if (hasMore()) {
+        <div class="expand-row">
+          <button type="button" class="btn-expand-assets" (click)="toggleExpanded()" aria-label="Espandi o contrai materiali">
+            <span>{{ expanded() ? 'Mostra meno' : 'Mostra tutti gli asset (' + files().length + ')' }}</span>
+            <span class="expand-arrow" [class.is-expanded]="expanded()">▾</span>
+          </button>
+        </div>
+      }
 
       @if (!loading() && !files().length && !uploading().length) {
         <p class="muted small empty-msg">Nessun file presente. {{ readonly() ? '' : 'Trascina qui loghi o foto, oppure usa “+ Carica file”.' }}</p>
@@ -246,6 +255,43 @@ interface Uploading { name: string; pct: number }
       transform: scale(1.12);
     }
 
+    /* Pulsante freccia espansione */
+    .expand-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .btn-expand-assets {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(124, 58, 237, 0.12);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      color: #DDD6FE;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-expand-assets:hover {
+      background: rgba(124, 58, 237, 0.25);
+      border-color: #C4B5FD;
+      color: #FFFFFF;
+      transform: translateY(-1px);
+    }
+    .expand-arrow {
+      font-size: 0.95rem;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-block;
+    }
+    .expand-arrow.is-expanded {
+      transform: rotate(180deg);
+    }
+
     .empty-msg {
       margin: 8px 0 0;
     }
@@ -265,7 +311,15 @@ export class ProjectFilesComponent {
   protected readonly uploading = signal<Uploading[]>([]);
   protected readonly loading = signal(true);
   protected readonly dragging = signal(false);
-  private readonly isTeam = computed(() => this.auth.isTeam());
+  protected readonly expanded = signal(false);
+
+  // Mostra i primi 4 di default; espande se l'utente clicca sulla freccetta
+  protected readonly visibleFiles = computed(() => {
+    const list = this.files();
+    return this.expanded() ? list : list.slice(0, 4);
+  });
+
+  protected readonly hasMore = computed(() => this.files().length > 4);
 
   constructor() {
     effect(() => { void this.load(this.projectId()); });
@@ -275,6 +329,10 @@ export class ProjectFilesComponent {
     try { this.files.set(await this.api.get<ProjectFileDto[]>(`/projects/${id}/files`)); }
     catch (err) { this.toast.error(err); }
     finally { this.loading.set(false); }
+  }
+
+  protected toggleExpanded(): void {
+    this.expanded.update((v) => !v);
   }
 
   protected canDelete(f: ProjectFileDto): boolean {

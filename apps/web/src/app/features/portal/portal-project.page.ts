@@ -50,10 +50,9 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
           </div>
         </header>
 
-        <!-- Layout principale -->
+        <!-- Layout principale: Materiali a sinistra, Scontrino e Box a destra -->
         <div class="portal-grid">
           <div class="main-column stack">
-            <!-- Sezione Materiali: con anteprime visive e upload in alto a destra -->
             <section class="section-box">
               <cf-project-files
                 [projectId]="p.id"
@@ -62,33 +61,16 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
                 hint=""
               />
             </section>
-
-            <!-- Card Banner Chat Studio interattiva -->
-            <section class="chat-invite-card" (click)="chatWidgetRef.openChat()">
-              <div class="chat-invite-left">
-                <div class="chat-invite-bubble" aria-hidden="true">💬</div>
-                <div class="chat-invite-text">
-                  <strong>Messaggi e media con lo studio</strong>
-                  <p>Invia domande, modifiche, foto e video direttamente al team tramite la chat attiva.</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                class="btn btn-sm btn-primary chat-open-btn"
-                (click)="$event.stopPropagation(); chatWidgetRef.openChat()">
-                Apri chat ↗
-              </button>
-            </section>
           </div>
 
-          <!-- Colonna Scontrino Preventivo -->
+          <!-- Colonna Scontrino Preventivo con i box DA PAGARE e PAGATO -->
           <aside class="receipt-column">
             <cf-quote-receipt [project]="p" />
           </aside>
         </div>
 
         <!-- Floating Chat Widget con Button fisso in basso a destra -->
-        <cf-messages-thread #chatWidgetRef [projectId]="p.id" [floating]="true" />
+        <cf-messages-thread [projectId]="p.id" [floating]="true" />
 
       } @else if (error()) {
         <div class="alert alert-error">{{ error() }} · <a routerLink="/portale">Torna ai progetti</a></div>
@@ -230,63 +212,6 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       grid-template-columns: minmax(0, 1fr) 440px;
       gap: 32px;
       align-items: start;
-    }
-
-    /* Banner interattivo per la chat */
-    .chat-invite-card {
-      background: rgba(30, 26, 46, 0.5);
-      border: 1px solid rgba(167, 139, 250, 0.3);
-      border-radius: 16px;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .chat-invite-card:hover {
-      background: rgba(45, 38, 70, 0.65);
-      border-color: rgba(167, 139, 250, 0.55);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    }
-
-    .chat-invite-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .chat-invite-bubble {
-      font-size: 1.8rem;
-      line-height: 1;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: rgba(124, 58, 237, 0.2);
-      border: 1px solid rgba(167, 139, 250, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .chat-invite-text strong {
-      font-size: 0.95rem;
-      color: #F6F1FF;
-      display: block;
-      margin-bottom: 2px;
-    }
-    .chat-invite-text p {
-      font-size: 0.82rem;
-      color: rgba(246, 241, 255, 0.7);
-      margin: 0;
-      line-height: 1.35;
-    }
-
-    .chat-open-btn {
-      white-space: nowrap;
-      flex-shrink: 0;
-      font-weight: 600;
     }
 
     @media (max-width: 992px) {

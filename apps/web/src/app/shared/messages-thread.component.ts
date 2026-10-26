@@ -38,7 +38,6 @@ interface ParsedMessage {
         title="Chat con lo studio">
         @if (!isOpen()) {
           <span class="fab-icon">💬</span>
-          <span class="fab-badge">Chat Studio</span>
           @if (unreadCount() > 0) {
             <span class="unread-pill">{{ unreadCount() }}</span>
           }
@@ -255,32 +254,29 @@ interface ParsedMessage {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      height: 56px;
-      border-radius: 999px;
-      padding: 0 20px 0 16px;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      padding: 0;
+      justify-content: center;
       background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
       color: #FFFFFF;
-      border: 1.5px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 12px 36px rgba(124, 58, 237, 0.45), 0 4px 12px rgba(0, 0, 0, 0.4);
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 12px 36px rgba(124, 58, 237, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
       display: flex;
       align-items: center;
-      gap: 10px;
       cursor: pointer;
       z-index: 1050;
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
     }
     .floating-chat-fab:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 16px 42px rgba(124, 58, 237, 0.6), 0 6px 16px rgba(0, 0, 0, 0.5);
+      transform: translateY(-3px) scale(1.06);
+      box-shadow: 0 16px 42px rgba(124, 58, 237, 0.65), 0 6px 16px rgba(0, 0, 0, 0.5);
     }
     .floating-chat-fab.is-open {
-      padding: 0;
-      width: 56px;
-      height: 56px;
-      justify-content: center;
       background: #242033;
-      border-color: rgba(167, 139, 250, 0.4);
+      border-color: rgba(167, 139, 250, 0.5);
     }
     .fab-icon {
       font-size: 1.35rem;

@@ -31,17 +31,17 @@ function sanitizeUrl(val: string | null | undefined, domainPrefix?: string): str
   imports: [FormsModule, ReactiveFormsModule, RouterLink, ModalComponent],
   template: `
     <div class="page">
-      <header class="page-header" style="justify-content: flex-end; margin-bottom: 12px;"><button class="btn btn-primary" (click)="open()">+ Nuovo cliente</button></header>
 
-      <div class="toolbar row">
+
+      <div class="toolbar row-between" style="margin-bottom: 16px;">
         <input
           class="input"
           style="max-width: 360px"
           placeholder="Cerca per nome, referente o P.IVA…"
           [(ngModel)]="q"
           (ngModelChange)="onSearch()"
-          aria-label="Cerca clienti"
-        />
+          aria-label="Cerca clienti" /><button class="btn btn-primary" (click)="open()">+ Nuovo cliente</button>
+
       </div>
 
       <section class="card card-tight">

@@ -28,10 +28,6 @@ import { ModalComponent } from '../../../shared/modal.component';
           <option value="">Tutti gli stati</option>
           @for (s of statuses; track s) { <option [value]="s">{{ projectStatus(s).label }}</option> }
         </select>
-        <select class="select" style="width: auto" [(ngModel)]="clientId" (ngModelChange)="reload()" aria-label="Cliente">
-          <option value="">Tutti i clienti</option>
-          @for (c of clients(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
-        </select>
         <label class="check"><input type="checkbox" [(ngModel)]="archived" (ngModelChange)="reload()" /> Archiviati</label>
       </div>
 
@@ -47,7 +43,7 @@ import { ModalComponent } from '../../../shared/modal.component';
                   <td><a [routerLink]="['/admin/progetti', p.id]" (click)="$event.stopPropagation()"><strong>{{ p.name }}</strong></a></td>
                   <td class="muted">{{ p.clientName }}</td>
                   <td><cf-badge [label]="st.label" [tone]="st.tone" /></td>
-                  <td><div class="row"><div class="progress grow"><span [style.width.%]="pct"></span></div><span class="small mono">{{ pct }}%</span></div></td>
+                  <td><div class="row"><div class="progress grow"><span [style.width.%]="pct"></span></div><span class="mono small">{{ pct }}%</span></div></td>
                   <td class="nowrap" [class.late]="isLate(p)">{{ p.deadline ? (p.deadline | date: 'd MMM y') : '—' }}</td>
                   <td>{{ p.isOnline ? '●' : '○' }}</td>
                 </tr>
@@ -61,12 +57,13 @@ import { ModalComponent } from '../../../shared/modal.component';
         </div>
       </section>
 
-      @if (total() > pageSize) {
+      @if (pages() > 1) {
         <div class="row-between">
-          <span class="muted small">Pagina {{ page() }} di {{ pages() }}</span>
-          <div class="row">
-            <button class="btn btn-sm" [disabled]="page() <= 1" (click)="go(page() - 1)">← Precedente</button>
-            <button class="btn btn-sm" [disabled]="page() >= pages()" (click)="go(page() + 1)">Successiva →</button>
+          <span class="muted small">{{ total() }} totali</span>
+          <div class="pagination">
+            <button class="btn btn-sm" [disabled]="page() <= 1" (click)="go(page() - 1)">‹ Prec</button>
+            <span class="muted small">{{ page() }} / {{ pages() }}</span>
+            <button class="btn btn-sm" [disabled]="page() >= pages()" (click)="go(page() + 1)">Succ ›</button>
           </div>
         </div>
       }

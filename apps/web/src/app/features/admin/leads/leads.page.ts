@@ -23,9 +23,9 @@ const SERVICES = ['Sito vetrina', 'Landing page', 'Sito + menu digitale', 'Ordin
   imports: [DatePipe, FormsModule, BadgeComponent],
   template: `
     <div class="page">
-      <header class="page-header">
-        <div><span class="eyebrow">Commerciale</span><h1>Lead</h1><p>Form del sito e prospezione automatica: un unico elenco.</p></div>
-      </header>
+
+
+
 
       <section class="kpis" aria-label="Riepilogo">
         <div class="card stat"><span class="muted">Totale</span><strong>{{ total() }}</strong></div>
