@@ -1,7 +1,10 @@
 <section class="contact" id="contatti" aria-labelledby="contact-title">
   <div class="card">
     <aside class="intro">
-      <p class="eyebrow"><span aria-hidden="true"></span>Hai un’idea?</p>
+      <div class="intro-header">
+        <p class="eyebrow"><span aria-hidden="true"></span>Hai un’idea?</p>
+        <a routerLink="/login" class="card-login-link">Accedi</a>
+      </div>
       <h2 id="contact-title">Diamo forma a qualcosa <em>che resta.</em></h2>
       @if (summary().length) {
         <div class="summary" aria-label="Le tue risposte">
