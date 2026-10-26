@@ -148,7 +148,7 @@ describe('archiviazione', () => {
 });
 
 describe('dati interni nascosti al cliente', () => {
-  const hidden = ['stagingUrl', 'repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus', 'quoteItems'];
+  const hidden = ['repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus', 'quoteItems'];
 
   it('tipo e preventivo: salvati dal team, prezzi nascosti al cliente', async () => {
     const items = [
@@ -188,6 +188,7 @@ describe('dati interni nascosti al cliente', () => {
       expect(list).not.toHaveProperty(k);
     }
     expect(mine['name']).toBe('Sito Alfa');
+    expect(mine['stagingUrl']).toBe('https://staging.alfa.it');
     expect(JSON.stringify(mine)).not.toContain('github.com');
   });
 

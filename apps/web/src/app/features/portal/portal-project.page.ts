@@ -5,19 +5,21 @@ import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
 import { MessagesThreadComponent } from '../../shared/messages-thread.component';
 import { ProjectFilesComponent } from '../../shared/project-files.component';
+import { PaymentBoxesComponent } from './receipt/payment-boxes.component';
 import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
 
 /**
  * Vista Progetto per il Portale Clienti:
  * - 2 soli stati: "IN SVILUPPO" e "LIVE" (centrati)
+ * - Link di anteprima staging se presente sotto lo stato
+ * - Box DA PAGARE e PAGATO posizionati sotto al link
  * - Sezione "I tuoi materiali" con anteprime visive
  * - Scontrino termico preventivo con dati reali del progetto
- * - Box DA PAGARE e PAGATO affiancati sulla stessa riga anche da mobile
  * - Chat moderna con button fisso in basso a destra e supporto foto/video
  */
 @Component({
   selector: 'cf-portal-project-page',
-  imports: [DatePipe, MessagesThreadComponent, ProjectFilesComponent, QuoteReceiptComponent],
+  imports: [DatePipe, MessagesThreadComponent, ProjectFilesComponent, PaymentBoxesComponent, QuoteReceiptComponent],
   template: `
     <div class="page portal-container">
       @if (project(); as p) {
@@ -48,9 +50,25 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
               </span>
             }
           </div>
+
+          <!-- Link staging se inserito (sotto lo stato) -->
+          @if (p.stagingUrl) {
+            <div class="staging-row">
+              <a class="staging-pill" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" title="Apri anteprima staging">
+                <span class="staging-badge">🧪 ANTEPRIMA STAGING</span>
+                <span class="staging-url">{{ p.stagingUrl }}</span>
+                <span class="staging-arrow">↗</span>
+              </a>
+            </div>
+          }
         </header>
 
-        <!-- Layout principale: Materiali a sinistra, Scontrino e Box a destra -->
+        <!-- Box DA PAGARE e PAGATO posizionati sotto al link di staging -->
+        <div class="payment-boxes-wrapper">
+          <cf-payment-boxes [project]="p" />
+        </div>
+
+        <!-- Layout principale: Materiali a sinistra, Scontrino a destra -->
         <div class="portal-grid">
           <div class="main-column stack">
             <section class="section-box">
@@ -63,7 +81,7 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
             </section>
           </div>
 
-          <!-- Colonna Scontrino Preventivo con i box DA PAGARE e PAGATO -->
+          <!-- Colonna Scontrino Preventivo -->
           <aside class="receipt-column">
             <cf-quote-receipt [project]="p" />
           </aside>
@@ -92,7 +110,7 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       flex-direction: column;
       align-items: center;
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
       gap: 12px;
     }
 
@@ -110,6 +128,70 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
+    }
+
+    /* Staging link pill */
+    .staging-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .staging-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      color: #E0E7FF !important;
+      text-decoration: none !important;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 14px rgba(99, 102, 241, 0.2);
+      max-width: 100%;
+    }
+    .staging-pill:hover {
+      background: rgba(99, 102, 241, 0.28);
+      border-color: #A5B4FC;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .staging-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(99, 102, 241, 0.35);
+      color: #DDD6FE;
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .staging-url {
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: #FFFFFF;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 320px;
+    }
+
+    .staging-arrow {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #C7D2FE;
+    }
+
+    /* Contenitori DA PAGARE e PAGATO sotto al link di staging */
+    .payment-boxes-wrapper {
+      max-width: 600px;
+      margin: 0 auto 32px auto;
+      width: 100%;
     }
 
     /* Tag Badge IN SVILUPPO / LIVE centrati */

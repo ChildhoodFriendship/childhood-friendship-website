@@ -44,7 +44,7 @@ export interface ProjectDto {
 }
 
 /** Vista del progetto per il cliente: senza campi interni (repo, staging, budget, indicizzazione). */
-export type PortalProjectDto = Omit<ProjectDto, 'stagingUrl' | 'repositoryUrl' | 'marketingEnabled' | 'marketingBudgetCents' | 'indexingStatus'>;
+export type PortalProjectDto = Omit<ProjectDto, 'repositoryUrl' | 'marketingEnabled' | 'marketingBudgetCents' | 'indexingStatus'>;
 
 export interface QuoteItem { id: string; name: string; priceCents: number; monthly: boolean; }
 
