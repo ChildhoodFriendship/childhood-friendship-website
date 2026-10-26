@@ -13,11 +13,9 @@ export async function buildContext(): Promise<{ ctx: AppContext; handle: DbHandl
 
   // Assicura che le nuove colonne per le scadenze e l'acconto pagato siano presenti (idempotente)
   try {
-    await handle.db.execute(sql`
-      ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "paid_amount_cents" integer;
-      ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "payment_deadline" text;
-      UPDATE "projects" SET "status" = 'in_sviluppo' WHERE "status"::text NOT IN ('in_sviluppo', 'lanciato');
-    `);
+    await handle.db.execute(sql`ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "paid_amount_cents" integer;`);
+    await handle.db.execute(sql`ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "payment_deadline" text;`);
+    await handle.db.execute(sql`UPDATE "projects" SET "status" = 'in_sviluppo' WHERE "status"::text NOT IN ('in_sviluppo', 'lanciato');`);
   } catch (err) {
     console.warn('[db] Auto-migration columns warning:', err);
   }
