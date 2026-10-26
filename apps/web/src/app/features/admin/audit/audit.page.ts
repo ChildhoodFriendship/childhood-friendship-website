@@ -50,17 +50,6 @@ const ACTION_MAP: Record<string, ActionMeta> = {
   'invite.revoked': { label: 'Invito revocato', icon: '🚫', color: 'red' }
 };
 
-const CATEGORIES = [
-  { id: '', label: 'Tutti i log' },
-  { id: 'file', label: 'Asset & File' },
-  { id: 'credential', label: 'Caveau & Chiavi' },
-  { id: 'user', label: 'Accessi & Utenti' },
-  { id: 'project', label: 'Progetti' },
-  { id: 'document', label: 'Documenti' },
-  { id: 'client', label: 'Clienti' },
-  { id: 'lead', label: 'Lead' }
-];
-
 @Component({
   selector: 'cf-audit-page',
   imports: [DatePipe, FormsModule],
@@ -68,46 +57,19 @@ const CATEGORIES = [
     <div class="audit-page">
       <!-- Toolbar compatta e filtri -->
       <div class="audit-header">
-        <div class="title-block">
-          <div class="title-row">
-            <h1>Registro attività</h1>
-            <div class="compliance-badges">
-              <span class="badge-audit badge-immutable" title="Audit immutabile append-only: nessun log può essere modificato o eliminato">
-                🛡️ WORM Permanente
-              </span>
-              <span class="badge-audit badge-gdpr" title="Indirizzi IP pseudonimizzati con HMAC-SHA256 non reversibile (GDPR Art. 4.5 e 25)">
-                🔒 GDPR Conforme
-              </span>
-            </div>
-          </div>
-          <p class="audit-sub">Tracciamento legale e immutabile di accessi, modifiche e visualizzazione credenziali sensibili.</p>
-        </div>
+        <h1>Registro attività</h1>
 
-        <div class="controls-row">
-          <div class="category-tabs" role="tablist">
-            @for (cat of categories; track cat.id) {
-              <button
-                type="button"
-                class="cat-tab"
-                [class.active]="entity() === cat.id"
-                (click)="setEntity(cat.id)">
-                {{ cat.label }}
-              </button>
-            }
-          </div>
-
-          <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input
-              type="text"
-              class="search-input"
-              [(ngModel)]="query"
-              placeholder="Cerca utente o risorsa..."
-              aria-label="Cerca nel registro attività" />
-            @if (query()) {
-              <button type="button" class="clear-search" (click)="query.set('')">✕</button>
-            }
-          </div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input"
+            [(ngModel)]="query"
+            placeholder="Cerca utente o risorsa..."
+            aria-label="Cerca nel registro attività" />
+          @if (query()) {
+            <button type="button" class="clear-search" (click)="query.set('')">✕</button>
+          }
         </div>
       </div>
 
@@ -133,20 +95,15 @@ const CATEGORIES = [
                     <span class="time-sub">{{ item.createdAt | date: 'dd/MM HH:mm' }}</span>
                   </td>
 
-                  <!-- Operatore con avatar e ruolo -->
+                  <!-- Operatore (senza avatar) -->
                   <td class="col-actor">
-                    <div class="actor-cell">
-                      <div class="actor-avatar" [class]="'role-' + (item.actorRole ?? 'system')">
-                        {{ getInitials(item.actorName) }}
-                      </div>
-                      <div class="actor-info">
-                        <span class="actor-name" [title]="item.actorName ?? 'Sistema automatico'">
-                          {{ item.actorName ?? 'Sistema' }}
-                        </span>
-                        <span class="actor-role-badge" [class]="'role-' + (item.actorRole ?? 'system')">
-                          {{ roleLabel(item.actorRole) }}
-                        </span>
-                      </div>
+                    <div class="actor-info">
+                      <span class="actor-name" [title]="item.actorName ?? 'Sistema automatico'">
+                        {{ item.actorName ?? 'Sistema' }}
+                      </span>
+                      <span class="actor-role-badge" [class]="'role-' + (item.actorRole ?? 'system')">
+                        {{ roleLabel(item.actorRole) }}
+                      </span>
                     </div>
                   </td>
 
@@ -204,7 +161,7 @@ const CATEGORIES = [
         <!-- Footer paginazione compatto -->
         <div class="audit-footer">
           <div class="footer-stats">
-            <span class="total-count"><strong>{{ total() }}</strong> eventi registrati nel caveau</span>
+            <span class="total-count"><strong>{{ total() }}</strong> eventi registrati</span>
             <span class="page-indicator">Pagina {{ page() }} di {{ maxPages() }}</span>
           </div>
           <div class="footer-actions">
@@ -240,24 +197,13 @@ const CATEGORIES = [
     /* Header compatto */
     .audit-header {
       display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .title-row {
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
       flex-wrap: wrap;
     }
 
-    .title-row h1 {
+    .audit-header h1 {
       font-size: 1.6rem;
       font-weight: 700;
       letter-spacing: -0.02em;
@@ -265,114 +211,37 @@ const CATEGORIES = [
       color: #F8FAFC;
     }
 
-    .compliance-badges {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .badge-audit {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 999px;
-      letter-spacing: 0.02em;
-    }
-
-    .badge-immutable {
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      color: #6EE7B7;
-    }
-
-    .badge-gdpr {
-      background: rgba(99, 102, 241, 0.12);
-      border: 1px solid rgba(99, 102, 241, 0.35);
-      color: #A5B4FC;
-    }
-
-    .audit-sub {
-      margin: 0;
-      font-size: 0.84rem;
-      color: rgba(248, 250, 252, 0.55);
-    }
-
-    /* Controls: tab filtri + ricerca rapida */
-    .controls-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .category-tabs {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-    }
-
-    .cat-tab {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: rgba(248, 250, 252, 0.7);
-      padding: 6px 13px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s ease;
-    }
-
-    .cat-tab:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #FFFFFF;
-      border-color: rgba(255, 255, 255, 0.15);
-    }
-
-    .cat-tab.active {
-      background: rgba(124, 58, 237, 0.2);
-      border-color: rgba(167, 139, 250, 0.5);
-      color: #DDD6FE;
-      font-weight: 600;
-      box-shadow: 0 0 12px rgba(124, 58, 237, 0.2);
-    }
-
     .search-box {
       position: relative;
       display: flex;
       align-items: center;
-      min-width: 240px;
+      min-width: 260px;
     }
 
     .search-icon {
       position: absolute;
-      left: 10px;
-      font-size: 0.78rem;
+      left: 11px;
+      font-size: 0.85rem;
       pointer-events: none;
       opacity: 0.6;
     }
 
     .search-input {
       width: 100%;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 8px;
-      padding: 6px 28px 6px 30px;
+      padding: 7px 30px 7px 32px;
       color: #F8FAFC;
       font-size: 0.82rem;
-      outline: none;
-      transition: border-color 0.15s;
+      transition: all 0.15s ease;
     }
 
     .search-input:focus {
+      outline: none;
       border-color: rgba(167, 139, 250, 0.6);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
     }
 
     .clear-search {
@@ -733,12 +602,10 @@ export class AuditPage implements OnInit {
   private readonly api = inject(Api);
   private readonly toast = inject(ToastService);
 
-  protected readonly categories = CATEGORIES;
   protected readonly items = signal<AuditDto[]>([]);
   protected readonly total = signal(0);
   protected readonly page = signal(1);
   protected readonly pageSize = 50;
-  protected readonly entity = signal('');
   protected readonly query = signal('');
 
   protected readonly maxPages = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize)));
@@ -759,16 +626,10 @@ export class AuditPage implements OnInit {
     void this.go(1);
   }
 
-  protected setEntity(e: string): void {
-    this.entity.set(e);
-    void this.go(1);
-  }
-
   protected async go(p: number): Promise<void> {
     this.page.set(p);
     try {
       const r = await this.api.get<Paginated<AuditDto>>('/audit', {
-        entity: this.entity() || undefined,
         page: p,
         pageSize: this.pageSize
       });

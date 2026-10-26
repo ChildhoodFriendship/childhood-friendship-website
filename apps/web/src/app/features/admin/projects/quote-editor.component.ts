@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { PROJECT_TYPES, PROJECT_TYPE_BASE_PRICE_CENTS, PROJECT_TYPE_LABELS, PROJECT_TYPE_SUGGESTED_PARTS, type ProjectType } from '@cf/shared/catalog';
 import type { QuoteItem } from '@cf/shared/types';
 import { ToastService } from '../../../core/toast.service';
@@ -17,7 +16,7 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
  */
 @Component({
   selector: 'cf-quote-editor',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule],
   template: `
     <section class="card stack quote-card">
       <div class="row-between head-bar">
@@ -83,12 +82,6 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
         @if (!archived()) {
           <div class="suggest">
             <button type="button" class="btn btn-sm btn-add-row" (click)="add()">+ Aggiungi voce</button>
-            @if (base[type()] > 0 && !hasBase()) {
-              <button type="button" class="chip strong" (click)="addBase()">+ Prezzo base {{ labels[type()] }}</button>
-            }
-            @for (s of suggestions(); track s) {
-              <button type="button" class="chip" (click)="add(s)">+ {{ s }}</button>
-            }
           </div>
         }
       </div>
@@ -105,7 +98,6 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
           <div class="pay-field-col">
             <label class="field-label" for="paid-input">
               <span>IMPORTO GIÀ PAGATO DALL'UTENTE (€)</span>
-              <span class="hint-small">Aggiorna il box "PAGATO" nello scontrino</span>
             </label>
             <div class="input-money-wrap">
               <span class="currency-symbol">€</span>
@@ -120,20 +112,12 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
                 (ngModelChange)="onPaidEurosChange($event)"
                 placeholder="0.00" />
             </div>
-
-            <div class="quick-chips">
-              <button type="button" class="quick-chip" [disabled]="archived()" (click)="setPaidPercent(0)">0 € (Niente)</button>
-              <button type="button" class="quick-chip" [disabled]="archived()" (click)="setPaidPercent(30)">Acconto 30%</button>
-              <button type="button" class="quick-chip" [disabled]="archived()" (click)="setPaidPercent(50)">Acconto 50%</button>
-              <button type="button" class="quick-chip chip-success" [disabled]="archived()" (click)="setPaidPercent(100)">100% Saldato</button>
-            </div>
           </div>
 
           <!-- SCADENZA PAGAMENTO -->
           <div class="pay-field-col">
             <label class="field-label" for="deadline-input">
               <span>SCADENZA PAGAMENTO</span>
-              <span class="hint-small">Aggiorna la data in "DA PAGARE"</span>
             </label>
             <div class="input-date-wrap">
               <input
@@ -143,17 +127,6 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
                 [disabled]="archived()"
                 [ngModel]="paymentDeadline()"
                 (ngModelChange)="onDeadlineChange($event)" />
-            </div>
-
-            <div class="quick-chips">
-              <button type="button" class="quick-chip" [disabled]="archived()" (click)="setQuickDeadlineDays(15)">+15 gg</button>
-              <button type="button" class="quick-chip" [disabled]="archived()" (click)="setQuickDeadlineDays(30)">+30 gg</button>
-              <button type="button" class="quick-chip" [disabled]="archived()" (click)="setQuickDeadlineMonthEnd()">Fine mese</button>
-              @if (store.project()?.deadline) {
-                <button type="button" class="quick-chip chip-accent" [disabled]="archived()" (click)="useProjectDeliveryDeadline()">
-                  Data consegna ({{ store.project()?.deadline | date: 'dd/MM' }})
-                </button>
-              }
             </div>
           </div>
         </div>
