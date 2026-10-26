@@ -3,7 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 import { projectInputSchema, projectListQuerySchema, projectPatchSchema } from '@cf/shared/schemas';
 import type { ProjectHealthCheckDto } from '@cf/shared/types';
 import type { AppContext } from '../../context.js';
-import { clients, projects } from '../../db/schema.js';
+import { clients, credentials, projects } from '../../db/schema.js';
 import { audit } from '../../lib/audit.js';
 import { badRequest, notFound } from '../../lib/http-error.js';
 import { serialize } from '../../lib/serialize.js';
@@ -124,6 +124,20 @@ export function projectsRouter(ctx: AppContext): Router {
       meta: { siteOnline, siteStatus, siteLatencyMs, dbConnected, dbLatencyMs }
     });
 
+    const credRows = await ctx.db.select().from(credentials).where(eq(credentials.projectId, project.id));
+    const credsWithUrl = credRows.filter((c) => c.url && /^https?:\/\//i.test(c.url)).slice(0, 6);
+    const accessProbes = await Promise.all(credsWithUrl.map(async (c) => {
+      const p = await probe(c.url);
+      return {
+        service: c.service,
+        url: c.url,
+        online: p.online,
+        status: p.status,
+        latencyMs: p.latencyMs,
+        error: p.error
+      };
+    }));
+
     const result: ProjectHealthCheckDto = {
       targetUrl: project.targetUrl,
       stagingUrl: project.stagingUrl,
@@ -136,7 +150,8 @@ export function projectsRouter(ctx: AppContext): Router {
       stagingLatencyMs,
       dbConnected,
       dbLatencyMs,
-      checkedAt: new Date().toISOString()
+      checkedAt: new Date().toISOString(),
+      accessProbes
     };
 
     res.json(result);

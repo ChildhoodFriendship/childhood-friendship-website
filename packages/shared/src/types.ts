@@ -132,6 +132,15 @@ export interface DashboardDto {
 export interface AiUsageDto { usedToday: number; dailyLimit: number; enabled: boolean; }
 export interface AiTextResult { text: string; }
 
+export interface AccessProbeDto {
+  service: string;
+  url: string;
+  online: boolean;
+  status: number | null;
+  latencyMs: number | null;
+  error: string | null;
+}
+
 export interface ProjectHealthCheckDto {
   targetUrl: string | null;
   stagingUrl: string | null;
@@ -145,4 +154,5 @@ export interface ProjectHealthCheckDto {
   dbConnected: boolean;
   dbLatencyMs: number;
   checkedAt: string;
+  accessProbes?: AccessProbeDto[];
 }

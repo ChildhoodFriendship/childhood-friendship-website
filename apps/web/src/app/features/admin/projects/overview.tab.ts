@@ -24,71 +24,76 @@ const urlPattern = /^https?:\/\/.+/;
           <div class="row-between">
             <div class="row" style="gap: 8px; align-items: center">
               <span class="monitor-icon">⚡</span>
-              <h3 style="margin: 0">Monitor Uptime & Database</h3>
+              <h3 style="margin: 0">Monitor Uptime & Servizi</h3>
             </div>
-            <button type="button" class="btn btn-sm btn-ghost" [disabled]="checkingHealth() || archived()" (click)="checkHealth()">
-              {{ checkingHealth() ? 'Verifica…' : '🔄 Verifica adesso' }}
-            </button>
+            @if (checkingHealth()) {
+              <span class="checking-badge">Verifica automatica in corso…</span>
+            } @else if (health()?.checkedAt) {
+              <span class="checked-time">Live · {{ health()!.checkedAt | date: 'HH:mm:ss' }}</span>
+            }
           </div>
 
-          @if (health(); as h) {
-            <div class="monitor-grid">
-              <div class="monitor-item" [class.healthy]="h.siteOnline" [class.danger]="h.targetUrl && !h.siteOnline">
-                <div class="monitor-header">
-                  <span class="status-dot" [class.dot-green]="h.siteOnline" [class.dot-red]="h.targetUrl && !h.siteOnline" [class.dot-gray]="!h.targetUrl"></span>
-                  <span class="small font-bold">Sito Produzione</span>
-                </div>
-                @if (h.targetUrl) {
-                  <div class="monitor-val">
-                    <strong>{{ h.siteOnline ? 'Online (' + h.siteStatus + ')' : (h.siteError ?? 'Offline') }}</strong>
-                    @if (h.siteLatencyMs !== null) { <span class="muted small mono">{{ h.siteLatencyMs }} ms</span> }
-                  </div>
-                  <a class="small truncate" [href]="h.targetUrl" target="_blank" rel="noopener noreferrer">{{ h.targetUrl }}</a>
-                } @else {
-                  <span class="muted small">Nessun URL configurato</span>
-                }
+          <div class="monitor-grid">
+            <!-- Database Cloud Neon (Sempre testato) -->
+            <div class="monitor-item" [class.healthy]="health()?.dbConnected" [class.danger]="health() && !health()?.dbConnected">
+              <div class="monitor-header">
+                <span class="status-dot" [class.dot-green]="health()?.dbConnected" [class.dot-red]="health() && !health()?.dbConnected" [class.dot-gray]="!health()"></span>
+                <span class="small font-bold">Database Cloud</span>
               </div>
+              <div class="monitor-val">
+                <strong>{{ health() ? (health()?.dbConnected ? 'Raggiungibile' : 'Non risponde') : 'In verifica…' }}</strong>
+                @if (health()?.dbLatencyMs !== undefined) { <span class="muted small mono">{{ health()?.dbLatencyMs }} ms</span> }
+              </div>
+              <span class="muted small">Postgres Neon collegato</span>
+            </div>
 
-              <div class="monitor-item" [class.healthy]="h.dbConnected" [class.danger]="!h.dbConnected">
-                <div class="monitor-header">
-                  <span class="status-dot" [class.dot-green]="h.dbConnected" [class.dot-red]="!h.dbConnected"></span>
-                  <span class="small font-bold">Database Cloud</span>
-                </div>
+            <!-- Sito / Web App Produzione -->
+            <div class="monitor-item" [class.healthy]="health()?.siteOnline" [class.danger]="health()?.targetUrl && !health()?.siteOnline">
+              <div class="monitor-header">
+                <span class="status-dot" [class.dot-green]="health()?.siteOnline" [class.dot-red]="health()?.targetUrl && !health()?.siteOnline" [class.dot-gray]="!health()?.targetUrl"></span>
+                <span class="small font-bold">Sito / App Produzione</span>
+              </div>
+              @if (health()?.targetUrl) {
                 <div class="monitor-val">
-                  <strong>{{ h.dbConnected ? 'Raggiungibile' : 'Non risponde' }}</strong>
-                  <span class="muted small mono">{{ h.dbLatencyMs }} ms</span>
+                  <strong>{{ health()?.siteOnline ? 'Online (' + health()?.siteStatus + ')' : (health()?.siteError ?? 'Offline') }}</strong>
+                  @if (health()?.siteLatencyMs !== null) { <span class="muted small mono">{{ health()?.siteLatencyMs }} ms</span> }
                 </div>
-                <span class="muted small">Postgres Neon collegato</span>
-              </div>
-
-              @if (h.stagingUrl) {
-                <div class="monitor-item" [class.healthy]="h.stagingOnline" [class.danger]="!h.stagingOnline">
-                  <div class="monitor-header">
-                    <span class="status-dot" [class.dot-green]="h.stagingOnline" [class.dot-red]="!h.stagingOnline"></span>
-                    <span class="small font-bold">Ambiente Staging</span>
-                  </div>
-                  <div class="monitor-val">
-                    <strong>{{ h.stagingOnline ? 'Attivo' : 'Offline' }}</strong>
-                    @if (h.stagingLatencyMs !== null) { <span class="muted small mono">{{ h.stagingLatencyMs }} ms</span> }
-                  </div>
-                  <a class="small truncate" [href]="h.stagingUrl" target="_blank" rel="noopener noreferrer">{{ h.stagingUrl }}</a>
-                </div>
+                <a class="small truncate" [href]="health()!.targetUrl!" target="_blank" rel="noopener noreferrer">{{ health()!.targetUrl }}</a>
+              } @else {
+                <div class="monitor-val"><strong>Non configurato</strong></div>
+                <span class="muted small">Imposta URL produzione sotto</span>
               }
             </div>
-            <div class="row-between small muted">
-              <span>Ultimo controllo: {{ h.checkedAt | date: 'd MMM y, HH:mm:ss' }}</span>
-              @if (h.siteOnline) { <span style="color: #22c55e">✓ Sincronizzato con scheda</span> }
-            </div>
-          } @else {
-            <div class="empty-monitor">
-              <p class="muted small">Verifica in tempo reale la raggiungibilità del sito web/app e la connessione al database cloud del progetto.</p>
-              <div>
-                <button type="button" class="btn btn-sm btn-primary" [disabled]="checkingHealth() || archived()" (click)="checkHealth()">
-                  {{ checkingHealth() ? 'Test in corso…' : 'Esegui test di connettività' }}
-                </button>
+
+            <!-- Eventuali Accessi / Servizi con URL (Dominio, Hosting, Store...) -->
+            @for (ap of health()?.accessProbes ?? []; track ap.service) {
+              <div class="monitor-item" [class.healthy]="ap.online" [class.danger]="!ap.online">
+                <div class="monitor-header">
+                  <span class="status-dot" [class.dot-green]="ap.online" [class.dot-red]="!ap.online"></span>
+                  <span class="small font-bold">{{ ap.service }}</span>
+                </div>
+                <div class="monitor-val">
+                  <strong>{{ ap.online ? 'Online (' + (ap.status ?? 200) + ')' : (ap.error ?? 'Offline') }}</strong>
+                  @if (ap.latencyMs !== null) { <span class="muted small mono">{{ ap.latencyMs }} ms</span> }
+                </div>
+                <a class="small truncate" [href]="ap.url" target="_blank" rel="noopener noreferrer">{{ ap.url }}</a>
               </div>
-            </div>
-          }
+            }
+
+            @if (health()?.stagingUrl) {
+              <div class="monitor-item" [class.healthy]="health()?.stagingOnline" [class.danger]="!health()?.stagingOnline">
+                <div class="monitor-header">
+                  <span class="status-dot" [class.dot-green]="health()?.stagingOnline" [class.dot-red]="!health()?.stagingOnline"></span>
+                  <span class="small font-bold">Staging</span>
+                </div>
+                <div class="monitor-val">
+                  <strong>{{ health()?.stagingOnline ? 'Attivo' : 'Offline' }}</strong>
+                  @if (health()?.stagingLatencyMs !== null) { <span class="muted small mono">{{ health()?.stagingLatencyMs }} ms</span> }
+                </div>
+                <a class="small truncate" [href]="health()!.stagingUrl!" target="_blank" rel="noopener noreferrer">{{ health()!.stagingUrl }}</a>
+              </div>
+            }
+          </div>
         </section>
 
         <section class="card stack">
@@ -133,16 +138,7 @@ const urlPattern = /^https?:\/\/.+/;
           </section>
         }
 
-        <section class="card stack-sm">
-          <h3>Zona pericolosa</h3>
-          @if (archived()) {
-            <button class="btn" (click)="toggleArchive(false)">Ripristina progetto</button>
-            @if (auth.isAdmin()) { <button class="btn btn-danger" (click)="remove()">Elimina definitivamente</button> }
-          } @else {
-            <button class="btn btn-danger" (click)="toggleArchive(true)">Archivia progetto</button>
-            <p class="muted small">L'archiviazione rende il progetto di sola lettura per tutti.</p>
-          }
-        </section>
+        
       </aside>
     </div>
   `,
@@ -231,6 +227,7 @@ export class OverviewTab {
       if (this.loadedFor !== p.id) {
         this.loadedFor = p.id;
         void this.loadSide(p);
+        void this.checkHealth();
       }
     });
   }
