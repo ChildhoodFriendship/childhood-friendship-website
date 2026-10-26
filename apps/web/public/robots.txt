@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+Sitemap: https://childhood-friendship-website-pi.vercel.app/sitemap.xml

@@ -1,8 +1,7 @@
+<cf-preloader />
 @if (customCursor) { <cf-cursor /> }
 @if (use3d) {
-  @defer (on idle) {
-    <cf-scene (started)="sceneOn.set(true)" />
-  }
+  <cf-scene (started)="sceneOn.set(true)" (loaded)="onSceneLoaded()" />
 }
 <cf-header />
 <main [class.scene-on]="sceneOn()">

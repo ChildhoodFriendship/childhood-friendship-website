@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
 import { AboutComponent } from './about/about.component';
 import { ContactSectionComponent } from './contact/contact-section.component';
 import { CursorComponent } from './cursor/cursor.component';
@@ -10,12 +10,13 @@ import { MethodComponent } from './method/method.component';
 import { OutroComponent } from './outro/outro.component';
 import { PointerService } from './pointer.service';
 import { PortfolioComponent } from './portfolio/portfolio.component';
+import { PreloaderComponent } from './preloader/preloader.component';
 import { SceneComponent } from './scene/scene.component';
 import { ServicesComponent } from './services/services.component';
 
 @Component({
   selector: 'cf-landing-page',
-  imports: [AboutComponent, ContactSectionComponent, CursorComponent, FooterComponent, HeaderComponent, HeroComponent, ManifestoComponent, MethodComponent, OutroComponent, PortfolioComponent, SceneComponent, ServicesComponent],
+  imports: [AboutComponent, ContactSectionComponent, CursorComponent, FooterComponent, HeaderComponent, HeroComponent, ManifestoComponent, MethodComponent, OutroComponent, PortfolioComponent, PreloaderComponent, SceneComponent, ServicesComponent],
   providers: [PointerService],
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.css',
@@ -23,6 +24,7 @@ import { ServicesComponent } from './services/services.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LandingPageComponent {
+  private readonly preloader = viewChild(PreloaderComponent);
   protected readonly customCursor = typeof window !== 'undefined'
     && window.matchMedia('(pointer: fine)').matches
     && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -31,5 +33,9 @@ export class LandingPageComponent {
   protected readonly use3d = typeof window !== 'undefined' && (() => {
     try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') ?? c.getContext('webgl')); } catch { return false; }
   })();
-  protected readonly sceneOn = signal(false);
+  protected readonly sceneOn = signal(this.use3d);
+
+  protected onSceneLoaded(): void {
+    this.preloader()?.markReady();
+  }
 }

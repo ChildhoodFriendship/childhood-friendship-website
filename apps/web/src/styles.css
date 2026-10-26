@@ -29,7 +29,7 @@
 }
 
 * { box-sizing: border-box; }
-html { background: var(--cf-color-black); scroll-behavior: smooth; }
+html { background: var(--cf-color-black); }
 body { background: var(--cf-color-black); margin: 0; min-width: 320px; }
 button, a { font: inherit; }
 :focus-visible { outline: 2px solid var(--cf-color-violet-light); outline-offset: 4px; }

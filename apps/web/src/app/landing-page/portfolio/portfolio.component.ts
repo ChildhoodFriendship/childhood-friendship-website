@@ -80,7 +80,7 @@ const PROJECTS: readonly Project[] = [
   template: `
     <section #section class="portfolio" id="progetti" aria-labelledby="portfolio-title" [style.--n]="projects.length">
       <div class="sticky">
-        <div class="ghost" aria-hidden="true">PROGETTI</div>
+        <div class="ghost" aria-hidden="true">PROJECTS</div>
         <header class="head">
           <p class="kicker"><span aria-hidden="true"></span>Portfolio</p>
           <h2 id="portfolio-title">Cose che abbiamo<br /><em>costruito.</em></h2>

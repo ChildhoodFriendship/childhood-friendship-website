@@ -15,6 +15,7 @@ import { BuilderScene } from './builder-scene';
 })
 export class SceneComponent {
   readonly started = output<void>();
+  readonly loaded = output<void>();
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   protected ready = false;
 
@@ -29,7 +30,10 @@ export class SceneComponent {
         scene = new BuilderScene(this.canvas().nativeElement, {
           reducedMotion, mobile,
           ids: { hero: 'top', stage: 'hero-stage', manifesto: 'manifesto', services: 'servizi', method: 'metodo', methodStage: 'method-stage', portfolio: 'progetti', portLeft: 'port-left', portRight: 'port-right', contact: 'finale' },
-          onReady: () => { host.classList.add('ready'); }
+          onReady: () => {
+            host.classList.add('ready');
+            this.loaded.emit();
+          }
         });
       } catch (err) {
         console.warn('[cf-scene] WebGL non disponibile', err);
