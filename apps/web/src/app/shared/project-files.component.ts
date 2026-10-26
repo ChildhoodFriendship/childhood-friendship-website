@@ -27,7 +27,9 @@ interface Uploading { name: string; pct: number }
     <div class="files card stack-sm" [class.drag]="dragging()" (dragover)="onDrag($event, true)" (dragleave)="onDrag($event, false)" (drop)="onDrop($event)">
       <div class="row-between files-head">
         <div>
-          <h3>{{ title() }}</h3>
+          @if (title()) {
+            <h3>{{ title() }}</h3>
+          }
           @if (hint()) { <p class="muted small hint-text">{{ hint() }}</p> }
         </div>
         @if (!readonly()) {

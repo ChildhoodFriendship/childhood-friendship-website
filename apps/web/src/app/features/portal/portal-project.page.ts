@@ -27,7 +27,7 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
         <header class="page-head">
           <h1 class="project-title">{{ p.name }}</h1>
           <div class="tags-row">
-            @if (p.isOnline || p.status === 'lanciato') {
+            @if (isLive(p)) {
               <span class="tag-badge tag-live">
                 <span class="dot pulse-green" aria-hidden="true"></span>
                 LIVE
@@ -42,17 +42,17 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
                 <span class="dot pulse-violet" aria-hidden="true"></span>
                 IN SVILUPPO
               </span>
-            }
 
-            @if (p.deadline) {
-              <span class="deadline-pill">
-                🗓️ Consegna: {{ p.deadline | date: 'd MMMM y' }}
-              </span>
+              @if (p.deadline) {
+                <span class="deadline-pill">
+                  🗓️ Consegna: {{ p.deadline | date: 'd MMMM y' }}
+                </span>
+              }
             }
           </div>
 
-          <!-- Link staging se inserito (sotto lo stato) -->
-          @if (p.stagingUrl) {
+          <!-- Link staging solo se NON è live (deve sparire se è live) -->
+          @if (!isLive(p) && p.stagingUrl) {
             <div class="staging-row">
               <a class="staging-pill" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" title="Apri anteprima staging">
                 <span class="staging-badge">🧪 ANTEPRIMA STAGING</span>
@@ -68,22 +68,64 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
           <cf-payment-boxes [project]="p" />
         </div>
 
-        <!-- Layout principale: Materiali a sinistra, Scontrino a destra -->
+        <!-- Layout principale: Materiali a sinistra, Scontrino a destra (chiusi ma espandibili dalla freccetta) -->
         <div class="portal-grid">
           <div class="main-column stack">
-            <section class="section-box">
-              <cf-project-files
-                [projectId]="p.id"
-                [readonly]="!!p.archivedAt"
-                title="I tuoi materiali"
-                hint=""
-              />
+            <section class="collapsible-card">
+              <button
+                type="button"
+                class="collapsible-header"
+                (click)="materialsOpen.set(!materialsOpen())"
+                [attr.aria-expanded]="materialsOpen()">
+                <div class="collapsible-title-wrap">
+                  <span class="collapsible-icon">📁</span>
+                  <h3 class="collapsible-title">I tuoi materiali</h3>
+                </div>
+                <span class="btn-arrow-wrap">
+                  <svg class="chevron-icon" [class.open]="materialsOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </span>
+              </button>
+
+              @if (materialsOpen()) {
+                <div class="collapsible-body">
+                  <cf-project-files
+                    [projectId]="p.id"
+                    [readonly]="!!p.archivedAt"
+                    title=""
+                    hint=""
+                  />
+                </div>
+              }
             </section>
           </div>
 
-          <!-- Colonna Scontrino Preventivo -->
+          <!-- Colonna Scontrino Preventivo (chiuso ma espandibile dalla freccetta) -->
           <aside class="receipt-column">
-            <cf-quote-receipt [project]="p" />
+            <section class="collapsible-card receipt-card">
+              <button
+                type="button"
+                class="collapsible-header"
+                (click)="receiptOpen.set(!receiptOpen())"
+                [attr.aria-expanded]="receiptOpen()">
+                <div class="collapsible-title-wrap">
+                  <span class="collapsible-icon">🧾</span>
+                  <h3 class="collapsible-title">Scontrino preventivo</h3>
+                </div>
+                <span class="btn-arrow-wrap">
+                  <svg class="chevron-icon" [class.open]="receiptOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </span>
+              </button>
+
+              @if (receiptOpen()) {
+                <div class="collapsible-body receipt-body">
+                  <cf-quote-receipt [project]="p" />
+                </div>
+              }
+            </section>
           </aside>
         </div>
 
@@ -272,6 +314,100 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       100% { opacity: 1; transform: scale(1.15); }
     }
 
+    /* Cards collassabili per Materiali e Scontrino */
+    .collapsible-card {
+      border-radius: var(--cf-radius-md, 16px);
+      background: rgba(18, 16, 26, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .collapsible-card:hover {
+      border-color: rgba(167, 139, 250, 0.25);
+    }
+    .receipt-card {
+      width: 100%;
+    }
+
+    .collapsible-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      color: inherit;
+      transition: background 0.15s ease;
+    }
+    .collapsible-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .collapsible-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .collapsible-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .collapsible-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0;
+      color: #F6F1FF;
+    }
+
+    .btn-arrow-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #C4B5FD;
+      transition: all 0.2s ease;
+    }
+    .collapsible-header:hover .btn-arrow-wrap {
+      background: rgba(124, 58, 237, 0.2);
+      border-color: rgba(167, 139, 250, 0.4);
+      color: #DDD6FE;
+    }
+
+    .chevron-icon {
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: rotate(0deg);
+    }
+    .chevron-icon.open {
+      transform: rotate(90deg);
+    }
+
+    .collapsible-body {
+      padding: 4px 18px 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      animation: fadeIn 0.2s ease;
+    }
+    .receipt-body {
+      display: flex;
+      justify-content: center;
+      padding: 10px 14px 18px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* Titolo e upload allineati in cf-project-files (Carica file in alto a destra) */
     :host ::ng-deep .files .row-between {
       display: flex;
@@ -316,15 +452,24 @@ export class PortalProjectPage {
   private readonly toast = inject(ToastService);
   protected readonly project = signal<PortalProjectDto | null>(null);
   protected readonly error = signal<string | null>(null);
+  protected readonly materialsOpen = signal(false);
+  protected readonly receiptOpen = signal(false);
 
   constructor() {
     effect(() => { void this.load(this.projectId()); });
+  }
+
+  protected isLive(p: PortalProjectDto): boolean {
+    return p.isOnline || p.status === 'lanciato';
   }
 
   private async load(id: string): Promise<void> {
     try {
       const p = await this.api.get<PortalProjectDto>(`/projects/${id}`);
       this.project.set(p);
+      const live = this.isLive(p);
+      this.materialsOpen.set(!live);
+      this.receiptOpen.set(!live);
     } catch (err) {
       this.error.set((err as Error).message);
       this.toast.error(err);
