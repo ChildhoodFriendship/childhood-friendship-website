@@ -15,10 +15,7 @@ import { ModalComponent } from '../../../shared/modal.component';
   imports: [DatePipe, FormsModule, ModalComponent],
   template: `
     <div class="page">
-      <header class="page-header">
-        <div><span class="eyebrow">Accessi</span><h1>Utenti e inviti</h1><p>Nessuna registrazione pubblica: ogni account nasce da un invito.</p></div>
-        <button class="btn btn-primary" (click)="openInvite()">+ Invita</button>
-      </header>
+      <header class="page-header" style="justify-content: flex-end; margin-bottom: 12px;"><button class="btn btn-primary" (click)="openInvite()">+ Invita</button></header>
       <section class="card card-tight"><div class="table-wrap"><table class="table">
         <thead><tr><th>Utente</th><th>Ruolo</th><th>Cliente</th><th>Ultimo accesso</th><th>Attivo</th></tr></thead>
         <tbody>

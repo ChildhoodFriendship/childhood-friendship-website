@@ -31,14 +31,7 @@ function sanitizeUrl(val: string | null | undefined, domainPrefix?: string): str
   imports: [FormsModule, ReactiveFormsModule, RouterLink, ModalComponent],
   template: `
     <div class="page">
-      <header class="page-header">
-        <div>
-          <span class="eyebrow">Anagrafica Studio</span>
-          <h1>Clienti</h1>
-          <p>{{ items().length }} clienti registrati</p>
-        </div>
-        <button class="btn btn-primary" (click)="open()">+ Nuovo cliente</button>
-      </header>
+      <header class="page-header" style="justify-content: flex-end; margin-bottom: 12px;"><button class="btn btn-primary" (click)="open()">+ Nuovo cliente</button></header>
 
       <div class="toolbar row">
         <input
