@@ -22,13 +22,18 @@ import { ProjectStore } from './project.store';
               <span class="eyebrow">{{ p.clientName }}</span>
               <h1>{{ p.name }}</h1>
               <div class="row" style="margin-top: 8px">
-                @let st = status();
-                @if (st) { <cf-badge [label]="st.label" [tone]="st.tone" /> }
                 @if (p.archivedAt) { <cf-badge label="Archiviato" tone="red" /> }
                 @if (p.deadline) { <span class="muted small">Consegna {{ p.deadline | date: 'd MMM y' }}</span> }
                 @if (p.targetUrl) { <a class="small" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">{{ p.targetUrl }} ↗</a> }
               </div>
             </div>
+
+            @let st = status();
+            @if (st) {
+              <div class="header-status-box">
+                <cf-badge [label]="st.label" [tone]="st.tone" />
+              </div>
+            }
           </div>
           <nav class="tabs" aria-label="Sezioni progetto">
             <a [routerLink]="['./']" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Panoramica</a>
@@ -44,6 +49,20 @@ import { ProjectStore } from './project.store';
         <div class="skeleton" style="height: 120px"></div>
       }
     </div>
+  `,
+  styles: `
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .header-status-box {
+      display: flex;
+      align-items: center;
+      padding-top: 6px;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })

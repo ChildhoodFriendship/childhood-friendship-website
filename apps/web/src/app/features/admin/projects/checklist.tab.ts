@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -11,13 +12,50 @@ import { ProjectStore } from './project.store';
 
 @Component({
   selector: 'cf-checklist-tab',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DatePipe],
   template: `
     <div class="stack">
-      <form class="card row" (ngSubmit)="add()">
-        <input class="input grow" name="title" [(ngModel)]="newTitle" placeholder="Nuovo task…" aria-label="Titolo nuovo task" [disabled]="archived()" />
-        <input class="input" style="width: auto" type="date" name="due" [(ngModel)]="newDue" aria-label="Scadenza" />
-        <button class="btn btn-primary" [disabled]="!newTitle.trim() || archived()">Aggiungi</button>
+      <form class="task-composer-card" (ngSubmit)="add()">
+        <div class="composer-row">
+          <input
+            class="composer-input"
+            name="title"
+            [(ngModel)]="newTitle"
+            placeholder="Nuovo task…"
+            aria-label="Titolo nuovo task"
+            [disabled]="archived()" />
+
+          <div class="composer-icons">
+            <div class="date-icon-control" [class.has-value]="!!newDue" title="Imposta scadenza">
+              <span class="cal-emoji">📅</span>
+              @if (newDue) {
+                <span class="cal-date-text">{{ newDue | date: 'dd/MM' }}</span>
+                <button
+                  type="button"
+                  class="cal-clear-btn"
+                  (click)="$event.preventDefault(); $event.stopPropagation(); newDue = ''"
+                  title="Rimuovi data">
+                  ✕
+                </button>
+              }
+              <input
+                type="date"
+                class="hidden-native-date"
+                name="due"
+                [(ngModel)]="newDue"
+                aria-label="Scadenza" />
+            </div>
+
+            <button
+              type="submit"
+              class="icon-add-btn"
+              [disabled]="!newTitle.trim() || archived()"
+              title="Aggiungi task"
+              aria-label="Aggiungi task">
+              <span class="add-symbol">➕</span>
+            </button>
+          </div>
+        </div>
       </form>
 
       @for (g of groups(); track g.phase) {
@@ -63,6 +101,131 @@ import { ProjectStore } from './project.store';
     .tasks li.late .date { border-color: var(--cf-color-danger); color: var(--cf-color-danger); }
     .date { width: 150px; min-height: 30px; padding: 4px 8px; font-size: 13px; }
     .sel-sm { width: 150px; min-height: 30px; padding: 4px 8px; font-size: 13px; }
+    .task-composer-card {
+      background: rgba(18, 16, 28, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 6px 10px 6px 14px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .task-composer-card:focus-within {
+      border-color: rgba(167, 139, 250, 0.6);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+    .composer-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+    .composer-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #F8FAFC;
+      font-size: 0.92rem;
+      padding: 6px 0;
+      min-width: 0;
+    }
+    .composer-input::placeholder {
+      color: rgba(248, 250, 252, 0.4);
+    }
+    .composer-icons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .date-icon-control {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .date-icon-control:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .date-icon-control.has-value {
+      background: rgba(124, 58, 237, 0.18);
+      border-color: rgba(167, 139, 250, 0.4);
+    }
+    .cal-emoji {
+      font-size: 0.92rem;
+      pointer-events: none;
+      line-height: 1;
+    }
+    .cal-date-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #DDD6FE;
+      pointer-events: none;
+    }
+    .cal-clear-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      font-size: 0.72rem;
+      padding: 0 2px;
+      line-height: 1;
+      position: relative;
+      z-index: 2;
+    }
+    .cal-clear-btn:hover {
+      color: #EF4444;
+    }
+    .hidden-native-date {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .date-icon-control.has-value .hidden-native-date {
+      width: 26px;
+    }
+    .icon-add-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #7C3AED, #6366F1);
+      color: #FFF;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+    }
+    .icon-add-btn:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.5);
+    }
+    .icon-add-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .add-symbol {
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
