@@ -286,10 +286,11 @@ export class OverviewTab {
     const v = this.form.getRawValue();
     this.saving.set(true);
     try {
+      const isOnline = v.status === 'lanciato' ? true : v.isOnline;
       await this.store.update({
         name: v.name, description: v.description || null, status: v.status, indexingStatus: v.indexingStatus,
         startDate: v.startDate || null, deadline: v.deadline || null, targetUrl: v.targetUrl || null, stagingUrl: v.stagingUrl || null,
-        repositoryUrl: v.repositoryUrl || null, isOnline: v.isOnline, marketingEnabled: v.marketingEnabled,
+        repositoryUrl: v.repositoryUrl || null, isOnline, marketingEnabled: v.marketingEnabled,
         marketingBudgetCents: v.marketingEnabled ? Math.round((Number(v.marketingBudget) || 0) * 100) : null
       });
       this.form.markAsPristine();
