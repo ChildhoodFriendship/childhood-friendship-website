@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import type { PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
@@ -10,73 +9,64 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
 
 /**
  * Vista Progetto per il Portale Clienti:
- * - 2 soli stati: "IN SVILUPPO" e "LIVE"
- * - Sezione "I tuoi materiali" (loghi, asset e file caricati da admin o cliente)
- * - Thread messaggi
- * - Preventivo a forma di Scontrino termico autentico
+ * - 2 soli stati: "IN SVILUPPO" e "LIVE" (centrati)
+ * - Titoli e badge centrati
+ * - Sezione "I tuoi materiali" pulita e centrata
+ * - Sezione "Messaggi con lo studio" pulita e centrata
+ * - Scontrino termico preventivo realistico sotto / a fianco
  */
 @Component({
   selector: 'cf-portal-project-page',
-  imports: [DatePipe, RouterLink, MessagesThreadComponent, ProjectFilesComponent, QuoteReceiptComponent],
+  imports: [DatePipe, MessagesThreadComponent, ProjectFilesComponent, QuoteReceiptComponent],
   template: `
-    <div class="page" style="max-width: 1160px">
+    <div class="page portal-container">
       @if (project(); as p) {
-        <header class="stack-sm page-head">
-          <a routerLink="/portale" class="small back-link">← I tuoi progetti</a>
-          <div class="page-header">
-            <div>
-              <h1 class="project-title">{{ p.name }}</h1>
-              <div class="row tags-row" style="margin-top: 10px">
-                <!-- Solo due stati possibili: IN SVILUPPO o LIVE -->
-                @if (p.isOnline || p.status === 'lanciato') {
-                  <span class="tag-badge tag-live">
-                    <span class="dot pulse-green" aria-hidden="true"></span>
-                    LIVE
-                  </span>
-                  @if (p.targetUrl) {
-                    <a class="btn-live-link" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">
-                      Visita il sito ↗
-                    </a>
-                  }
-                } @else {
-                  <span class="tag-badge tag-dev">
-                    <span class="dot pulse-violet" aria-hidden="true"></span>
-                    IN SVILUPPO
-                  </span>
-                }
+        <!-- Header centrato senza link di ritorno -->
+        <header class="page-head">
+          <h1 class="project-title">{{ p.name }}</h1>
+          <div class="tags-row">
+            @if (p.isOnline || p.status === 'lanciato') {
+              <span class="tag-badge tag-live">
+                <span class="dot pulse-green" aria-hidden="true"></span>
+                LIVE
+              </span>
+              @if (p.targetUrl) {
+                <a class="btn-live-link" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">
+                  Visita il sito ↗
+                </a>
+              }
+            } @else {
+              <span class="tag-badge tag-dev">
+                <span class="dot pulse-violet" aria-hidden="true"></span>
+                IN SVILUPPO
+              </span>
+            }
 
-                @if (p.deadline) {
-                  <span class="deadline-pill">
-                    🗓️ Consegna prevista: {{ p.deadline | date: 'd MMMM y' }}
-                  </span>
-                }
-              </div>
-            </div>
+            @if (p.deadline) {
+              <span class="deadline-pill">
+                🗓️ Consegna: {{ p.deadline | date: 'd MMMM y' }}
+              </span>
+            }
           </div>
         </header>
 
-        <!-- Layout principale: Materiali + Messaggi a sinistra, Scontrino a destra -->
+        <!-- Layout principale -->
         <div class="portal-grid">
           <div class="main-column stack">
-            <!-- Sezione Materiali: Loghi, foto, testi caricati da admin o cliente -->
-            <section class="stack-sm">
+            <!-- Sezione Materiali: centrata, senza sottotitolo -->
+            <section class="section-box">
               <cf-project-files
                 [projectId]="p.id"
                 [readonly]="!!p.archivedAt"
                 title="I tuoi materiali"
-                hint="Loghi, foto, testi e asset caricati dal team o da te (max 25 MB ciascuno)."
+                hint=""
               />
             </section>
 
-            <!-- Thread Comunicazioni / Messaggi -->
-            <section class="stack-sm">
+            <!-- Thread Comunicazioni / Messaggi: centrato, senza sottotitolo -->
+            <section class="section-box">
               <div class="card stack-sm">
-                <div class="row-between">
-                  <div>
-                    <h3>Messaggi con lo studio</h3>
-                    <p class="muted small">Scrivi direttamente a Lorenzo e al team di sviluppo.</p>
-                  </div>
-                </div>
+                <h3 class="center-heading">Messaggi con lo studio</h3>
                 <cf-messages-thread [projectId]="p.id" />
               </div>
             </section>
@@ -95,72 +85,76 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
     </div>
   `,
   styles: `
-    .page-head {
-      margin-bottom: 24px;
+    .portal-container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 12px 16px 48px;
     }
 
-    .back-link {
-      color: var(--cf-color-violet-light, #A78BFA) !important;
-      text-decoration: none !important;
-      display: inline-block;
-      margin-bottom: 6px;
-    }
-    .back-link:hover {
-      text-decoration: underline !important;
+    /* Header e Titolo centrati */
+    .page-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 32px;
+      gap: 12px;
     }
 
     .project-title {
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 800;
       letter-spacing: -0.02em;
       margin: 0;
+      text-align: center;
     }
 
     .tags-row {
       display: flex;
+      justify-content: center;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
     }
 
-    /* Tag Badge Esclusivi (LIVE / IN SVILUPPO) */
+    /* Tag Badge IN SVILUPPO / LIVE centrati */
     .tag-badge {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 5px 14px;
+      gap: 8px;
+      padding: 6px 16px;
       border-radius: 999px;
       font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
     .tag-dev {
-      background: rgba(124, 58, 237, 0.18);
+      background: rgba(124, 58, 237, 0.22);
       color: #DDD6FE;
-      border: 1px solid rgba(167, 139, 250, 0.5);
-      box-shadow: 0 0 16px rgba(124, 58, 237, 0.25);
+      border: 1px solid rgba(167, 139, 250, 0.6);
+      box-shadow: 0 0 18px rgba(124, 58, 237, 0.35);
     }
 
     .tag-live {
-      background: rgba(16, 185, 129, 0.16);
+      background: rgba(16, 185, 129, 0.2);
       color: #6EE7B7;
-      border: 1px solid rgba(16, 185, 129, 0.45);
-      box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+      border: 1px solid rgba(16, 185, 129, 0.55);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
     }
 
     .btn-live-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: 999px;
-      background: rgba(167, 139, 250, 0.12);
-      border: 1px solid rgba(167, 139, 250, 0.35);
+      background: rgba(167, 139, 250, 0.15);
+      border: 1px solid rgba(167, 139, 250, 0.4);
       color: #F6F1FF !important;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 600;
       text-decoration: none !important;
       transition: all 0.2s ease;
@@ -175,7 +169,6 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       color: rgba(246, 241, 255, 0.7);
     }
 
-    /* Dot pulsanti */
     .dot {
       width: 8px;
       height: 8px;
@@ -202,7 +195,34 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       100% { opacity: 1; transform: scale(1.15); }
     }
 
-    /* Griglia layout: materiali a sinistra, scontrino a destra */
+    /* Centratura titoli card */
+    .center-heading {
+      text-align: center;
+      width: 100%;
+      margin: 0 0 12px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    /* Centratura del titolo e header in cf-project-files */
+    :host ::ng-deep .files .row-between {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    :host ::ng-deep .files h3 {
+      text-align: center;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0;
+      width: 100%;
+    }
+
+    /* Griglia layout */
     .portal-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 440px;

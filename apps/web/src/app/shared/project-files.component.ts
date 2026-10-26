@@ -28,7 +28,10 @@ interface Uploading { name: string; pct: number }
   template: `
     <div class="files card stack-sm" [class.drag]="dragging()" (dragover)="onDrag($event, true)" (dragleave)="onDrag($event, false)" (drop)="onDrop($event)">
       <div class="row-between">
-        <div><h3>{{ title() }}</h3><p class="muted small">{{ hint() }}</p></div>
+        <div>
+          <h3>{{ title() }}</h3>
+          @if (hint()) { <p class="muted small">{{ hint() }}</p> }
+        </div>
         @if (!readonly()) {
           <label class="btn btn-primary btn-sm upload">
             + Carica file
