@@ -7,6 +7,7 @@ import { MessagesThreadComponent } from '../../shared/messages-thread.component'
 import { ProjectFilesComponent } from '../../shared/project-files.component';
 import { PaymentBoxesComponent } from './receipt/payment-boxes.component';
 import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
+import { ProjectContractComponent } from './contract/project-contract.component';
 
 /**
  * Vista Progetto per il Portale Clienti:
@@ -19,7 +20,7 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
  */
 @Component({
   selector: 'cf-portal-project-page',
-  imports: [DatePipe, MessagesThreadComponent, ProjectFilesComponent, PaymentBoxesComponent, QuoteReceiptComponent],
+  imports: [DatePipe, MessagesThreadComponent, ProjectFilesComponent, PaymentBoxesComponent, QuoteReceiptComponent, ProjectContractComponent],
   template: `
     <div class="page portal-container">
       @if (project(); as p) {
@@ -114,6 +115,9 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
                 />
               </div>
             </section>
+
+            <!-- Contratto B2B di Sviluppo Software e Licenza d'Uso -->
+            <cf-project-contract [project]="p" />
           </div>
 
           <!-- Colonna Scontrino Preventivo (chiuso ma espandibile dalla freccetta) -->

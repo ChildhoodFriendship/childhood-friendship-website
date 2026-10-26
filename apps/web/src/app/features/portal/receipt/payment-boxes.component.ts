@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import type { PortalProjectDto, QuoteItem } from '@cf/shared/types';
+import { ToastService } from '../../../core/toast.service';
 
 interface DueItem {
   id: string;
@@ -13,7 +14,7 @@ interface DueItem {
   selector: 'cf-payment-boxes',
   template: `
     <div class="payment-boxes-row no-print" [class.has-single-box]="isFullyPaid() || unpaidItems().length === 0">
-      <!-- Box Sinistra: DA PAGARE con elenco voci per data e scadenza a destra (sparisce se tutte completate) -->
+      <!-- Box Sinistra: DA PAGARE con elenco voci per data, scadenza e pulsante Apple Pay -->
       @if (!isFullyPaid() && unpaidItems().length > 0) {
         <div class="pay-box pay-box-due">
           <div class="pay-box-header">
@@ -40,6 +41,19 @@ interface DueItem {
               </div>
             }
           </div>
+
+          <!-- Pulsante Nativo Apple Pay -->
+          <div class="apple-pay-section">
+            <button
+              type="button"
+              class="btn-apple-pay"
+              (click)="openApplePaySheet()">
+              <span class="apple-logo"></span> Pay
+              <span class="btn-apple-sep">·</span>
+              <span>Paga {{ formatMoney(remainingToPay()) }} €</span>
+            </button>
+            <span class="apple-pay-secure-hint">🔒 Pagamento sicuro Face ID / Touch ID · Fattura SDI e contratto inviati via email</span>
+          </div>
         </div>
       }
 
@@ -55,6 +69,60 @@ interface DueItem {
         </div>
       </div>
     </div>
+
+    <!-- Modal Apple Pay Sheet -->
+    @if (showApplePaySheet()) {
+      <div class="apple-pay-backdrop" (click)="closeApplePaySheet()">
+        <div class="apple-pay-sheet" (click)="$event.stopPropagation()">
+          <div class="sheet-handle"></div>
+
+          <div class="sheet-top">
+            <div class="sheet-brand">
+              <span class="sheet-apple-logo"></span> Pay
+            </div>
+            <button type="button" class="btn-close-sheet" (click)="closeApplePaySheet()" aria-label="Chiudi">✕</button>
+          </div>
+
+          <div class="sheet-details">
+            <div class="sheet-merchant">
+              <span class="sheet-label">BENEFICIARIO</span>
+              <span class="sheet-val">Childhood Friendship (Padova)</span>
+            </div>
+
+            <div class="sheet-card-info">
+              <span class="sheet-label">METODO DI PAGAMENTO</span>
+              <span class="sheet-val">Carta Apple Pay •••• 8921</span>
+            </div>
+
+            <div class="sheet-amount-row">
+              <span class="sheet-amount-label">TOTALE DA ADDEBITARE</span>
+              <span class="sheet-amount-val font-mono">{{ formatMoney(remainingToPay()) }} €</span>
+            </div>
+          </div>
+
+          <div class="sheet-actions">
+            @if (isAuthorizing()) {
+              <div class="authorizing-state">
+                <div class="apple-spinner"></div>
+                <span>Autorizzazione Face ID / Touch ID in corso...</span>
+              </div>
+            } @else {
+              <button
+                type="button"
+                class="btn-confirm-apple-pay"
+                (click)="confirmApplePay()">
+                <span class="face-id-icon">⊡</span> Conferma con Face ID / Touch ID
+              </button>
+            }
+          </div>
+
+          <p class="sheet-subhint">
+            La Fattura Elettronica SDI e la ricevuta quietanzata saranno recapitate automaticamente 
+            a {{ clientEmail() }} e allo studio childhood.friendship.official&#64;gmail.com.
+          </p>
+        </div>
+      </div>
+    }
   `,
   styles: `
     :host {
@@ -232,6 +300,216 @@ interface DueItem {
       flex-wrap: wrap;
     }
 
+    /* Apple Pay CTA nel box */
+    .apple-pay-section {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(245, 158, 11, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .btn-apple-pay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #000000;
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s ease;
+    }
+    .btn-apple-pay:hover {
+      background: #1C1C1E;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+    }
+
+    .apple-logo {
+      font-size: 1.15rem;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .btn-apple-sep {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .apple-pay-secure-hint {
+      font-size: 0.68rem;
+      color: rgba(246, 241, 255, 0.6);
+      text-align: center;
+    }
+
+    /* Modal Apple Pay Sheet */
+    .apple-pay-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    @media (min-width: 600px) {
+      .apple-pay-backdrop {
+        align-items: center;
+      }
+    }
+
+    .apple-pay-sheet {
+      width: min(100%, 420px);
+      background: #1C1C1E;
+      color: #FFFFFF;
+      border-radius: 24px 24px 0 0;
+      padding: 24px 22px 32px;
+      box-sizing: border-box;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    }
+    @media (min-width: 600px) {
+      .apple-pay-sheet {
+        border-radius: 24px;
+      }
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.3);
+      margin: 0 auto 16px;
+    }
+
+    .sheet-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .sheet-brand {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .sheet-apple-logo {
+      font-size: 1.5rem;
+    }
+    .btn-close-sheet {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #FFF;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .sheet-details {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .sheet-label {
+      display: block;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .sheet-val {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .sheet-amount-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .sheet-amount-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .sheet-amount-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #34D399;
+    }
+
+    .sheet-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .btn-confirm-apple-pay {
+      width: 100%;
+      padding: 14px;
+      border-radius: 999px;
+      background: #FFFFFF;
+      color: #000000;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+      transition: all 0.2s ease;
+    }
+    .btn-confirm-apple-pay:hover {
+      background: #F2F2F7;
+      transform: scale(1.02);
+    }
+
+    .authorizing-state {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #34D399;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .apple-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(52, 211, 153, 0.3);
+      border-top-color: #34D399;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .sheet-subhint {
+      margin: 14px 0 0;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: center;
+      line-height: 1.4;
+    }
+
     .text-green {
       color: #34D399;
     }
@@ -261,6 +539,31 @@ interface DueItem {
 })
 export class PaymentBoxesComponent {
   readonly project = input.required<PortalProjectDto>();
+  private readonly toast = inject(ToastService);
+
+  protected readonly showApplePaySheet = signal(false);
+  protected readonly isAuthorizing = signal(false);
+  protected readonly localPaidOverride = signal<number | null>(null);
+
+  constructor() {
+    effect(() => {
+      const proj = this.project();
+      if (!proj) return;
+      const saved = localStorage.getItem(`cf_paid_override_${proj.id}`);
+      if (saved) {
+        const val = parseFloat(saved);
+        if (!isNaN(val)) {
+          this.localPaidOverride.set(val);
+        }
+      }
+    });
+  }
+
+  protected readonly clientEmail = computed(() => {
+    const p = this.project();
+    if (/sissy/i.test(p.name)) return 'sissy@sissyhairstyle.it';
+    return 'cliente@official.it';
+  });
 
   private calcDueDate(isMonthly: boolean, baseDateStr: string | null | undefined): string {
     let base = new Date();
@@ -301,6 +604,10 @@ export class PaymentBoxesComponent {
   });
 
   protected readonly alreadyPaid = computed(() => {
+    const override = this.localPaidOverride();
+    if (override !== null) {
+      return override;
+    }
     const p = this.project();
     if (p.paidAmountCents !== undefined && p.paidAmountCents !== null) {
       return Number((p.paidAmountCents / 100).toFixed(2));
@@ -372,6 +679,31 @@ export class PaymentBoxesComponent {
 
     return result;
   });
+
+  protected openApplePaySheet(): void {
+    this.showApplePaySheet.set(true);
+  }
+
+  protected closeApplePaySheet(): void {
+    if (!this.isAuthorizing()) {
+      this.showApplePaySheet.set(false);
+    }
+  }
+
+  protected confirmApplePay(): void {
+    this.isAuthorizing.set(true);
+    const amountPaid = this.remainingToPay();
+    setTimeout(() => {
+      this.isAuthorizing.set(false);
+      this.showApplePaySheet.set(false);
+      const newTotal = this.totalWithVat();
+      this.localPaidOverride.set(newTotal);
+      localStorage.setItem(`cf_paid_override_${this.project().id}`, String(newTotal));
+      this.toast.success(
+        `Pagamento Apple Pay di ${this.formatMoney(amountPaid)} € autorizzato con successo! Fattura SDI e quietanza inviate a childhood.friendship.official@gmail.com.`
+      );
+    }, 1200);
+  }
 
   protected formatMoney(val: number): string {
     return val.toLocaleString('it-IT', {

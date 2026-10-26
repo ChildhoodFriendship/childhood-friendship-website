@@ -6,7 +6,7 @@
 export const LEGAL = {
   brand: 'Childhood Friendship',
   controllers: 'Lorenzo e Mirko, fondatori di Childhood Friendship',
-  email: 'lorenzo@cfofficial.it',
+  email: 'childhood.friendship.official@gmail.com',
   city: 'Padova (PD)',
   updated: '15 ottobre 2026'
 } as const;

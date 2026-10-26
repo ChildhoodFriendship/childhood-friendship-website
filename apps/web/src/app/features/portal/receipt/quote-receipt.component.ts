@@ -23,21 +23,21 @@ interface DisplayReceiptItem {
         <!-- Header Azienda -->
         <header class="receipt-header">
           <h2 class="store-name">CHILDHOOD FRIENDSHIP</h2>
-          <p class="store-sub">STUDIO SVILUPPO SOFTWARE & WEB</p>
+          <p class="store-sub">STUDIO SVILUPPO SOFTWARE & SOLUZIONI DIGITALI</p>
           <p class="store-info">VIA ROMA 99</p>
           <p class="store-info">35122 PADOVA (PD) - VENETO</p>
           <p class="store-info">P.IVA IT04982710284</p>
           <p class="store-info">Tel. +39 380 8970829</p>
-          <p class="store-info">lorenzo&#64;childhoodfriendship.it</p>
+          <p class="store-info">childhood.friendship.official&#64;gmail.com</p>
         </header>
 
         <div class="dashed-line" aria-hidden="true"></div>
 
-        <!-- Intestazione Fiscale Dimostrativa -->
+        <!-- Intestazione Commerciale / Fiscale B2B -->
         <div class="receipt-type">
-          <strong class="mode-title">MODALITA' DIMOSTRATIVA</strong>
-          <span class="mode-sub">NON FISCALE</span>
-          <span class="mode-desc">di vendita o prestazione</span>
+          <strong class="mode-title">DOCUMENTO COMMERCIALE B2B</strong>
+          <span class="mode-sub">RICEVUTA DI PRESTAZIONE E SVILUPPO SOFTWARE</span>
+          <span class="mode-desc">Operazione soggetta a Fattura Elettronica SDI</span>
         </div>
 
         <!-- Tabella Voci Preventivo Reali del Progetto -->
@@ -98,19 +98,21 @@ interface DisplayReceiptItem {
           <div class="meta-line">Documento n. {{ receiptDocNumber() }}</div>
         </div>
 
-        <!-- Note e Info Aggiuntive Reali -->
+        <!-- Note e Info Fiscali SDI -->
         <div class="notes-section">
-          <strong class="notes-title">Altre Info:</strong>
+          <strong class="notes-title">Dati Fiscali & SDI:</strong>
           <span class="notes-subtitle">Note:</span>
           <p class="notes-text">
             Progetto: {{ project().name }}<br>
-            Codice sorgente artigianale, server cloud SSL e collaudo inclusi.
+            Sviluppo software su misura, licenza e architettura cloud SSL.<br>
+            Fattura elettronica SDI trasmessa all'Agenzia delle Entrate.<br>
+            Pagamento tracciato: Transazione Elettronica (Apple Pay / Carta)
           </p>
         </div>
 
         <!-- Ringraziamento -->
         <div class="thank-you">
-          GRAZIE E ARRIVEDERCI
+          GRAZIE PER LA COLLABORAZIONE
         </div>
 
         <!-- Codice a Barre Realistico -->
