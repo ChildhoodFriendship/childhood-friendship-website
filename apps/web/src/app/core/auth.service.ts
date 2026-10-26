@@ -33,6 +33,13 @@ export class AuthService {
     return this.loaded;
   }
 
+    async register(name: string, email: string, password: string): Promise<SessionUser> {
+    await this.api.get('/auth/csrf');
+    const { user } = await this.api.post<{ user: SessionUser }>('/auth/register', { name, email, password });
+    this.setUser(user);
+    return user;
+  }
+
   async login(email: string, password: string): Promise<SessionUser> {
     await this.api.get('/auth/csrf');
     const { user } = await this.api.post<{ user: SessionUser }>('/auth/login', { email, password });

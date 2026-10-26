@@ -25,6 +25,14 @@ export const routes: Routes = [
     loadComponent: () => import('./legal/legal.page').then((m) => m.LegalPage)
   },
   {
+    path: 'registrati',
+    redirectTo: 'login?mode=register'
+  },
+  {
+    path: 'register',
+    redirectTo: 'login?mode=register'
+  },
+  {
     path: 'login',
     title: 'Accedi — Childhood Friendship',
     canMatch: [guestGuard],

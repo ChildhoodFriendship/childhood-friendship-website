@@ -1,5 +1,5 @@
 import { Router, type Response } from 'express';
-import { acceptInviteSchema, changePasswordSchema, loginSchema } from '@cf/shared/schemas';
+import { acceptInviteSchema, changePasswordSchema, loginSchema, registerSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
 import { audit } from '../../lib/audit.js';
 import { appUrl, renderPasswordResetMail } from '../../lib/mailer.js';
@@ -31,6 +31,18 @@ export function authRouter(ctx: AppContext): Router {
 
   /** Endpoint "vuoto": garantisce che il cookie XSRF-TOKEN sia impostato. */
   router.get('/csrf', (_req, res) => { res.status(204).end(); });
+
+  
+  const registerLimiter = sharedLimiter(ctx.db, 'register', 60 * 60_000, isTest ? 1000 : 10, 'Troppe registrazioni. Riprova più tardi.');
+
+  router.post('/register', registerLimiter, async (req, res) => {
+    const input = parse(registerSchema, req.body);
+    const tokens = await service.register(input.name, input.email, input.password, req.get('user-agent'));
+    setCookies(res, tokens);
+    req.user = tokens.user;
+    await audit(ctx.db, req, { action: 'auth.registered', entity: 'user', entityId: tokens.user.id });
+    res.status(201).json({ user: tokens.user });
+  });
 
   router.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = parse(loginSchema, req.body);

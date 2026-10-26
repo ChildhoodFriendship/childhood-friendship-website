@@ -2,7 +2,8 @@ import { and, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 import { SignJWT } from 'jose';
 import type { SessionUser } from '@cf/shared/types';
 import type { AppContext } from '../../context.js';
-import { invites, passwordResets, sessions, users } from '../../db/schema.js';
+import { clients, invites, leads, passwordResets, sessions, users } from '../../db/schema.js';
+import { appUrl, renderWelcomeMail } from '../../lib/mailer.js';
 import { getDummyHash, hashPassword, randomToken, sha256, verifyPassword } from '../../lib/crypto.js';
 import { HttpError, badRequest, notFound, unauthorized } from '../../lib/http-error.js';
 import { jwtKey } from '../../middleware/auth.js';
@@ -111,6 +112,68 @@ export class AuthService {
       .limit(1);
     if (!invite) throw badRequest('Invito non valido o scaduto');
     return invite;
+  }
+
+  
+  async register(name: string, email: string, password: string, userAgent?: string): Promise<IssuedTokens> {
+    const { db } = this.ctx;
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanName = name.trim();
+    const passwordHash = await hashPassword(password);
+
+    const user = await db.transaction(async (tx) => {
+      // 1. Check if user already exists
+      const [existingUser] = await tx.select().from(users).where(eq(sql`lower(${users.email})`, cleanEmail)).limit(1);
+      if (existingUser) {
+        throw badRequest('Un account con questa email esiste già. Accedi con la tua password.');
+      }
+
+      // 2. Find or create client record
+      let [client] = await tx.select().from(clients).where(eq(sql`lower(${clients.contactEmail})`, cleanEmail)).limit(1);
+      if (!client) {
+        const [newClient] = await tx.insert(clients).values({
+          name: cleanName,
+          contactName: cleanName,
+          contactEmail: cleanEmail
+        }).returning();
+        client = newClient!;
+      }
+
+      // 3. Create user with role 'client'
+      const [created] = await tx.insert(users).values({
+        email: cleanEmail,
+        name: cleanName,
+        passwordHash,
+        role: 'client',
+        clientId: client.id,
+        isActive: true
+      }).returning();
+
+      // 4. Se esiste un lead corrispondente con questa email, collegalo al clientId
+      await tx.update(leads).set({ clientId: client.id }).where(eq(sql`lower(${leads.email})`, cleanEmail));
+
+      return created!;
+    });
+
+    // 5. Invia email di benvenuto
+    if (this.ctx.mailer) {
+      try {
+        const mail = renderWelcomeMail({
+          name: user.name,
+          portalUrl: appUrl(this.ctx.env, 'portale')
+        });
+        void this.ctx.mailer.send({
+          to: [user.email],
+          subject: mail.subject,
+          html: mail.html,
+          text: mail.text
+        });
+      } catch (err) {
+        console.error('Errore invio mail benvenuto:', err);
+      }
+    }
+
+    return this.issue(user, userAgent);
   }
 
   async acceptInvite(token: string, name: string, password: string, userAgent?: string): Promise<IssuedTokens> {

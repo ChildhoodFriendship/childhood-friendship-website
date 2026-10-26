@@ -39,6 +39,12 @@ export const acceptInviteSchema = z.object({
   password: passwordSchema
 });
 
+export const registerSchema = z.object({
+  name: trimmed(120).min(2, 'Inserisci nome e cognome'),
+  email: z.email('Email non valida').max(254).transform((v) => v.toLowerCase().trim()),
+  password: passwordSchema
+});
+
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(200),
   newPassword: passwordSchema
