@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import type { PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
@@ -67,32 +67,52 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
         <div class="portal-grid">
           <div class="main-column stack">
             <section class="collapsible-card">
-              <button
-                type="button"
-                class="collapsible-header"
-                (click)="materialsOpen.set(!materialsOpen())"
-                [attr.aria-expanded]="materialsOpen()">
-                <div class="collapsible-title-wrap">
+              <div class="collapsible-header">
+                <div
+                  class="collapsible-title-wrap"
+                  (click)="materialsOpen.set(!materialsOpen())"
+                  role="button"
+                  tabindex="0"
+                  [attr.aria-expanded]="materialsOpen()">
                   <span class="collapsible-icon">📁</span>
                   <h3 class="collapsible-title">I tuoi materiali</h3>
                 </div>
-                <span class="btn-arrow-wrap">
-                  <svg class="chevron-icon" [class.open]="materialsOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </span>
-              </button>
 
-              @if (materialsOpen()) {
-                <div class="collapsible-body">
-                  <cf-project-files
-                    [projectId]="p.id"
-                    [readonly]="!!p.archivedAt"
-                    title=""
-                    hint=""
-                  />
+                <div class="collapsible-header-actions">
+                  @if (!p.archivedAt) {
+                    <label class="btn-header-upload" (click)="$event.stopPropagation()" title="Carica foto, loghi o documenti">
+                      + Carica file
+                      <input
+                        type="file"
+                        multiple
+                        (change)="onPortalUploadPicked($event)"
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt,.csv,.mp4,.mov,.mp3,.m4a" />
+                    </label>
+                  }
+
+                  <button
+                    type="button"
+                    class="btn-arrow-wrap"
+                    (click)="materialsOpen.set(!materialsOpen())"
+                    [attr.aria-expanded]="materialsOpen()"
+                    [attr.aria-label]="materialsOpen() ? 'Comprimi materiali' : 'Espandi materiali'">
+                    <svg class="chevron-icon" [class.open]="materialsOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
                 </div>
-              }
+              </div>
+
+              <div class="collapsible-body" [hidden]="!materialsOpen()">
+                <cf-project-files
+                  #filesComp
+                  [projectId]="p.id"
+                  [readonly]="!!p.archivedAt"
+                  [showUploadButton]="false"
+                  title=""
+                  hint=""
+                />
+              </div>
             </section>
           </div>
 
@@ -348,6 +368,45 @@ import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
       display: flex;
       align-items: center;
       gap: 10px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .collapsible-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-header-upload {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      color: #FFFFFF;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3);
+      transition: all 0.2s ease;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .btn-header-upload:hover {
+      background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
+    }
+    .btn-header-upload input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
     }
 
     .collapsible-icon {
@@ -451,6 +510,17 @@ export class PortalProjectPage {
   protected readonly error = signal<string | null>(null);
   protected readonly materialsOpen = signal(false);
   protected readonly receiptOpen = signal(false);
+  protected readonly filesComponent = viewChild(ProjectFilesComponent);
+
+  protected onPortalUploadPicked(e: Event): void {
+    const el = e.target as HTMLInputElement;
+    const files = Array.from(el.files ?? []);
+    if (files.length > 0) {
+      this.materialsOpen.set(true);
+      void this.filesComponent()?.uploadFiles(files);
+    }
+    el.value = '';
+  }
 
   constructor() {
     effect(() => { void this.load(this.projectId()); });

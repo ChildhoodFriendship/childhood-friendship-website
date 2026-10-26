@@ -25,20 +25,22 @@ interface Uploading { name: string; pct: number }
   selector: 'cf-project-files',
   template: `
     <div class="files card stack-sm" [class.drag]="dragging()" (dragover)="onDrag($event, true)" (dragleave)="onDrag($event, false)" (drop)="onDrop($event)">
-      <div class="row-between files-head">
-        <div>
-          @if (title()) {
-            <h3>{{ title() }}</h3>
+      @if (title() || hint() || (!readonly() && showUploadButton())) {
+        <div class="row-between files-head">
+          <div>
+            @if (title()) {
+              <h3>{{ title() }}</h3>
+            }
+            @if (hint()) { <p class="muted small hint-text">{{ hint() }}</p> }
+          </div>
+          @if (!readonly() && showUploadButton()) {
+            <label class="btn btn-primary btn-sm upload">
+              + Carica file
+              <input type="file" multiple (change)="onPick($event)" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt,.csv,.mp4,.mov,.mp3,.m4a" />
+            </label>
           }
-          @if (hint()) { <p class="muted small hint-text">{{ hint() }}</p> }
         </div>
-        @if (!readonly()) {
-          <label class="btn btn-primary btn-sm upload">
-            + Carica file
-            <input type="file" multiple (change)="onPick($event)" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt,.csv,.mp4,.mov,.mp3,.m4a" />
-          </label>
-        }
-      </div>
+      }
 
       @for (u of uploading(); track u.name) {
         <div class="upload-bar">
@@ -309,6 +311,7 @@ interface Uploading { name: string; pct: number }
 export class ProjectFilesComponent {
   readonly projectId = input.required<string>();
   readonly readonly = input(false);
+  readonly showUploadButton = input(true);
   readonly title = input('Materiali');
   readonly hint = input('Logo, foto, testi e documenti del progetto (max 25 MB ciascuno).');
   private readonly api = inject(Api);
@@ -367,15 +370,15 @@ export class ProjectFilesComponent {
     if (this.readonly()) return;
     e.preventDefault();
     this.dragging.set(false);
-    void this.uploadAll(Array.from(e.dataTransfer?.files ?? []));
+    void this.uploadFiles(Array.from(e.dataTransfer?.files ?? []));
   }
   protected onPick(e: Event): void {
     const el = e.target as HTMLInputElement;
-    void this.uploadAll(Array.from(el.files ?? []));
+    void this.uploadFiles(Array.from(el.files ?? []));
     el.value = '';
   }
 
-  private async uploadAll(list: File[]): Promise<void> {
+  async uploadFiles(list: File[]): Promise<void> {
     for (const f of list) await this.uploadOne(f);
   }
 
