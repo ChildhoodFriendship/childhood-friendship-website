@@ -27,9 +27,9 @@ interface SignatureRecord {
           <div class="title-and-badge">
             <h3 class="collapsible-title">Contratto di Sviluppo B2B</h3>
             @if (isSigned()) {
-              <span class="status-pill status-signed">FIRMATO DIGITALMENTE ✓</span>
+              <span class="status-signed-text">firmato</span>
             } @else {
-              <span class="status-pill status-pending">DA FIRMARE DIGITALMENTE</span>
+              <span class="status-pending-text">da firmare</span>
             }
           </div>
         </div>
@@ -41,7 +41,7 @@ interface SignatureRecord {
               class="btn-print-contract no-print"
               (click)="printContract($event)"
               title="Stampa o salva come PDF">
-              🖨️ Salva PDF
+              🖨️ PDF
             </button>
           }
 

@@ -13,18 +13,28 @@ interface DueItem {
 @Component({
   selector: 'cf-payment-boxes',
   template: `
-    <div class="payment-boxes-row no-print" [class.has-single-box]="isFullyPaid() || unpaidItems().length === 0">
-      <!-- Box Sinistra: DA PAGARE con elenco voci per data, scadenza e pulsante Apple Pay -->
+    <div class="payment-boxes-row no-print" [class.has-single-box]="isFullyPaid() || unpaidItems().length === 0 || alreadyPaid() <= 0">
+      <!-- Box Sinistra: DA PAGARE (l'intera card è cliccabile per pagare con Apple Pay) -->
       @if (!isFullyPaid() && unpaidItems().length > 0) {
-        <div class="pay-box pay-box-due">
+        <div
+          class="pay-box pay-box-due clickable-pay-card"
+          (click)="openApplePaySheet()"
+          role="button"
+          tabindex="0"
+          title="Clicca per pagare con Apple Pay"
+          (keydown.enter)="openApplePaySheet()"
+          (keydown.space)="openApplePaySheet()">
           <div class="pay-box-header">
             <div class="pay-box-header-left">
               <span class="pay-dot dot-due"></span>
               <span class="pay-box-title">DA PAGARE</span>
             </div>
-            @if (unpaidItems().length > 1) {
-              <span class="pay-box-header-total font-mono">Tot. {{ formatMoney(remainingToPay()) }} €</span>
-            }
+            <div class="pay-box-header-right">
+              @if (unpaidItems().length > 1) {
+                <span class="pay-box-header-total font-mono">Tot. {{ formatMoney(remainingToPay()) }} €</span>
+              }
+              <span class="pay-action-pill font-mono"> Pay ↗</span>
+            </div>
           </div>
 
           <div class="due-items-list">
@@ -41,33 +51,22 @@ interface DueItem {
               </div>
             }
           </div>
-
-          <!-- Pulsante Nativo Apple Pay -->
-          <div class="apple-pay-section">
-            <button
-              type="button"
-              class="btn-apple-pay"
-              (click)="openApplePaySheet()">
-              <span class="apple-logo"></span> Pay
-              <span class="btn-apple-sep">·</span>
-              <span>Paga {{ formatMoney(remainingToPay()) }} €</span>
-            </button>
-            <span class="apple-pay-secure-hint">🔒 Pagamento sicuro Face ID / Touch ID · Fattura SDI e contratto inviati via email</span>
-          </div>
         </div>
       }
 
-      <!-- Box Destra: PAGATO (totale versato; se tutte le voci sono completate riempie lo spazio) -->
-      <div class="pay-box pay-box-paid">
-        <div class="pay-box-header">
-          <span class="pay-dot dot-paid"></span>
-          <span class="pay-box-title">{{ isFullyPaid() ? 'SALDATO 100%' : 'PAGATO' }}</span>
+      <!-- Box Destra: PAGATO (visibile solo se l'importo pagato è > 0 oppure tutto saldato) -->
+      @if (alreadyPaid() > 0 || isFullyPaid()) {
+        <div class="pay-box pay-box-paid">
+          <div class="pay-box-header">
+            <span class="pay-dot dot-paid"></span>
+            <span class="pay-box-title">{{ isFullyPaid() ? 'SALDATO 100%' : 'PAGATO' }}</span>
+          </div>
+          <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }} €</div>
+          <div class="pay-box-sub text-green-light">
+            <span>{{ isFullyPaid() ? 'Tutte le voci saldate con successo ✓' : 'Importo versato ✓' }}</span>
+          </div>
         </div>
-        <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }} €</div>
-        <div class="pay-box-sub text-green-light">
-          <span>{{ isFullyPaid() ? 'Tutte le voci saldate con successo ✓' : 'Importo versato ✓' }}</span>
-        </div>
-      </div>
+      }
     </div>
 
     <!-- Modal Apple Pay Sheet -->
@@ -166,6 +165,36 @@ interface DueItem {
       background: rgba(16, 185, 129, 0.09);
       border: 1px solid rgba(16, 185, 129, 0.45);
       box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12);
+    }
+
+    
+    .clickable-pay-card {
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .clickable-pay-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(245, 158, 11, 0.7);
+      box-shadow: 0 8px 28px rgba(245, 158, 11, 0.22);
+    }
+    .clickable-pay-card:active {
+      transform: translateY(0);
+    }
+    .pay-box-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pay-action-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: #000000;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      letter-spacing: 0.02em;
     }
 
     .pay-box-header {
