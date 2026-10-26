@@ -286,7 +286,7 @@ export class OverviewTab {
     const v = this.form.getRawValue();
     this.saving.set(true);
     try {
-      const isOnline = v.status === 'lanciato' ? true : v.isOnline;
+      const isOnline = v.status === 'lanciato';
       await this.store.update({
         name: v.name, description: v.description || null, status: v.status, indexingStatus: v.indexingStatus,
         startDate: v.startDate || null, deadline: v.deadline || null, targetUrl: v.targetUrl || null, stagingUrl: v.stagingUrl || null,
