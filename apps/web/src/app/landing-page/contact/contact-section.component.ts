@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { LEAD_SERVICES, type LeadService } from '@cf/shared/catalog';
 import { Api } from '../../core/api';
 
@@ -51,7 +52,7 @@ const EMPTY: Answers = { service: '', timing: '', budget: '', message: '', name:
  */
 @Component({
   selector: 'cf-contact-section',
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, RouterLink],
   templateUrl: './contact-section.component.html',
   styleUrl: './contact-section.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

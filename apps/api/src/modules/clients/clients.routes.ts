@@ -3,7 +3,9 @@ import { count, eq, ilike, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { clientInputSchema, clientPatchSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
-import { clients, projects } from '../../db/schema.js';
+import { clients, projects, users } from '../../db/schema.js';
+import { appUrl, renderPasswordResetMail } from '../../lib/mailer.js';
+import { AuthService } from '../auth/auth.service.js';
 import { audit } from '../../lib/audit.js';
 import { conflict, notFound } from '../../lib/http-error.js';
 import { serialize } from '../../lib/serialize.js';
@@ -58,6 +60,42 @@ export function clientsRouter(ctx: AppContext): Router {
     if (!row) throw notFound('Cliente');
     await audit(db, req, { action: 'client.deleted', entity: 'client', entityId: id, meta: { name: row.name } });
     res.status(204).end();
+  });
+
+
+  router.post('/:id/reset-password', requireAdmin, async (req, res) => {
+    const id = parse(uuidParam, req.params['id']);
+    const [clientUser] = await db.select({ id: users.id, email: users.email, name: users.name })
+      .from(users).where(and(eq(users.clientId, id), eq(users.isActive, true))).limit(1);
+    if (!clientUser) {
+      throw notFound('Nessun utente attivo trovato per questo cliente. Crea prima un invito.');
+    }
+    const authService = new AuthService(ctx);
+    const result = await authService.adminGenerateResetLink(clientUser.id);
+    const resetUrl = appUrl(env, `reset-password/${result.token}`);
+    let emailSent = false;
+    if (ctx.mailer) {
+      emailSent = await ctx.mailer.send({
+        to: [result.user.email],
+        ...renderPasswordResetMail({ name: result.user.name, resetUrl })
+      });
+    }
+    await audit(db, req, { action: 'client.password_reset_requested', entity: 'client', entityId: id, meta: { email: result.user.email, emailSent } });
+    res.json({ ok: true, resetUrl, emailSent, email: result.user.email, name: result.user.name });
+  });
+
+  router.post('/:id/set-password', requireAdmin, async (req, res) => {
+    const id = parse(uuidParam, req.params['id']);
+    const { password } = parse(z.object({ password: z.string().min(8, 'Almeno 8 caratteri') }), req.body);
+    const [clientUser] = await db.select({ id: users.id })
+      .from(users).where(and(eq(users.clientId, id), eq(users.isActive, true))).limit(1);
+    if (!clientUser) {
+      throw notFound('Nessun utente attivo trovato per questo cliente.');
+    }
+    const authService = new AuthService(ctx);
+    await authService.adminSetPassword(clientUser.id, password);
+    await audit(db, req, { action: 'client.password_set_by_admin', entity: 'client', entityId: id });
+    res.json({ ok: true });
   });
 
   return router;

@@ -2,9 +2,9 @@ import { and, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 import { SignJWT } from 'jose';
 import type { SessionUser } from '@cf/shared/types';
 import type { AppContext } from '../../context.js';
-import { invites, sessions, users } from '../../db/schema.js';
+import { invites, passwordResets, sessions, users } from '../../db/schema.js';
 import { getDummyHash, hashPassword, randomToken, sha256, verifyPassword } from '../../lib/crypto.js';
-import { HttpError, badRequest, unauthorized } from '../../lib/http-error.js';
+import { HttpError, badRequest, notFound, unauthorized } from '../../lib/http-error.js';
 import { jwtKey } from '../../middleware/auth.js';
 
 const MAX_FAILED = 5;
@@ -141,5 +141,79 @@ export class AuthService {
     const others = [eq(sessions.userId, userId), isNull(sessions.revokedAt)];
     if (keepSessionId) others.push(ne(sessions.id, keepSessionId));
     await db.update(sessions).set({ revokedAt: new Date() }).where(and(...others));
+  }
+
+  async requestPasswordReset(email: string): Promise<{ token: string; user: { id: string; email: string; name: string } } | null> {
+    const { db } = this.ctx;
+    const [user] = await db.select({ id: users.id, email: users.email, name: users.name, isActive: users.isActive })
+      .from(users).where(eq(sql`lower(${users.email})`, email.toLowerCase().trim())).limit(1);
+    if (!user || !user.isActive) return null;
+    const token = randomToken(32);
+    const tokenHash = sha256(token);
+    const expiresAt = new Date(Date.now() + 3_600_000); // 1 ora
+    await db.insert(passwordResets).values({
+      userId: user.id,
+      tokenHash,
+      expiresAt
+    });
+    return { token, user: { id: user.id, email: user.email, name: user.name } };
+  }
+
+  async verifyResetToken(token: string): Promise<{ user: { id: string; email: string; name: string } }> {
+    const { db } = this.ctx;
+    const tokenHash = sha256(token);
+    const [reset] = await db.select({
+      id: passwordResets.id,
+      userId: passwordResets.userId,
+      expiresAt: passwordResets.expiresAt,
+      usedAt: passwordResets.usedAt
+    }).from(passwordResets).where(eq(passwordResets.tokenHash, tokenHash)).limit(1);
+    if (!reset || reset.usedAt || reset.expiresAt <= new Date()) {
+      throw badRequest('Link di recupero password non valido o scaduto');
+    }
+    const [user] = await db.select({ id: users.id, email: users.email, name: users.name, isActive: users.isActive })
+      .from(users).where(eq(users.id, reset.userId)).limit(1);
+    if (!user || !user.isActive) throw badRequest('Utente non trovato o disattivato');
+    return { user: { id: user.id, email: user.email, name: user.name } };
+  }
+
+  async resetPasswordWithToken(token: string, newPassword: string): Promise<void> {
+    const { db } = this.ctx;
+    const tokenHash = sha256(token);
+    const [reset] = await db.select().from(passwordResets).where(eq(passwordResets.tokenHash, tokenHash)).limit(1);
+    if (!reset || reset.usedAt || reset.expiresAt <= new Date()) {
+      throw badRequest('Link di recupero password non valido o scaduto');
+    }
+    const passwordHash = await hashPassword(newPassword);
+    await db.transaction(async (tx) => {
+      await tx.update(users).set({ passwordHash, failedLogins: 0, lockedUntil: null }).where(eq(users.id, reset.userId));
+      await tx.update(passwordResets).set({ usedAt: new Date() }).where(eq(passwordResets.id, reset.id));
+      await tx.update(sessions).set({ revokedAt: new Date() }).where(and(eq(sessions.userId, reset.userId), isNull(sessions.revokedAt)));
+    });
+  }
+
+  async adminSetPassword(userId: string, newPassword: string): Promise<void> {
+    const { db } = this.ctx;
+    const [user] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
+    if (!user) throw notFound('Utente');
+    const passwordHash = await hashPassword(newPassword);
+    await db.update(users).set({ passwordHash, failedLogins: 0, lockedUntil: null }).where(eq(users.id, userId));
+    await db.update(sessions).set({ revokedAt: new Date() }).where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)));
+  }
+
+  async adminGenerateResetLink(userId: string): Promise<{ token: string; user: { id: string; email: string; name: string } }> {
+    const { db } = this.ctx;
+    const [user] = await db.select({ id: users.id, email: users.email, name: users.name, isActive: users.isActive })
+      .from(users).where(eq(users.id, userId)).limit(1);
+    if (!user) throw notFound('Utente');
+    const token = randomToken(32);
+    const tokenHash = sha256(token);
+    const expiresAt = new Date(Date.now() + 24 * 3_600_000); // 24 ore
+    await db.insert(passwordResets).values({
+      userId: user.id,
+      tokenHash,
+      expiresAt
+    });
+    return { token, user: { id: user.id, email: user.email, name: user.name } };
   }
 }

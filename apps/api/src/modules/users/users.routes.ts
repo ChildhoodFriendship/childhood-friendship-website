@@ -6,7 +6,8 @@ import type { AppContext } from '../../context.js';
 import { clients, invites, sessions, users } from '../../db/schema.js';
 import { audit } from '../../lib/audit.js';
 import { randomToken, sha256 } from '../../lib/crypto.js';
-import { appUrl, renderMail } from '../../lib/mailer.js';
+import { appUrl, renderMail, renderPasswordResetMail } from '../../lib/mailer.js';
+import { AuthService } from '../auth/auth.service.js';
 import { badRequest, conflict, notFound } from '../../lib/http-error.js';
 import { serialize } from '../../lib/serialize.js';
 import { defined, parse } from '../../lib/validate.js';
@@ -108,6 +109,32 @@ export function usersRouter(ctx: AppContext): Router {
     if (!row) throw notFound('Invito');
     await audit(db, req, { action: 'invite.revoked', entity: 'invite', entityId: id });
     res.status(204).end();
+  });
+
+
+  router.post('/:id/reset-password', requireAdmin, async (req, res) => {
+    const id = parse(uuidParam, req.params['id']);
+    const authService = new AuthService(ctx);
+    const result = await authService.adminGenerateResetLink(id);
+    const resetUrl = appUrl(env, `reset-password/${result.token}`);
+    let emailSent = false;
+    if (ctx.mailer) {
+      emailSent = await ctx.mailer.send({
+        to: [result.user.email],
+        ...renderPasswordResetMail({ name: result.user.name, resetUrl })
+      });
+    }
+    await audit(db, req, { action: 'user.password_reset_requested', entity: 'user', entityId: id, meta: { email: result.user.email, emailSent } });
+    res.json({ ok: true, resetUrl, emailSent, email: result.user.email, name: result.user.name });
+  });
+
+  router.post('/:id/set-password', requireAdmin, async (req, res) => {
+    const id = parse(uuidParam, req.params['id']);
+    const { password } = parse(z.object({ password: z.string().min(8, 'Almeno 8 caratteri') }), req.body);
+    const authService = new AuthService(ctx);
+    await authService.adminSetPassword(id, password);
+    await audit(db, req, { action: 'user.password_set_by_admin', entity: 'user', entityId: id });
+    res.json({ ok: true });
   });
 
   return router;

@@ -86,6 +86,15 @@ export const invites = pgTable('invites', {
   createdAt: createdAt()
 }, (t) => [uniqueIndex('invites_token_uq').on(t.tokenHash)]);
 
+export const passwordResets = pgTable('password_resets', {
+  id: id(),
+  userId: uuid().notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text().notNull(),
+  expiresAt: ts().notNull(),
+  usedAt: ts(),
+  createdAt: createdAt()
+}, (t) => [uniqueIndex('password_resets_token_uq').on(t.tokenHash), index('password_resets_user_idx').on(t.userId)]);
+
 /* ---------- Progetti ---------- */
 
 export const projects = pgTable('projects', {

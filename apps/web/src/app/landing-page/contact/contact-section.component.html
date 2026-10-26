@@ -26,10 +26,29 @@
 
       @if (submission() === 'success') {
         <div class="done-screen" aria-live="polite">
+          <div class="success-top-pill">
+            <span class="pill-dot"></span>
+            RICHIESTA PRESA IN CARICO 🚀
+          </div>
           <svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-16" /></svg>
-          <h3>Ricevuto, {{ answers().name.split(' ')[0] }}!</h3>
-          <p>Ti scriviamo a <strong>{{ answers().email }}</strong> entro un giorno lavorativo.</p>
-          <button type="button" class="ghost" (click)="restart()">Invia un’altra richiesta</button>
+          <h3>Bomba, {{ answers().name.split(' ')[0] }}! Abbiamo tutto.</h3>
+          <p class="lead-subcopy">
+            Lorenzo e Mirko sono già al lavoro sulla tua idea. Presto riceverai un messaggio (o un vocale!) su WhatsApp o un'email a <strong>{{ answers().email }}</strong> con il tuo preventivo su misura: chiaro, trasparente e senza fronzoli.
+          </p>
+
+          <div class="portal-cta-box">
+            <div class="portal-cta-text">
+              <span class="portal-cta-title">🔐 Area Riservata Dedicata</span>
+              <p class="portal-cta-desc">
+                Abbiamo già predisposto il tuo spazio per seguire il progetto in tempo reale, visualizzare il preventivo commerciale e chattare con noi.
+              </p>
+            </div>
+            <a class="btn-portal-entry" [routerLink]="['/login']" [queryParams]="{ email: answers().email, next: '/portale' }">
+              Crea o Accedi al tuo Account ↗
+            </a>
+          </div>
+
+          <button type="button" class="ghost restart-btn" (click)="restart()">← Invia un’altra richiesta</button>
         </div>
       } @else {
         <div class="body" #body>

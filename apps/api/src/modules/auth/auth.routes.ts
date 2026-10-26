@@ -2,6 +2,7 @@ import { Router, type Response } from 'express';
 import { acceptInviteSchema, changePasswordSchema, loginSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
 import { audit } from '../../lib/audit.js';
+import { appUrl, renderPasswordResetMail } from '../../lib/mailer.js';
 import { parse } from '../../lib/validate.js';
 import { sharedLimiter } from '../../lib/rate-limit.js';
 import { ACCESS_COOKIE, REFRESH_COOKIE, requireAuth } from '../../middleware/auth.js';
@@ -87,6 +88,35 @@ export function authRouter(ctx: AppContext): Router {
     await service.changePassword(req.user!.id, input.currentPassword, input.newPassword, req.sessionId);
     await audit(ctx.db, req, { action: 'auth.password_changed', entity: 'user', entityId: req.user!.id });
     res.status(204).end();
+  });
+
+
+  router.post('/forgot-password', loginLimiter, async (req, res) => {
+    const { email } = parse(z.object({ email: z.string().email() }), req.body);
+    const result = await service.requestPasswordReset(email);
+    if (result && ctx.mailer) {
+      const resetUrl = appUrl(ctx.env, `reset-password/${result.token}`);
+      void ctx.mailer.send({
+        to: [result.user.email],
+        ...renderPasswordResetMail({ name: result.user.name, resetUrl })
+      });
+    }
+    res.json({ ok: true, message: 'Se l\'email è registrata, riceverai a breve un link per reimpostare la password.' });
+  });
+
+  router.get('/reset-password/:token', loginLimiter, async (req, res) => {
+    const token = parse(z.string().min(20).max(100), req.params['token']);
+    const info = await service.verifyResetToken(token);
+    res.json({ ok: true, email: info.user.email, name: info.user.name });
+  });
+
+  router.post('/reset-password', loginLimiter, async (req, res) => {
+    const input = parse(z.object({
+      token: z.string().min(20).max(100),
+      password: z.string().min(8, 'La password deve avere almeno 8 caratteri').max(128)
+    }), req.body);
+    await service.resetPasswordWithToken(input.token, input.password);
+    res.json({ ok: true, message: 'Password aggiornata con successo! Ora puoi accedere.' });
   });
 
   return router;

@@ -74,3 +74,185 @@ export async function notifyClient(db: Database, mailer: Mailer | null | undefin
   if (!rows.length) return;
   await mailer.send({ to: rows.map((r) => r.email), ...renderMail(content) });
 }
+
+
+export interface WelcomeMailOptions {
+  name: string;
+  email: string;
+  portalUrl: string;
+  serviceName?: string;
+}
+
+/** Template email di benvenuto personalizzato con design scuro/viola brand Childhood Friendship. */
+export function renderWelcomeMail(opts: WelcomeMailOptions): Pick<MailMessage, 'subject' | 'text' | 'html'> {
+  const firstName = opts.name.trim().split(' ')[0] || 'Cliente';
+  const subject = `Benvenuto a bordo di Childhood Friendship, ${firstName}! 🚀`;
+  const text = [
+    `Ciao ${firstName},`,
+    '',
+    'Grazie per averci contattato! Lorenzo e Mirko hanno preso in carico la tua richiesta e stanno già studiando i dettagli.',
+    'Presto riceverai un messaggio (o un vocale su WhatsApp!) o una mail con il tuo preventivo su misura, chiaro e senza fronzoli.',
+    '',
+    'Nel frattempo abbiamo configurato per te l\'accesso all\'Area Riservata:',
+    `Accedi subito: ${opts.portalUrl}`,
+    '',
+    'Dall\'area riservata potrai seguire lo stato del progetto, visualizzare le quietanze commerciali B2B, caricare materiali e chattare direttamente con noi.',
+    '',
+    'A presto,',
+    'Lorenzo & Mirko — Childhood Friendship',
+    'Email: childhood.friendship.official@gmail.com · Padova (PD)'
+  ].join('\n');
+
+  const html = `<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${esc(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0b0616;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#f3f0fa;">
+  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#0b0616;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:580px;background-color:#160e29;border:1px solid #2d1d4f;border-radius:24px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+          <!-- Top Accent Bar -->
+          <tr>
+            <td style="height:6px;background:linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);"></td>
+          </tr>
+          <!-- Header Brand -->
+          <tr>
+            <td style="padding:36px 36px 20px 36px;text-align:center;">
+              <div style="font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#a855f7;font-weight:700;margin-bottom:6px;">CHILDHOOD FRIENDSHIP</div>
+              <div style="font-size:13px;color:#8d83a8;">Studio di Sviluppo Software, Soluzioni Digitali & 3D</div>
+            </td>
+          </tr>
+          <!-- Hero Title -->
+          <tr>
+            <td style="padding:0 36px 24px 36px;text-align:center;">
+              <h1 style="margin:0;font-size:26px;font-weight:800;color:#ffffff;line-height:1.25;">Benvenuto a bordo, ${esc(firstName)}! 🚀</h1>
+              <p style="margin:12px 0 0 0;font-size:15px;line-height:1.6;color:#c2b9d6;">
+                Abbiamo ricevuto la tua idea e siamo già con le mani sul codice. Presto ti invieremo un preventivo su misura e senza fronzoli.
+              </p>
+            </td>
+          </tr>
+          <!-- Highlight Box -->
+          <tr>
+            <td style="padding:0 36px 28px 36px;">
+              <div style="background-color:#20143a;border:1px solid #3b2569;border-radius:16px;padding:22px 24px;">
+                <div style="font-size:14px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">🔐 La tua Area Riservata Dedicata</div>
+                <div style="font-size:14px;line-height:1.55;color:#d8d0ea;margin-bottom:18px;">
+                  Nel tuo portale potrai consultare i dettagli del preventivo, lo scontrino commerciale B2B, caricare file e loghi, e chattare direttamente con il team.
+                </div>
+                <div style="text-align:center;">
+                  <a href="${esc(opts.portalUrl)}" style="display:inline-block;background:linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 28px;border-radius:12px;box-shadow:0 8px 24px rgba(124,58,237,0.35);">
+                    Accedi all'Area Riservata ↗
+                  </a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Account Summary -->
+          <tr>
+            <td style="padding:0 36px 28px 36px;">
+              <div style="font-size:13px;color:#8d83a8;line-height:1.5;background:#130b24;padding:12px 18px;border-radius:10px;border-left:3px solid #7c3aed;">
+                Email account associata: <strong style="color:#ffffff;">${esc(opts.email)}</strong>
+              </div>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 36px 36px 36px;border-top:1px solid #23163d;text-align:center;font-size:12px;line-height:1.6;color:#6b5f85;">
+              <strong style="color:#8d83a8;">Childhood Friendship</strong> · P.IVA IT04982710284 · Padova (PD)<br>
+              Email ufficiale: <a href="mailto:childhood.friendship.official@gmail.com" style="color:#a855f7;text-decoration:none;">childhood.friendship.official@gmail.com</a><br>
+              Ricevi questa email perché hai inviato una richiesta di preventivo su <a href="https://childhood-friendship-website-pi.vercel.app" style="color:#a855f7;text-decoration:none;">childhoodfriendship.it</a>.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, text, html };
+}
+
+export interface PasswordResetMailOptions {
+  name: string;
+  resetUrl: string;
+}
+
+/** Template email di reset password coerente con il brand Childhood Friendship. */
+export function renderPasswordResetMail(opts: PasswordResetMailOptions): Pick<MailMessage, 'subject' | 'text' | 'html'> {
+  const firstName = opts.name.trim().split(' ')[0] || 'Utente';
+  const subject = 'Reimposta la password del tuo account — Childhood Friendship';
+  const text = [
+    `Ciao ${firstName},`,
+    '',
+    'Abbiamo ricevuto una richiesta di reimpostazione della password per il tuo account su Childhood Friendship.',
+    'Clicca sul seguente link per impostare una nuova password (il link è valido per 1 ora):',
+    opts.resetUrl,
+    '',
+    'Se non hai richiesto tu il ripristino della password, ignora questa email: la tua password attuale rimarrà invariata e al sicuro.',
+    '',
+    'Childhood Friendship Team',
+    'childhood.friendship.official@gmail.com'
+  ].join('\n');
+
+  const html = `<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${esc(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0b0616;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#f3f0fa;">
+  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#0b0616;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:540px;background-color:#160e29;border:1px solid #2d1d4f;border-radius:24px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+          <tr>
+            <td style="height:6px;background:linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);"></td>
+          </tr>
+          <tr>
+            <td style="padding:36px 36px 20px 36px;text-align:center;">
+              <div style="font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#a855f7;font-weight:700;margin-bottom:6px;">CHILDHOOD FRIENDSHIP</div>
+              <h1 style="margin:0;font-size:24px;font-weight:800;color:#ffffff;">Reimposta la tua password</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 36px 28px 36px;text-align:center;">
+              <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#c2b9d6;">
+                Ciao <strong style="color:#ffffff;">${esc(firstName)}</strong>, abbiamo ricevuto la richiesta di ripristino per accedere alla tua area riservata.
+              </p>
+              <p style="margin:0 0 24px 0;font-size:14px;line-height:1.5;color:#8d83a8;">
+                Clicca sul pulsante qui sotto per inserire la tua nuova password. Il link è strettamente personale e scade tra <strong>1 ora</strong>.
+              </p>
+              <div>
+                <a href="${esc(opts.resetUrl)}" style="display:inline-block;background:linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 28px;border-radius:12px;box-shadow:0 8px 24px rgba(124,58,237,0.35);">
+                  Reimposta la Password ↗
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 36px 28px 36px;">
+              <div style="background-color:#130b24;border:1px solid #23163d;border-radius:12px;padding:14px 18px;font-size:12px;line-height:1.5;color:#786c91;">
+                🛡️ Se non hai richiesto tu il ripristino, puoi tranquillamente ignorare questo messaggio. Il tuo account e la password attuale sono al sicuro.
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 36px 32px 36px;border-top:1px solid #23163d;text-align:center;font-size:12px;color:#6b5f85;">
+              Childhood Friendship · <a href="mailto:childhood.friendship.official@gmail.com" style="color:#a855f7;text-decoration:none;">childhood.friendship.official@gmail.com</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, text, html };
+}

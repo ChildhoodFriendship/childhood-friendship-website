@@ -278,6 +278,12 @@ export class ClientsPage implements OnInit {
 
   protected readonly inviteOpen = signal(false);
   protected readonly inviteFor = signal<ClientDto | null>(null);
+  protected readonly clientPwModalOpen = signal(false);
+  protected readonly pwClient = signal<ClientDto | null>(null);
+  protected readonly clientResetUrl = signal<string | null>(null);
+  protected readonly clientResetEmailSent = signal(false);
+  protected readonly clientPwLoading = signal(false);
+  protected clientManualPassword = '';
   protected readonly inviteLink = signal<string | null>(null);
   protected inviteEmail = '';
   protected q = '';
@@ -472,4 +478,57 @@ export class ClientsPage implements OnInit {
       this.toast.error('Copia non consentita');
     }
   }
+
+  protected openClientPw(c: ClientDto): void {
+    this.pwClient.set(c);
+    this.clientResetUrl.set(null);
+    this.clientResetEmailSent.set(false);
+    this.clientManualPassword = '';
+    this.clientPwModalOpen.set(true);
+  }
+
+  protected async requestClientReset(c: ClientDto): Promise<void> {
+    this.clientPwLoading.set(true);
+    try {
+      const res = await this.api.post<{ ok: boolean; resetUrl: string; emailSent: boolean; email: string }>(
+        `/clients/${c.id}/reset-password`, {}
+      );
+      this.clientResetUrl.set(res.resetUrl);
+      this.clientResetEmailSent.set(res.emailSent);
+      if (res.emailSent) {
+        this.toast.success(`Email inviata con successo a ${res.email}`);
+      } else {
+        this.toast.success('Link di reset generato!');
+      }
+    } catch (err) {
+      this.toast.error(err);
+    } finally {
+      this.clientPwLoading.set(false);
+    }
+  }
+
+  protected generateClientPw(): void {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+    let res = '';
+    for (let i = 0; i < 12; i++) {
+      res += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    this.clientManualPassword = res;
+  }
+
+  protected async saveClientManualPassword(c: ClientDto): Promise<void> {
+    if (this.clientManualPassword.length < 8) return;
+    this.clientPwLoading.set(true);
+    try {
+      await this.api.post(`/clients/${c.id}/set-password`, { password: this.clientManualPassword });
+      this.toast.success(`Nuova password impostata per ${c.name}!`);
+      await this.copy(this.clientManualPassword);
+      this.clientPwModalOpen.set(false);
+    } catch (err) {
+      this.toast.error(err);
+    } finally {
+      this.clientPwLoading.set(false);
+    }
+  }
+
 }

@@ -12,6 +12,7 @@ import { omit, serialize } from '../../lib/serialize.js';
 import { defined, parse } from '../../lib/validate.js';
 import { requireAdmin, requireTeam } from '../../middleware/auth.js';
 import { notifyTeam } from '../../lib/notify.js';
+import { appUrl, renderWelcomeMail } from '../../lib/mailer.js';
 
 const uuidParam = z.uuid('ID non valido');
 const toDto = (l: typeof leads.$inferSelect) => serialize(omit(l, 'updatedAt'));

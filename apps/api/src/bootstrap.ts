@@ -16,6 +16,18 @@ export async function buildContext(): Promise<{ ctx: AppContext; handle: DbHandl
     await handle.db.execute(sql`ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "paid_amount_cents" integer;`);
     await handle.db.execute(sql`ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "payment_deadline" text;`);
     await handle.db.execute(sql`UPDATE "projects" SET "status" = 'in_sviluppo' WHERE "status"::text NOT IN ('in_sviluppo', 'lanciato');`);
+    await handle.db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "password_resets" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "token_hash" text NOT NULL,
+        "expires_at" timestamp with time zone NOT NULL,
+        "used_at" timestamp with time zone,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL
+      );
+    `);
+    await handle.db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS "password_resets_token_uq" ON "password_resets"("token_hash");`);
+    await handle.db.execute(sql`CREATE INDEX IF NOT EXISTS "password_resets_user_idx" ON "password_resets"("user_id");`);
   } catch (err) {
     console.warn('[db] Auto-migration columns warning:', err);
   }
