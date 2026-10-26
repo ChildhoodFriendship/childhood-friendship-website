@@ -71,13 +71,33 @@ export class MethodComponent {
       const update = () => {
         raf = 0;
         const sec = this.section().nativeElement;
-        const r = sec.getBoundingClientRect();
-        const scrollable = sec.offsetHeight - window.innerHeight;
-        const p = scrollable > 0 ? Math.min(1, Math.max(0, -r.top / scrollable)) : 0;
-        this.progress.set(p);
-        this.active.set(Math.min(this.steps.length - 1, Math.floor(p * this.steps.length)));
-        // ogni fase occupa la stessa porzione di scroll; al centro della sua porzione la card è tutta aperta
-        this.pos.set(horizontal() ? Math.min(this.steps.length - 1, Math.max(0, p * this.steps.length - 0.5)) : this.active());
+        const isDesktop = horizontal();
+        if (isDesktop) {
+          const r = sec.getBoundingClientRect();
+          const scrollable = sec.offsetHeight - window.innerHeight;
+          const p = scrollable > 0 ? Math.min(1, Math.max(0, -r.top / scrollable)) : 0;
+          this.progress.set(p);
+          this.active.set(Math.min(this.steps.length - 1, Math.floor(p * this.steps.length)));
+          this.pos.set(Math.min(this.steps.length - 1, Math.max(0, p * this.steps.length - 0.5)));
+        } else {
+          // Mobile: evidenzia con transizione fluida la card al centro del viewport
+          const panels = sec.querySelectorAll('.panel');
+          const targetY = window.innerHeight * 0.45;
+          let bestIdx = 0;
+          let bestDist = Infinity;
+          panels.forEach((el, idx) => {
+            const box = el.getBoundingClientRect();
+            const cardCenter = box.top + box.height / 2;
+            const dist = Math.abs(cardCenter - targetY);
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestIdx = idx;
+            }
+          });
+          this.active.set(bestIdx);
+          this.pos.set(bestIdx);
+          this.progress.set((bestIdx + 0.5) / this.steps.length);
+        }
       };
       const onScroll = () => { raf ||= requestAnimationFrame(update); };
       window.addEventListener('scroll', onScroll, { passive: true });

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { ParticleText } from './particle-text';
 
 interface Fact { readonly k: string; readonly v: string; }
@@ -31,9 +31,9 @@ const FACTS: readonly Fact[] = [
           <p>Siamo amici da quando eravamo bambini. Abbiamo imparato a costruire cose insieme molto prima che diventasse un mestiere, e quel modo di lavorare non l'abbiamo più cambiato.</p>
           <p>Oggi lo mettiamo al servizio delle aziende: pensiero strategico, design essenziale e ingegneria pragmatica, per trasformare obiettivi complessi in prodotti digitali chiari, utili e pronti a crescere.</p>
         </div>
-        <ol class="facts">
+        <ol class="facts" #factsList>
           @for (f of facts; track f.k; let i = $index) {
-            <li [style.--i]="i">
+            <li [style.--i]="i" [class.active]="i === activeFact()">
               <span class="n">0{{ i + 1 }}</span>
               <strong>{{ f.k }}</strong>
               <span class="v">{{ f.v }}</span>
@@ -97,25 +97,102 @@ const FACTS: readonly Fact[] = [
     @media (max-width: 899px) {
       .inner { grid-template-columns: 1fr; row-gap: 2rem; }
       .facts { grid-template-columns: 1fr; margin-top: 1rem; }
-      .facts li { padding: 1.1rem 0; border-bottom: 1px solid rgba(246, 241, 255, .14); }
+      .facts li {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        padding: 1.15rem 0;
+        border-bottom: 1px solid rgba(246, 241, 255, .14);
+        transition: all .35s cubic-bezier(.2, .8, .2, 1);
+      }
       .facts li + li { padding-left: 0; border-left: 0; }
       .facts li + li::before { left: 0; }
+      .facts li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -1px;
+        height: 2px;
+        background: var(--cf-violet);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform .4s cubic-bezier(.2, .8, .2, 1);
+      }
+      .facts li.active::before,
+      .facts li:hover::before {
+        transform: scaleX(1);
+      }
+      .facts li.active strong,
+      .facts li:hover strong {
+        color: #A78BFA;
+        transform: translateX(4px);
+      }
+      .facts li.active .v,
+      .facts li:hover .v {
+        color: rgba(246, 241, 255, .95);
+      }
+      .facts li.active .n {
+        color: #c084fc;
+        text-shadow: 0 0 12px rgba(167, 139, 250, .4);
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AboutComponent {
   protected readonly facts = FACTS;
+  protected readonly activeFact = signal(0);
   private readonly area = viewChild.required<ElementRef<HTMLElement>>('area');
   private readonly title = viewChild.required<ElementRef<HTMLElement>>('title');
   private readonly cvs = viewChild.required<ElementRef<HTMLCanvasElement>>('cvs');
+  private readonly factsList = viewChild<ElementRef<HTMLElement>>('factsList');
 
   constructor() {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      const fx = new ParticleText(this.title().nativeElement, this.cvs().nativeElement, this.area().nativeElement);
-      destroyRef.onDestroy(() => fx.dispose());
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const fx = new ParticleText(this.title().nativeElement, this.cvs().nativeElement, this.area().nativeElement);
+        destroyRef.onDestroy(() => fx.dispose());
+      }
+
+      const updateFact = () => {
+        if (window.innerWidth >= 900) return;
+        const list = this.factsList()?.nativeElement;
+        if (!list) return;
+        const items = list.querySelectorAll('li');
+        const targetY = window.innerHeight * 0.48;
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        items.forEach((item: Element, idx: number) => {
+          const box = item.getBoundingClientRect();
+          const center = box.top + box.height / 2;
+          const dist = Math.abs(center - targetY);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestIdx = idx;
+          }
+        });
+        this.activeFact.set(bestIdx);
+      };
+
+      let raf = 0;
+      const onScroll = () => {
+        if (!raf) {
+          raf = requestAnimationFrame(() => {
+            raf = 0;
+            updateFact();
+          });
+        }
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      updateFact();
+      destroyRef.onDestroy(() => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onScroll);
+        cancelAnimationFrame(raf);
+      });
     });
   }
 }

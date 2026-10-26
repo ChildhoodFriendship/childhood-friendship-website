@@ -10,10 +10,36 @@ h2 { font-family: var(--cf-display); font-weight: 800; font-variation-settings: 
 .stage { display: none; }
 
 .track { list-style: none; margin: clamp(2.5rem, 7vh, 4.5rem) 0 0; padding: 0 var(--pad); display: grid; gap: 1rem; }
-.panel { display: grid; gap: .65rem; align-content: start; padding: 1.25rem 1.4rem 1.4rem; border-radius: 20px; background: rgba(246, 241, 255, .05); transition: background .4s; }
-.panel.active { background: rgba(124, 58, 237, .22); }
-.n { font-family: var(--cf-display); font-weight: 800; font-size: clamp(2.8rem, 4.6vw, 4.4rem); line-height: .8; color: transparent; -webkit-text-stroke: 1.5px rgba(246, 241, 255, .45); letter-spacing: -.04em; transition: color .5s, -webkit-text-stroke-color .5s; }
-.panel.active .n { color: var(--cf-violet); -webkit-text-stroke-color: var(--cf-violet); }
+.panel {
+  display: grid;
+  gap: .65rem;
+  align-content: start;
+  padding: 1.25rem 1.4rem 1.4rem;
+  border-radius: 20px;
+  background: rgba(246, 241, 255, .05);
+  border: 1px solid rgba(246, 241, 255, .08);
+  transition: background .35s cubic-bezier(.2, .8, .2, 1), border-color .35s cubic-bezier(.2, .8, .2, 1), box-shadow .35s cubic-bezier(.2, .8, .2, 1), transform .35s cubic-bezier(.2, .8, .2, 1);
+}
+.panel.active {
+  background: rgba(124, 58, 237, .26);
+  border-color: rgba(167, 139, 250, .45);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, .18);
+}
+.n {
+  font-family: var(--cf-display);
+  font-weight: 800;
+  font-size: clamp(2.8rem, 4.6vw, 4.4rem);
+  line-height: .8;
+  color: rgba(246, 241, 255, .32);
+  -webkit-text-stroke: 1px rgba(246, 241, 255, .4);
+  letter-spacing: -.04em;
+  transition: color .4s ease, -webkit-text-stroke-color .4s ease, text-shadow .4s ease;
+}
+.panel.active .n {
+  color: #A78BFA;
+  -webkit-text-stroke-color: #A78BFA;
+  text-shadow: 0 0 16px rgba(167, 139, 250, .35);
+}
 h3 { font-family: var(--cf-display); font-weight: 700; font-size: clamp(1.45rem, 2vw, 1.9rem); letter-spacing: -.02em; margin: 0; }
 .panel p { font-family: var(--cf-display); font-size: 1rem; line-height: 1.5; margin: 0; max-width: 34ch; color: rgba(246, 241, 255, .78); }
 .panel .proof { color: var(--cf-chalk); font-weight: 600; font-size: .92rem; padding-left: .85rem; border-left: 2px solid var(--cf-violet); }
@@ -37,7 +63,10 @@ h3 { font-family: var(--cf-display); font-weight: 700; font-size: clamp(1.45rem,
   /* il testo lungo appare solo quando la card è abbastanza larga */
   .panel p { opacity: var(--open, 0); transform: translateY(calc((1 - var(--open, 0)) * 10px)); min-width: 26ch; }
 }
-@media (max-width: 899px) { .bar { display: none; } }
+@media (max-width: 899px) {
+  .bar { display: none; }
+  .panel p { opacity: 1 !important; transform: none !important; }
+}
 
 /* scena 3D: la tela si vede dietro, i pannelli restano leggibili */
 :host-context(main.scene-on) .method { background: transparent; }
