@@ -5,6 +5,7 @@ import type { Paginated, PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import { PortalI18nService } from '../../core/portal-i18n.service';
 
 @Component({
   selector: 'cf-portal-projects-page',
@@ -13,8 +14,10 @@ import { ToastService } from '../../core/toast.service';
     <div class="page" style="max-width: 960px">
       <header class="page-header">
         <div>
-          <span class="eyebrow">Benvenuto</span>
-          <h1>Ciao {{ firstName }}, ecco i tuoi progetti</h1>
+          <span class="eyebrow">{{ i18n.isEn() ? 'Welcome' : 'Benvenuto' }}</span>
+          <h1>
+            {{ i18n.isEn() ? 'Hello ' + firstName + ', here are your active projects' : 'Ciao ' + firstName + ', ecco i tuoi progetti' }}
+          </h1>
         </div>
       </header>
       @if (loading()) { <div class="skeleton" style="height: 140px"></div> }
@@ -23,22 +26,31 @@ import { ToastService } from '../../core/toast.service';
           <a class="card stack-sm proj" [routerLink]="['progetti', p.id]">
             <div class="row-between">
               <h2>{{ p.name }}</h2>
-              <!-- Solo due stati possibili: IN SVILUPPO o LIVE -->
+              <!-- Solo due stati possibili: IN DEVELOPMENT / IN SVILUPPO o LIVE -->
               @if (p.isOnline || p.status === 'lanciato') {
                 <span class="tag-badge tag-live">
                   <span class="dot pulse-green"></span> LIVE
                 </span>
               } @else {
                 <span class="tag-badge tag-dev">
-                  <span class="dot pulse-violet"></span> IN SVILUPPO
+                  <span class="dot pulse-violet"></span> {{ i18n.isEn() ? 'IN DEVELOPMENT' : 'IN SVILUPPO' }}
                 </span>
               }
             </div>
             @if (p.description) { <p class="muted small clamp">{{ p.description }}</p> }
-            @if (p.deadline) { <span class="muted small">🗓️ Consegna prevista {{ p.deadline | date: 'd MMMM y' }}</span> }
+            @if (p.deadline) {
+              <span class="muted small">
+                🗓️ {{ i18n.isEn() ? 'Estimated delivery' : 'Consegna prevista' }} {{ p.deadline | date: (i18n.isEn() ? 'MMMM d, y' : 'd MMMM y') }}
+              </span>
+            }
           </a>
         } @empty {
-          @if (!loading()) { <div class="card empty"><strong>Nessun progetto attivo</strong>Quando avvieremo un progetto insieme lo troverai qui.</div> }
+          @if (!loading()) {
+            <div class="card empty">
+              <strong>{{ i18n.isEn() ? 'No active projects yet' : 'Nessun progetto attivo' }}</strong>
+              {{ i18n.isEn() ? 'Once we start a project together, all your assets, contracts, and updates will appear here.' : 'Quando avvieremo un progetto insieme lo troverai qui.' }}
+            </div>
+          }
         }
       </div>
     </div>
@@ -103,6 +115,7 @@ export class PortalProjectsPage implements OnInit {
   private readonly api = inject(Api);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(PortalI18nService);
   protected readonly items = signal<PortalProjectDto[]>([]);
   protected readonly loading = signal(true);
   protected readonly firstName = inject(AuthService).user()?.name.split(' ')[0] ?? '';

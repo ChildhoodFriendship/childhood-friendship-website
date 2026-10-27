@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import type { PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
+import { PortalI18nService } from '../../core/portal-i18n.service';
 import { MessagesThreadComponent } from '../../shared/messages-thread.component';
 import { ProjectFilesComponent } from '../../shared/project-files.component';
 import { PaymentBoxesComponent } from './receipt/payment-boxes.component';
@@ -11,7 +12,7 @@ import { ProjectContractComponent } from './contract/project-contract.component'
 
 /**
  * Vista Progetto per il Portale Clienti:
- * - 2 soli stati: "IN SVILUPPO" e "LIVE" (centrati)
+ * - 2 soli stati: "IN SVILUPPO" / "IN DEVELOPMENT" e "LIVE" (centrati)
  * - Link di anteprima staging se presente sotto lo stato
  * - Box DA PAGARE e PAGATO posizionati sotto al link
  * - Sezione "I tuoi materiali" con anteprime visive
@@ -35,24 +36,24 @@ import { ProjectContractComponent } from './contract/project-contract.component'
               </span>
               @if (p.targetUrl) {
                 <a class="btn-live-link" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">
-                  Visita il sito ↗
+                  {{ i18n.isEn() ? 'Visit Live Site ↗' : 'Visita il sito ↗' }}
                 </a>
               }
             } @else {
               <span class="tag-badge tag-dev">
                 <span class="dot pulse-violet" aria-hidden="true"></span>
-                IN SVILUPPO
+                {{ i18n.isEn() ? 'IN DEVELOPMENT' : 'IN SVILUPPO' }}
               </span>
 
               @if (p.stagingUrl) {
-                <a class="btn-preview-link" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" title="Apri anteprima staging">
-                  Anteprima ↗
+                <a class="btn-preview-link" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" [title]="i18n.isEn() ? 'Open live staging preview' : 'Apri anteprima staging'">
+                  {{ i18n.isEn() ? 'Live Preview ↗' : 'Anteprima ↗' }}
                 </a>
               }
 
               @if (p.deadline) {
                 <span class="deadline-pill">
-                  🗓️ Consegna: {{ p.deadline | date: 'd MMMM y' }}
+                  🗓️ {{ i18n.isEn() ? 'Estimated Delivery' : 'Consegna' }}: {{ p.deadline | date: (i18n.isEn() ? 'MMMM d, y' : 'd MMMM y') }}
                 </span>
               }
             }
@@ -76,13 +77,13 @@ import { ProjectContractComponent } from './contract/project-contract.component'
                   tabindex="0"
                   [attr.aria-expanded]="materialsOpen()">
                   <span class="collapsible-icon">📁</span>
-                  <h3 class="collapsible-title">I tuoi materiali</h3>
+                  <h3 class="collapsible-title">{{ i18n.isEn() ? 'Your Project Assets' : 'I tuoi materiali' }}</h3>
                 </div>
 
                 <div class="collapsible-header-actions">
                   @if (!p.archivedAt) {
-                    <label class="btn-header-upload" (click)="$event.stopPropagation()" title="Carica foto, loghi o documenti">
-                      + Carica file
+                    <label class="btn-header-upload" (click)="$event.stopPropagation()" [title]="i18n.isEn() ? 'Upload brand assets, photos or documents' : 'Carica foto, loghi o documenti'">
+                      + {{ i18n.isEn() ? 'Upload file' : 'Carica file' }}
                       <input
                         type="file"
                         multiple
@@ -96,7 +97,7 @@ import { ProjectContractComponent } from './contract/project-contract.component'
                     class="btn-arrow-wrap"
                     (click)="materialsOpen.set(!materialsOpen())"
                     [attr.aria-expanded]="materialsOpen()"
-                    [attr.aria-label]="materialsOpen() ? 'Comprimi materiali' : 'Espandi materiali'">
+                    [attr.aria-label]="materialsOpen() ? (i18n.isEn() ? 'Collapse assets' : 'Comprimi materiali') : (i18n.isEn() ? 'Expand assets' : 'Espandi materiali')">
                     <svg class="chevron-icon" [class.open]="materialsOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
@@ -130,7 +131,7 @@ import { ProjectContractComponent } from './contract/project-contract.component'
                 [attr.aria-expanded]="receiptOpen()">
                 <div class="collapsible-title-wrap">
                   <span class="collapsible-icon">🧾</span>
-                  <h3 class="collapsible-title">Scontrino preventivo</h3>
+                  <h3 class="collapsible-title">{{ i18n.isEn() ? 'Estimate & Invoice' : 'Scontrino preventivo' }}</h3>
                 </div>
                 <span class="btn-arrow-wrap">
                   <svg class="chevron-icon" [class.open]="receiptOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -510,6 +511,7 @@ export class PortalProjectPage {
   readonly projectId = input.required<string>();
   private readonly api = inject(Api);
   private readonly toast = inject(ToastService);
+  protected readonly i18n = inject(PortalI18nService);
   protected readonly project = signal<PortalProjectDto | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly materialsOpen = signal(false);
@@ -538,6 +540,14 @@ export class PortalProjectPage {
     try {
       const p = await this.api.get<PortalProjectDto>(`/projects/${id}`);
       this.project.set(p);
+
+      const isUsProject = /us|usa|america|miami|new york|california|los angeles|austin|beverly hills|brickell|dollar|\$/i.test(
+        (p.description || '') + ' ' + (p.name || '') + ' ' + (p.clientName || '')
+      );
+      if (isUsProject && typeof window !== 'undefined' && !localStorage.getItem('cf_portal_lang')) {
+        this.i18n.setLang('en');
+      }
+
       const live = this.isLive(p);
       this.materialsOpen.set(!live);
       this.receiptOpen.set(!live);

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import type { PortalProjectDto, QuoteItem } from '@cf/shared/types';
+import { PortalI18nService } from '../../../core/portal-i18n.service';
 
 interface DisplayReceiptItem {
   name: string;
@@ -23,10 +24,10 @@ interface DisplayReceiptItem {
         <!-- Header Azienda -->
         <header class="receipt-header">
           <h2 class="store-name">CHILDHOOD FRIENDSHIP</h2>
-          <p class="store-sub">STUDIO SVILUPPO SOFTWARE & SOLUZIONI DIGITALI</p>
+          <p class="store-sub">{{ i18n.isEn() ? 'DIGITAL PRODUCT STUDIO & CREATIVE ENGINEERING' : 'STUDIO SVILUPPO SOFTWARE & SOLUZIONI DIGITALI' }}</p>
           <p class="store-info">VIA ROMA 99</p>
-          <p class="store-info">35122 PADOVA (PD) - VENETO</p>
-          <p class="store-info">P.IVA IT04982710284</p>
+          <p class="store-info">{{ i18n.isEn() ? '35122 PADOVA (PD) - ITALY / GLOBAL REMOTE' : '35122 PADOVA (PD) - VENETO' }}</p>
+          <p class="store-info">P.IVA / VAT ID IT04982710284</p>
           <p class="store-info">Tel. +39 380 8970829</p>
           <p class="store-info">childhood.friendship.official&#64;gmail.com</p>
         </header>
@@ -35,17 +36,21 @@ interface DisplayReceiptItem {
 
         <!-- Intestazione Commerciale / Fiscale B2B -->
         <div class="receipt-type">
-          <strong class="mode-title">DOCUMENTO COMMERCIALE B2B</strong>
-          <span class="mode-sub">RICEVUTA DI PRESTAZIONE E SVILUPPO SOFTWARE</span>
-          <span class="mode-desc">Operazione soggetta a Fattura Elettronica SDI</span>
+          <strong class="mode-title">{{ i18n.isEn() ? 'COMMERCIAL INVOICE & ESTIMATE' : 'DOCUMENTO COMMERCIALE B2B' }}</strong>
+          <span class="mode-sub">{{ i18n.isEn() ? 'B2B SOFTWARE DEVELOPMENT & DIGITAL DESIGN' : 'RICEVUTA DI PRESTAZIONE E SVILUPPO SOFTWARE' }}</span>
+          <span class="mode-desc">
+            {{ i18n.isEn() 
+              ? 'Tax-exempt cross-border B2B service (EU-US) ex Art. 7-ter DPR 633/72' 
+              : 'Operazione soggetta a Fattura Elettronica SDI' }}
+          </span>
         </div>
 
         <!-- Tabella Voci Preventivo Reali del Progetto -->
         <div class="items-table">
           <div class="table-header">
-            <span class="col-desc">DESCRIZIONE</span>
-            <span class="col-vat">IVA</span>
-            <span class="col-price">PREZZO (€)</span>
+            <span class="col-desc">{{ i18n.isEn() ? 'DESCRIPTION' : 'DESCRIZIONE' }}</span>
+            <span class="col-vat">{{ i18n.isEn() ? 'TAX' : 'IVA' }}</span>
+            <span class="col-price">{{ i18n.isEn() ? 'PRICE ($)' : 'PREZZO (€)' }}</span>
           </div>
 
           <div class="table-body">
@@ -57,7 +62,7 @@ interface DisplayReceiptItem {
                   <span class="item-price">{{ formatMoney(item.totalPrice) }}</span>
                 </div>
                 <div class="item-meta">
-                  PZ {{ item.quantity }} - prz. {{ formatMoney(item.unitPrice) }}
+                  {{ i18n.isEn() ? 'QTY' : 'PZ' }} {{ item.quantity }} - {{ formatMoney(item.unitPrice) }}
                 </div>
               </div>
             }
@@ -69,24 +74,32 @@ interface DisplayReceiptItem {
         <!-- Riepilogo Totali -->
         <div class="totals-section">
           <div class="total-row main-total">
-            <span class="total-label">TOTALE COMPLESSIVO</span>
+            <span class="total-label">{{ i18n.isEn() ? 'TOTAL AMOUNT' : 'TOTALE COMPLESSIVO' }}</span>
             <span class="total-val">{{ formatMoney(totalWithVat()) }}</span>
           </div>
           <div class="total-row vat-row">
-            <span class="total-label">di cui IVA (22%)</span>
+            <span class="total-label">{{ i18n.isEn() ? 'Tax (0% US B2B)' : 'di cui IVA (22%)' }}</span>
             <span class="total-val">{{ formatMoney(vatAmount()) }}</span>
           </div>
           <div class="total-row">
-            <span class="total-label">Elettronico</span>
+            <span class="total-label">{{ i18n.isEn() ? 'Electronic (Apple Pay / Card)' : 'Elettronico' }}</span>
             <span class="total-val">{{ formatMoney(totalWithVat()) }}</span>
           </div>
           <div class="total-row">
-            <span class="total-label">{{ isFullyPaid() ? 'Importo pagato (Saldato 100%)' : 'Importo pagato (Acconto)' }}</span>
+            <span class="total-label">
+              {{ isFullyPaid() 
+                ? (i18n.isEn() ? 'Amount Paid (100% Settled)' : 'Importo pagato (Saldato 100%)') 
+                : (i18n.isEn() ? 'Amount Paid (Retainer)' : 'Importo pagato (Acconto)') }}
+            </span>
             <span class="total-val">{{ formatMoney(alreadyPaid()) }}</span>
           </div>
           @if (!isFullyPaid()) {
             <div class="total-row">
-              <span class="total-label">Residuo da versare (Scad. {{ deadlineFormatted() }})</span>
+              <span class="total-label">
+                {{ i18n.isEn() 
+                  ? 'Balance Due (Due: ' + deadlineFormatted() + ')' 
+                  : 'Residuo da versare (Scad. ' + deadlineFormatted() + ')' }}
+              </span>
               <span class="total-val">{{ formatMoney(remainingToPay()) }}</span>
             </div>
           }
@@ -94,25 +107,31 @@ interface DisplayReceiptItem {
 
         <!-- Dati Documento & Data -->
         <div class="doc-meta">
-          <div class="meta-line">{{ receiptDate() | date: 'dd/MM/yyyy HH:mm' }}</div>
-          <div class="meta-line">Documento n. {{ receiptDocNumber() }}</div>
+          <div class="meta-line">{{ receiptDate() | date: (i18n.isEn() ? 'MM/dd/yyyy HH:mm' : 'dd/MM/yyyy HH:mm') }}</div>
+          <div class="meta-line">{{ i18n.isEn() ? 'Invoice n. ' : 'Documento n. ' }}{{ receiptDocNumber() }}</div>
         </div>
 
         <!-- Note e Info Fiscali SDI -->
         <div class="notes-section">
-          <strong class="notes-title">Dati Fiscali & SDI:</strong>
-          <span class="notes-subtitle">Note:</span>
+          <strong class="notes-title">{{ i18n.isEn() ? 'Commercial & Tax Details:' : 'Dati Fiscali & SDI:' }}</strong>
+          <span class="notes-subtitle">{{ i18n.isEn() ? 'Notes:' : 'Note:' }}</span>
           <p class="notes-text">
-            Progetto: {{ project().name }}<br>
-            Sviluppo software su misura, licenza e architettura cloud SSL.<br>
-            Fattura elettronica SDI trasmessa all'Agenzia delle Entrate.<br>
-            Pagamento tracciato: Transazione Elettronica (Apple Pay / Carta)
+            {{ i18n.isEn() ? 'Project: ' : 'Progetto: ' }}{{ project().name }}<br>
+            {{ i18n.isEn() 
+              ? 'Bespoke 3D web application, software license & SSL cloud deployment.' 
+              : 'Sviluppo software su misura, licenza e architettura cloud SSL.' }}<br>
+            {{ i18n.isEn() 
+              ? 'Electronic invoice and receipt delivered to client email.' 
+              : 'Fattura elettronica SDI trasmessa all\'Agenzia delle Entrate.' }}<br>
+            {{ i18n.isEn() 
+              ? 'Tracked payment: Electronic Transaction (Apple Pay / Credit Card via Stripe)' 
+              : 'Pagamento tracciato: Transazione Elettronica (Apple Pay / Carta)' }}
           </p>
         </div>
 
         <!-- Ringraziamento -->
         <div class="thank-you">
-          GRAZIE PER LA COLLABORAZIONE
+          {{ i18n.isEn() ? 'THANK YOU FOR YOUR BUSINESS' : 'GRAZIE PER LA COLLABORAZIONE' }}
         </div>
 
         <!-- Codice a Barre Realistico -->
@@ -138,76 +157,41 @@ interface DisplayReceiptItem {
 
     .receipt-container {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      margin: 8px 0;
-    }
-
-    .receipt-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
       width: 100%;
-      max-width: 440px;
-      padding: 0 4px;
     }
 
-    .receipt-hint {
-      font-family: var(--cf-display, sans-serif);
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--cf-color-violet-light, #A78BFA);
-      letter-spacing: -0.01em;
-    }
-
-    .print-btn {
-      cursor: pointer;
-      font-size: 0.8rem;
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid rgba(167, 139, 250, 0.4);
-      background: rgba(124, 58, 237, 0.1);
-      color: #F6F1FF;
-      transition: all 0.2s ease;
-    }
-    .print-btn:hover {
-      background: rgba(124, 58, 237, 0.25);
-      border-color: #A78BFA;
-    }
-
-    /* Struttura autentica scontrino termico */
     .receipt {
       background: #FFFFFF;
-      color: #0F0F11;
-      font-family: 'DM Mono', 'Courier New', Courier, monospace;
+      color: #121212;
       width: 100%;
-      max-width: 440px;
-      padding: 38px 26px 42px;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      padding: 24px 22px 28px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
       position: relative;
-      border-radius: 2px;
-      box-sizing: border-box;
+      font-family: 'DM Mono', monospace, 'Courier New', Courier;
+      font-size: 0.82rem;
       line-height: 1.35;
+      letter-spacing: -0.01em;
+      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.3));
     }
 
-    /* Bordo a zig-zag (strappo scontrino) */
     .tear-edge {
       position: absolute;
       left: 0;
       right: 0;
       height: 6px;
-      background: linear-gradient(135deg, transparent 75%, #FFFFFF 75%),
-                  linear-gradient(225deg, transparent 75%, #FFFFFF 75%);
-      background-size: 10px 6px;
+      background-size: 12px 6px;
       background-repeat: repeat-x;
     }
     .tear-top {
       top: -6px;
-      transform: rotate(180deg);
+      background-image: radial-gradient(circle at 6px 6px, transparent 6px, #FFFFFF 6px);
     }
     .tear-bottom {
       bottom: -6px;
+      background-image: radial-gradient(circle at 6px 0, transparent 6px, #FFFFFF 6px);
     }
 
     .receipt-header {
@@ -218,165 +202,167 @@ interface DisplayReceiptItem {
       font-size: 1.15rem;
       font-weight: 800;
       letter-spacing: 0.05em;
-      margin: 0 0 2px;
+      margin: 0 0 4px;
       color: #000;
     }
     .store-sub {
-      font-size: 0.76rem;
+      font-size: 0.68rem;
       font-weight: 700;
+      color: #444;
       margin: 0 0 6px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
     }
     .store-info {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
+      color: #333;
       margin: 1px 0;
-      color: #222;
     }
 
     .dashed-line {
-      border-top: 1px dashed #444;
-      margin: 12px 0;
-      width: 100%;
+      border-top: 1px dashed #777;
+      margin: 14px 0;
     }
 
     .receipt-type {
       text-align: center;
-      margin: 10px 0;
+      margin-bottom: 14px;
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 2px;
     }
     .mode-title {
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: 800;
-      letter-spacing: 0.06em;
+      color: #000;
     }
     .mode-sub {
-      font-size: 0.85rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
-    }
-    .mode-desc {
-      font-size: 0.72rem;
       color: #333;
     }
+    .mode-desc {
+      font-size: 0.64rem;
+      color: #666;
+      font-style: italic;
+    }
 
-    /* Tabella Voci */
     .items-table {
-      margin: 14px 0;
+      margin-bottom: 14px;
     }
     .table-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.75rem;
       font-weight: 800;
-      border-bottom: 1px solid #111;
+      font-size: 0.72rem;
+      border-bottom: 1px solid #222;
       padding-bottom: 4px;
       margin-bottom: 8px;
     }
     .col-desc { flex: 1; text-align: left; }
     .col-vat { width: 44px; text-align: center; }
-    .col-price { width: 90px; text-align: right; }
+    .col-price { width: 70px; text-align: right; }
 
     .item-block {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .item-row {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      font-size: 0.85rem;
-      font-weight: 700;
-      line-height: 1.25;
+      align-items: baseline;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
     .item-name {
       flex: 1;
-      padding-right: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 6px;
     }
     .item-vat {
       width: 44px;
       text-align: center;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      color: #555;
     }
     .item-price {
-      width: 90px;
+      width: 70px;
       text-align: right;
-      font-variant-numeric: tabular-nums;
+      font-weight: 700;
     }
     .item-meta {
-      font-size: 0.72rem;
-      color: #444;
-      margin-top: 2px;
+      font-size: 0.68rem;
+      color: #666;
     }
 
-    /* Totali */
     .totals-section {
-      margin: 12px 0;
       display: flex;
       flex-direction: column;
       gap: 4px;
+      margin-bottom: 14px;
     }
     .total-row {
       display: flex;
       justify-content: space-between;
-      font-size: 0.86rem;
-      font-weight: 600;
+      font-size: 0.8rem;
     }
     .main-total {
       font-size: 1.05rem;
       font-weight: 800;
-      margin-bottom: 4px;
+      border-top: 1px solid #111;
+      border-bottom: 1px solid #111;
+      padding: 6px 0;
+      margin: 4px 0 6px;
     }
     .vat-row {
-      font-size: 0.85rem;
-      color: #222;
-    }
-    .total-val {
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* Metadati Documento */
-    .doc-meta {
-      margin: 14px 0 10px;
-      font-size: 0.76rem;
-      color: #222;
-      line-height: 1.35;
-    }
-
-    /* Note */
-    .notes-section {
-      margin: 12px 0;
       font-size: 0.75rem;
-      line-height: 1.35;
+      color: #555;
+    }
+
+    .doc-meta {
+      font-size: 0.7rem;
+      color: #555;
+      text-align: center;
+      margin-bottom: 14px;
+      border-top: 1px dashed #999;
+      padding-top: 8px;
+    }
+
+    .notes-section {
+      background: #F7F7F7;
+      border: 1px solid #E0E0E0;
+      padding: 8px 10px;
+      margin-bottom: 14px;
+      font-size: 0.68rem;
     }
     .notes-title {
-      font-weight: 800;
       display: block;
+      color: #000;
+      font-weight: 800;
+      margin-bottom: 2px;
     }
     .notes-subtitle {
+      color: #555;
       font-weight: 700;
-      display: block;
-      margin-top: 2px;
     }
     .notes-text {
-      margin: 2px 0 0;
-      color: #222;
+      margin: 4px 0 0;
+      color: #444;
+      line-height: 1.35;
     }
 
     .thank-you {
       text-align: center;
-      font-size: 0.95rem;
+      font-size: 0.82rem;
       font-weight: 800;
       letter-spacing: 0.08em;
-      margin: 18px 0 12px;
+      margin-bottom: 14px;
     }
 
-    /* Codice a barre */
     .barcode-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 8px 0 4px;
       gap: 4px;
     }
     .barcode-lines {
@@ -422,8 +408,8 @@ interface DisplayReceiptItem {
 })
 export class QuoteReceiptComponent {
   readonly project = input.required<PortalProjectDto>();
+  protected readonly i18n = inject(PortalI18nService);
 
-  // Generatore di barre verticali per codice a barre realistico
   protected readonly barcodeBars = [
     { w: 3, g: 2 }, { w: 1, g: 3 }, { w: 2, g: 1 }, { w: 4, g: 2 },
     { w: 1, g: 2 }, { w: 3, g: 1 }, { w: 2, g: 3 }, { w: 1, g: 1 },
@@ -436,58 +422,77 @@ export class QuoteReceiptComponent {
   protected readonly deadlineFormatted = computed(() => {
     const p = this.project();
     const deadlineToUse = p.paymentDeadline || p.deadline;
+    const locale = this.i18n.isEn() ? 'en-US' : 'it-IT';
     if (deadlineToUse) {
       try {
         const d = new Date(deadlineToUse);
         if (!isNaN(d.getTime())) {
-          return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
       } catch {
         return deadlineToUse;
       }
     }
-    return '30/11/2026';
+    return this.i18n.isEn() ? '11/30/2026' : '30/11/2026';
   });
 
   protected readonly displayItems = computed<DisplayReceiptItem[]>(() => {
     const p = this.project();
     const items = p.quoteItems as QuoteItem[] | undefined;
+    const isEn = this.i18n.isEn();
+    const currentVatRate = isEn ? 0 : 22;
 
-    // Se l'admin ha inserito voci quoteItems per questo progetto, usiamo quelle reali!
     if (items && items.length > 0) {
       return items.map((it) => {
-        const euros = (it.priceCents || 0) / 100;
+        const amount = (it.priceCents || 0) / 100;
         return {
           name: it.name,
           quantity: 1,
-          unitPrice: euros,
-          totalPrice: euros,
-          vatRate: 22
+          unitPrice: amount,
+          totalPrice: amount,
+          vatRate: currentVatRate
         };
       });
     }
 
-    // Se l'admin non ha ancora valorizzato quoteItems specifiche, usiamo le voci coerenti col tipo impostato dall'admin nel progetto
     const pType = p.type as string;
     if (pType === 'mobile' || /app/i.test(p.name)) {
-      return [
-        { name: 'Sviluppo App Mobile iOS e Android', quantity: 1, unitPrice: 1200.0, totalPrice: 1200.0, vatRate: 22 },
-        { name: 'Pannello Gestionale Appuntamenti & Salone', quantity: 1, unitPrice: 800.0, totalPrice: 800.0, vatRate: 22 },
-        { name: 'Integrazione Notifiche Push & Cloud Sync', quantity: 1, unitPrice: 250.0, totalPrice: 250.0, vatRate: 22 }
-      ];
+      return isEn
+        ? [
+            { name: 'iOS & Android Mobile App Architecture', quantity: 1, unitPrice: 1500.0, totalPrice: 1500.0, vatRate: 0 },
+            { name: 'Cloud Booking & Client Dashboard System', quantity: 1, unitPrice: 1000.0, totalPrice: 1000.0, vatRate: 0 },
+            { name: 'Push Notifications & Real-Time Sync', quantity: 1, unitPrice: 350.0, totalPrice: 350.0, vatRate: 0 }
+          ]
+        : [
+            { name: 'Sviluppo App Mobile iOS e Android', quantity: 1, unitPrice: 1200.0, totalPrice: 1200.0, vatRate: 22 },
+            { name: 'Pannello Gestionale Appuntamenti & Salone', quantity: 1, unitPrice: 800.0, totalPrice: 800.0, vatRate: 22 },
+            { name: 'Integrazione Notifiche Push & Cloud Sync', quantity: 1, unitPrice: 250.0, totalPrice: 250.0, vatRate: 22 }
+          ];
     }
     if (pType === 'ecommerce' || /shop|store/i.test(p.name)) {
-      return [
-        { name: 'Sviluppo E-Commerce Catalog & Checkout', quantity: 1, unitPrice: 1400.0, totalPrice: 1400.0, vatRate: 22 },
-        { name: 'Gateway Pagamenti Stripe & PayPal', quantity: 1, unitPrice: 400.0, totalPrice: 400.0, vatRate: 22 },
-        { name: 'Configurazione Cloud SSL & Inventario', quantity: 1, unitPrice: 200.0, totalPrice: 200.0, vatRate: 22 }
-      ];
+      return isEn
+        ? [
+            { name: 'Custom E-Commerce Catalog & Checkout', quantity: 1, unitPrice: 1800.0, totalPrice: 1800.0, vatRate: 0 },
+            { name: 'Stripe & Apple Pay Integration', quantity: 1, unitPrice: 500.0, totalPrice: 500.0, vatRate: 0 },
+            { name: 'Cloud Infrastructure & Real-Time Inventory', quantity: 1, unitPrice: 300.0, totalPrice: 300.0, vatRate: 0 }
+          ]
+        : [
+            { name: 'Sviluppo E-Commerce Catalog & Checkout', quantity: 1, unitPrice: 1400.0, totalPrice: 1400.0, vatRate: 22 },
+            { name: 'Gateway Pagamenti Stripe & PayPal', quantity: 1, unitPrice: 400.0, totalPrice: 400.0, vatRate: 22 },
+            { name: 'Configurazione Cloud SSL & Inventario', quantity: 1, unitPrice: 200.0, totalPrice: 200.0, vatRate: 22 }
+          ];
     }
-    return [
-      { name: 'Sviluppo Sito Web 3D & Responsive', quantity: 1, unitPrice: 850.0, totalPrice: 850.0, vatRate: 22 },
-      { name: 'Piattaforma Web & Configurazione Cloud', quantity: 1, unitPrice: 400.0, totalPrice: 400.0, vatRate: 22 },
-      { name: 'Ottimizzazione SEO & Indicizzazione Google', quantity: 1, unitPrice: 150.0, totalPrice: 150.0, vatRate: 22 }
-    ];
+    return isEn
+      ? [
+          { name: 'Custom 3D Interactive Web Experience', quantity: 1, unitPrice: 1600.0, totalPrice: 1600.0, vatRate: 0 },
+          { name: 'Mobile Optimization & Fast SSL Cloud Architecture', quantity: 1, unitPrice: 600.0, totalPrice: 600.0, vatRate: 0 },
+          { name: 'Local SEO Engine & Google Indexing', quantity: 1, unitPrice: 300.0, totalPrice: 300.0, vatRate: 0 }
+        ]
+      : [
+          { name: 'Sviluppo Sito Web 3D & Responsive', quantity: 1, unitPrice: 850.0, totalPrice: 850.0, vatRate: 22 },
+          { name: 'Piattaforma Web & Configurazione Cloud', quantity: 1, unitPrice: 400.0, totalPrice: 400.0, vatRate: 22 },
+          { name: 'Ottimizzazione SEO & Indicizzazione Google', quantity: 1, unitPrice: 150.0, totalPrice: 150.0, vatRate: 22 }
+        ];
   });
 
   protected readonly subtotal = computed(() => {
@@ -495,11 +500,13 @@ export class QuoteReceiptComponent {
   });
 
   protected readonly vatAmount = computed(() => {
-    return Number((this.subtotal() * 0.22).toFixed(2));
+    const vatRate = this.i18n.vatRate();
+    return Number((this.subtotal() * vatRate).toFixed(2));
   });
 
   protected readonly totalWithVat = computed(() => {
-    return Number((this.subtotal() * 1.22).toFixed(2));
+    const vatRate = this.i18n.vatRate();
+    return Number((this.subtotal() * (1 + vatRate)).toFixed(2));
   });
 
   protected readonly alreadyPaid = computed(() => {
@@ -526,7 +533,7 @@ export class QuoteReceiptComponent {
   protected readonly receiptDocNumber = computed(() => {
     const p = this.project();
     const cleanId = p.id.replace(/-/g, '').slice(0, 10).toUpperCase();
-    return `DEMO2026${cleanId}`;
+    return `INV2026${cleanId}`;
   });
 
   protected readonly barcodeCode = computed(() => {
@@ -535,10 +542,7 @@ export class QuoteReceiptComponent {
   });
 
   protected formatMoney(val: number): string {
-    return val.toLocaleString('it-IT', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return this.i18n.formatMoney(val);
   }
 
   protected printReceipt(): void {

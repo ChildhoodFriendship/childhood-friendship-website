@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import type { PortalProjectDto, QuoteItem } from '@cf/shared/types';
 import { ToastService } from '../../../core/toast.service';
+import { PortalI18nService } from '../../../core/portal-i18n.service';
 
 interface DueItem {
   id: string;
@@ -14,24 +15,24 @@ interface DueItem {
   selector: 'cf-payment-boxes',
   template: `
     <div class="payment-boxes-row no-print" [class.has-single-box]="isFullyPaid() || unpaidItems().length === 0 || alreadyPaid() <= 0">
-      <!-- Box Sinistra: DA PAGARE (l'intera card è cliccabile per pagare con Apple Pay) -->
+      <!-- Box Sinistra: DA PAGARE / AMOUNT DUE -->
       @if (!isFullyPaid() && unpaidItems().length > 0) {
         <div
           class="pay-box pay-box-due clickable-pay-card"
           (click)="openApplePaySheet()"
           role="button"
           tabindex="0"
-          title="Clicca per pagare con Apple Pay"
+          [title]="i18n.isEn() ? 'Click to pay with Apple Pay or Card' : 'Clicca per pagare con Apple Pay o Carta'"
           (keydown.enter)="openApplePaySheet()"
           (keydown.space)="openApplePaySheet()">
           <div class="pay-box-header">
             <div class="pay-box-header-left">
               <span class="pay-dot dot-due"></span>
-              <span class="pay-box-title">DA PAGARE</span>
+              <span class="pay-box-title">{{ i18n.isEn() ? 'AMOUNT DUE' : 'DA PAGARE' }}</span>
             </div>
             <div class="pay-box-header-right">
               @if (unpaidItems().length > 1) {
-                <span class="pay-box-header-total font-mono">Tot. {{ formatMoney(remainingToPay()) }} €</span>
+                <span class="pay-box-header-total font-mono">Tot. {{ formatMoney(remainingToPay()) }}</span>
               }
               <span class="pay-action-pill font-mono"> Pay ↗</span>
             </div>
@@ -42,10 +43,10 @@ interface DueItem {
               <div class="due-item-row">
                 <div class="due-item-info">
                   <span class="due-item-name" [title]="item.name">{{ item.name }}</span>
-                  <div class="due-item-amount font-mono">{{ formatMoney(item.amount) }} €</div>
+                  <div class="due-item-amount font-mono">{{ formatMoney(item.amount) }}</div>
                 </div>
                 <div class="due-item-date">
-                  <span class="due-date-label">Scadenza</span>
+                  <span class="due-date-label">{{ i18n.isEn() ? 'Due Date' : 'Scadenza' }}</span>
                   <strong class="due-date-val">{{ item.dueDate }}</strong>
                 </div>
               </div>
@@ -54,16 +55,22 @@ interface DueItem {
         </div>
       }
 
-      <!-- Box Destra: PAGATO (visibile solo se l'importo pagato è > 0 oppure tutto saldato) -->
+      <!-- Box Destra: PAGATO / PAID IN FULL -->
       @if (alreadyPaid() > 0 || isFullyPaid()) {
         <div class="pay-box pay-box-paid">
           <div class="pay-box-header">
             <span class="pay-dot dot-paid"></span>
-            <span class="pay-box-title">{{ isFullyPaid() ? 'SALDATO 100%' : 'PAGATO' }}</span>
+            <span class="pay-box-title">
+              {{ isFullyPaid() ? (i18n.isEn() ? 'PAID IN FULL 100%' : 'SALDATO 100%') : (i18n.isEn() ? 'PAID' : 'PAGATO') }}
+            </span>
           </div>
-          <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }} €</div>
+          <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }}</div>
           <div class="pay-box-sub text-green-light">
-            <span>{{ isFullyPaid() ? 'Tutte le voci saldate con successo ✓' : 'Importo versato ✓' }}</span>
+            <span>
+              {{ isFullyPaid() 
+                ? (i18n.isEn() ? 'All items settled successfully ✓' : 'Tutte le voci saldate con successo ✓') 
+                : (i18n.isEn() ? 'Retainer received ✓' : 'Importo versato ✓') }}
+            </span>
           </div>
         </div>
       }
@@ -79,23 +86,23 @@ interface DueItem {
             <div class="sheet-brand">
               <span class="sheet-apple-logo"></span> Pay
             </div>
-            <button type="button" class="btn-close-sheet" (click)="closeApplePaySheet()" aria-label="Chiudi">✕</button>
+            <button type="button" class="btn-close-sheet" (click)="closeApplePaySheet()" [attr.aria-label]="i18n.isEn() ? 'Close' : 'Chiudi'">✕</button>
           </div>
 
           <div class="sheet-details">
             <div class="sheet-merchant">
-              <span class="sheet-label">BENEFICIARIO</span>
-              <span class="sheet-val">Childhood Friendship (Padova)</span>
+              <span class="sheet-label">{{ i18n.isEn() ? 'BENEFICIARY' : 'BENEFICIARIO' }}</span>
+              <span class="sheet-val">Childhood Friendship (Digital Product Studio)</span>
             </div>
 
             <div class="sheet-card-info">
-              <span class="sheet-label">METODO DI PAGAMENTO</span>
-              <span class="sheet-val">Carta Apple Pay •••• 8921</span>
+              <span class="sheet-label">{{ i18n.isEn() ? 'PAYMENT METHOD' : 'METODO DI PAGAMENTO' }}</span>
+              <span class="sheet-val">{{ i18n.isEn() ? 'Apple Pay / Card •••• 8921' : 'Carta Apple Pay •••• 8921' }}</span>
             </div>
 
             <div class="sheet-amount-row">
-              <span class="sheet-amount-label">TOTALE DA ADDEBITARE</span>
-              <span class="sheet-amount-val font-mono">{{ formatMoney(remainingToPay()) }} €</span>
+              <span class="sheet-amount-label">{{ i18n.isEn() ? 'TOTAL TO CHARGE' : 'TOTALE DA ADDEBITARE' }}</span>
+              <span class="sheet-amount-val font-mono">{{ formatMoney(remainingToPay()) }}</span>
             </div>
           </div>
 
@@ -103,21 +110,22 @@ interface DueItem {
             @if (isAuthorizing()) {
               <div class="authorizing-state">
                 <div class="apple-spinner"></div>
-                <span>Autorizzazione Face ID / Touch ID in corso...</span>
+                <span>{{ i18n.isEn() ? 'Face ID / Touch ID verification in progress...' : 'Autorizzazione Face ID / Touch ID in corso...' }}</span>
               </div>
             } @else {
               <button
                 type="button"
                 class="btn-confirm-apple-pay"
                 (click)="confirmApplePay()">
-                <span class="face-id-icon">⊡</span> Conferma con Face ID / Touch ID
+                <span class="face-id-icon">⊡</span> {{ i18n.isEn() ? 'Confirm with Face ID / Touch ID' : 'Conferma con Face ID / Touch ID' }}
               </button>
             }
           </div>
 
           <p class="sheet-subhint">
-            La Fattura Elettronica SDI e la ricevuta quietanzata saranno recapitate automaticamente 
-            a {{ clientEmail() }} e allo studio childhood.friendship.official&#64;gmail.com.
+            {{ i18n.isEn() 
+              ? 'Official commercial invoice and receipt will be automatically delivered to ' + clientEmail() + ' and childhood.friendship.official@gmail.com.'
+              : 'La Fattura Elettronica SDI e la ricevuta quietanzata saranno recapitate automaticamente a ' + clientEmail() + ' e allo studio childhood.friendship.official@gmail.com.' }}
           </p>
         </div>
       </div>
@@ -167,7 +175,6 @@ interface DueItem {
       box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12);
     }
 
-    
     .clickable-pay-card {
       cursor: pointer;
       user-select: none;
@@ -329,157 +336,135 @@ interface DueItem {
       flex-wrap: wrap;
     }
 
-    /* Apple Pay CTA nel box */
-    .apple-pay-section {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(245, 158, 11, 0.2);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .btn-apple-pay {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: #000000;
-      color: #FFFFFF;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-      font-size: 0.92rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-      transition: all 0.2s ease;
-    }
-    .btn-apple-pay:hover {
-      background: #1C1C1E;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
-    }
-
-    .apple-logo {
-      font-size: 1.15rem;
-      line-height: 1;
-      margin-bottom: 2px;
-    }
-    .btn-apple-sep {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    .apple-pay-secure-hint {
-      font-size: 0.68rem;
-      color: rgba(246, 241, 255, 0.6);
-      text-align: center;
-    }
-
     /* Modal Apple Pay Sheet */
     .apple-pay-backdrop {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(10px);
       z-index: 9999;
       display: flex;
       align-items: flex-end;
       justify-content: center;
+      animation: fadeIn 0.2s ease;
     }
-    @media (min-width: 600px) {
-      .apple-pay-backdrop {
-        align-items: center;
-      }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .apple-pay-sheet {
-      width: min(100%, 420px);
+      width: 100%;
+      max-width: 480px;
       background: #1C1C1E;
-      color: #FFFFFF;
       border-radius: 24px 24px 0 0;
-      padding: 24px 22px 32px;
+      padding: 16px 24px 32px;
       box-sizing: border-box;
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.8);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @media (min-width: 600px) {
-      .apple-pay-sheet {
-        border-radius: 24px;
-      }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
     }
 
     .sheet-handle {
       width: 36px;
       height: 4px;
-      border-radius: 2px;
       background: rgba(255, 255, 255, 0.3);
-      margin: 0 auto 16px;
+      border-radius: 999px;
+      margin: 0 auto 14px;
     }
 
     .sheet-top {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
+      justify-content: space-between;
+      margin-bottom: 20px;
     }
+
     .sheet-brand {
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
+
     .sheet-apple-logo {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
+      line-height: 1;
+      margin-bottom: 3px;
     }
+
     .btn-close-sheet {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       border: none;
-      color: #FFF;
-      width: 28px;
-      height: 28px;
+      color: rgba(255, 255, 255, 0.8);
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      transition: background 0.15s ease;
+    }
+    .btn-close-sheet:hover {
+      background: rgba(255, 255, 255, 0.22);
     }
 
     .sheet-details {
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 14px;
       padding: 14px 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-bottom: 20px;
-    }
-    .sheet-label {
-      display: block;
-      font-size: 0.65rem;
-      color: rgba(255, 255, 255, 0.5);
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-    .sheet-val {
-      font-size: 0.92rem;
-      font-weight: 600;
+      margin-bottom: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .sheet-amount-row {
+    .sheet-merchant, .sheet-card-info, .sheet-amount-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+    }
+
+    .sheet-amount-row {
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .sheet-amount-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.7);
+
+    .sheet-label {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.55);
+      letter-spacing: 0.04em;
+      font-weight: 600;
     }
+
+    .sheet-val {
+      font-size: 0.86rem;
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    .sheet-amount-label {
+      font-size: 0.82rem;
+      color: #FFFFFF;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
     .sheet-amount-val {
-      font-size: 1.25rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: #34D399;
     }
@@ -488,15 +473,18 @@ interface DueItem {
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 12px;
     }
+
     .btn-confirm-apple-pay {
       width: 100%;
-      padding: 14px;
-      border-radius: 999px;
+      padding: 14px 20px;
+      border-radius: 12px;
       background: #FFFFFF;
       color: #000000;
       border: none;
-      font-size: 0.95rem;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -569,6 +557,7 @@ interface DueItem {
 export class PaymentBoxesComponent {
   readonly project = input.required<PortalProjectDto>();
   private readonly toast = inject(ToastService);
+  protected readonly i18n = inject(PortalI18nService);
 
   protected readonly showApplePaySheet = signal(false);
   protected readonly isAuthorizing = signal(false);
@@ -591,7 +580,7 @@ export class PaymentBoxesComponent {
   protected readonly clientEmail = computed(() => {
     const p = this.project();
     if (/sissy/i.test(p.name)) return 'sissy@sissyhairstyle.it';
-    return 'cliente@official.it';
+    return 'client@official.com';
   });
 
   private calcDueDate(isMonthly: boolean, baseDateStr: string | null | undefined): string {
@@ -605,12 +594,13 @@ export class PaymentBoxesComponent {
       base = new Date(2026, 10, 30);
     }
 
+    const locale = this.i18n.isEn() ? 'en-US' : 'it-IT';
     if (isMonthly) {
       const nextMonth = new Date(base.getFullYear(), base.getMonth() + 1, base.getDate());
-      return nextMonth.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return nextMonth.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
-    return base.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return base.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   protected readonly totalWithVat = computed(() => {
@@ -629,7 +619,8 @@ export class PaymentBoxesComponent {
         subtotal = 1400.0;
       }
     }
-    return Number((subtotal * 1.22).toFixed(2));
+    const vatMultiplier = 1 + this.i18n.vatRate();
+    return Number((subtotal * vatMultiplier).toFixed(2));
   });
 
   protected readonly alreadyPaid = computed(() => {
@@ -657,13 +648,14 @@ export class PaymentBoxesComponent {
     const items = p.quoteItems as QuoteItem[] | undefined;
     const baseDeadline = p.paymentDeadline || p.deadline;
     let remainingPaid = this.alreadyPaid();
+    const vatMultiplier = 1 + this.i18n.vatRate();
 
     const billable: DueItem[] = [];
 
     if (items && items.length > 0) {
       for (const it of items) {
         if ((it.priceCents || 0) <= 0) continue;
-        const withVat = Number((((it.priceCents || 0) / 100) * 1.22).toFixed(2));
+        const withVat = Number((((it.priceCents || 0) / 100) * vatMultiplier).toFixed(2));
         billable.push({
           id: it.id,
           name: it.name,
@@ -679,7 +671,7 @@ export class PaymentBoxesComponent {
       if (rem > 0) {
         billable.push({
           id: 'default-due',
-          name: p.name || 'Saldo progetto',
+          name: p.name || (this.i18n.isEn() ? 'Project Balance' : 'Saldo progetto'),
           amount: rem,
           monthly: false,
           dueDate: this.calcDueDate(false, baseDeadline)
@@ -692,7 +684,6 @@ export class PaymentBoxesComponent {
     for (const it of billable) {
       if (remainingPaid >= it.amount) {
         remainingPaid = Number((remainingPaid - it.amount).toFixed(2));
-        // Voce completata: non compare in DA PAGARE
         continue;
       } else if (remainingPaid > 0) {
         const remAmount = Number((it.amount - remainingPaid).toFixed(2));
@@ -728,16 +719,16 @@ export class PaymentBoxesComponent {
       const newTotal = this.totalWithVat();
       this.localPaidOverride.set(newTotal);
       localStorage.setItem(`cf_paid_override_${this.project().id}`, String(newTotal));
-      this.toast.success(
-        `Pagamento Apple Pay di ${this.formatMoney(amountPaid)} € autorizzato con successo! Fattura SDI e quietanza inviate a childhood.friendship.official@gmail.com.`
-      );
+
+      const successMsg = this.i18n.isEn()
+        ? `Apple Pay payment of ${this.formatMoney(amountPaid)} authorized successfully! Commercial invoice and receipt sent to ${this.clientEmail()} and childhood.friendship.official@gmail.com.`
+        : `Pagamento Apple Pay di ${this.formatMoney(amountPaid)} autorizzato con successo! Fattura SDI e quietanza inviate a ${this.clientEmail()} e a childhood.friendship.official@gmail.com.`;
+
+      this.toast.success(successMsg);
     }, 1200);
   }
 
   protected formatMoney(val: number): string {
-    return val.toLocaleString('it-IT', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return this.i18n.formatMoney(val);
   }
 }
