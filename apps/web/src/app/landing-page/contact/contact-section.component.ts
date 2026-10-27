@@ -3,41 +3,13 @@ import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LEAD_SERVICES, type LeadService } from '@cf/shared/catalog';
 import { Api } from '../../core/api';
+import { PortalI18nService } from '../../core/portal-i18n.service';
 
 type SubmissionState = 'idle' | 'submitting' | 'success' | 'error';
 type StepId = 'service' | 'timing' | 'budget' | 'project' | 'who' | 'contact';
 
 interface Choice { readonly value: string; readonly label: string; readonly hint?: string; }
 
-const SERVICES: readonly Choice[] = [
-  { value: 'landing', label: 'Un sito o una landing page', hint: 'Presentarti e farti trovare' },
-  { value: 'webapp', label: 'Una web app o un gestionale', hint: 'Processi, aree riservate, dashboard' },
-  { value: 'mobile', label: 'Un’app mobile', hint: 'iOS e Android' },
-  { value: 'manutenzione', label: 'Seguire un progetto esistente', hint: 'Manutenzione ed evoluzione' },
-  { value: 'altro', label: 'Non lo so ancora', hint: 'Ne parliamo insieme' }
-];
-const TIMINGS: readonly Choice[] = [
-  { value: 'Prima possibile', label: 'Prima possibile' },
-  { value: 'Entro 1-3 mesi', label: 'Entro 1-3 mesi' },
-  { value: 'Più avanti', label: 'Più avanti, sto pianificando' },
-  { value: 'Sto esplorando', label: 'Sto solo esplorando' }
-];
-const BUDGETS: readonly Choice[] = [
-  { value: 'Fino a 500 €', label: 'Fino a 500 €' },
-  { value: '500 – 2.000 €', label: '500 – 2.000 €' },
-  { value: 'Oltre 2.000 €', label: 'Oltre 2.000 €' },
-  { value: 'Da definire', label: 'Da definire insieme' }
-];
-
-interface Step { readonly id: StepId; readonly title: string; readonly short: string; }
-const STEPS: readonly Step[] = [
-  { id: 'service', title: 'Cosa vuoi costruire?', short: 'Progetto' },
-  { id: 'timing', title: 'Quando ti servirebbe?', short: 'Tempi' },
-  { id: 'budget', title: 'Hai già un budget in mente?', short: 'Budget' },
-  { id: 'project', title: 'Raccontaci l’idea in due righe.', short: 'Idea' },
-  { id: 'who', title: 'Piacere! Come ti chiami?', short: 'Tu' },
-  { id: 'contact', title: 'Dove ti rispondiamo?', short: 'Contatti' }
-];
 const KEYS = 'ABCDE';
 
 interface Answers {
@@ -59,23 +31,29 @@ const EMPTY: Answers = { service: '', timing: '', budget: '', message: '', name:
   host: { '(document:keydown)': 'onKey($event)' }
 })
 export class ContactSectionComponent {
+  protected readonly i18n = inject(PortalI18nService);
   private readonly api = inject(Api);
   private readonly cdr = inject(ChangeDetectorRef);
-  protected readonly steps = STEPS;
+  protected readonly steps = computed(() => this.i18n.landing().contact.steps);
   protected readonly keys = KEYS;
-  protected readonly choices: Record<'service' | 'timing' | 'budget', readonly Choice[]> = { service: SERVICES, timing: TIMINGS, budget: BUDGETS };
+  protected readonly choices = computed<Record<'service' | 'timing' | 'budget', readonly Choice[]>>(() => ({
+    service: this.i18n.landing().contact.services,
+    timing: this.i18n.landing().contact.timings,
+    budget: this.i18n.landing().contact.budgets
+  }));
   protected readonly index = signal(0);
   protected readonly direction = signal<'fwd' | 'back'>('fwd');
-  protected readonly step = computed(() => STEPS[this.index()]);
+  protected readonly step = computed(() => this.steps()[this.index()]);
   /** Avanzamento della barra: la domanda corrente conta a metà. */
-  protected readonly progress = computed(() => this.submission() === 'success' ? 100 : Math.round((this.index() / STEPS.length) * 100));
+  protected readonly progress = computed(() => this.submission() === 'success' ? 100 : Math.round((this.index() / this.steps().length) * 100));
   protected readonly answers = signal<Answers>({ ...EMPTY });
   protected readonly error = signal('');
   protected readonly submission = signal<SubmissionState>('idle');
   protected readonly serverError = signal('');
   protected readonly summary = computed(() => {
     const a = this.answers();
-    return [SERVICES.find((s) => s.value === a.service)?.label, a.timing, a.budget].filter((x): x is string => !!x);
+    const serviceLabel = this.choices().service.find((s) => s.value === a.service)?.label;
+    return [serviceLabel, a.timing, a.budget].filter((x): x is string => !!x);
   });
   private readonly body = viewChild<ElementRef<HTMLElement>>('body');
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
@@ -87,7 +65,7 @@ export class ContactSectionComponent {
 
   protected value(e: Event): string { return (e.target as HTMLInputElement).value; }
 
-  protected list(key: 'service' | 'timing' | 'budget'): readonly Choice[] { return this.choices[key]; }
+  protected list(key: 'service' | 'timing' | 'budget'): readonly Choice[] { return this.choices()[key]; }
   protected isPicked(key: 'service' | 'timing' | 'budget', value: string): boolean { return this.answers()[key] === value; }
 
   /** Scelta rapida: seleziona e passa alla domanda dopo con un attimo di respiro. */
@@ -100,7 +78,7 @@ export class ContactSectionComponent {
   protected next(): void {
     const msg = this.validate(this.step().id);
     if (msg) { this.error.set(msg); return; }
-    if (this.index() === STEPS.length - 1) { void this.submit(); return; }
+    if (this.index() === this.steps().length - 1) { void this.submit(); return; }
     this.direction.set('fwd');
     this.index.update((i) => i + 1);
     this.focusStep();
@@ -142,7 +120,7 @@ export class ContactSectionComponent {
     const id = this.step().id;
     if ((id === 'service' || id === 'timing' || id === 'budget') && !typing) {
       const k = KEYS.indexOf(e.key.toUpperCase());
-      const list = this.choices[id];
+      const list = this.choices()[id];
       if (k >= 0 && k < list.length) { e.preventDefault(); this.pick(id, list[k].value); return; }
     }
     // Invio prosegue (nel testo lungo serve Ctrl/⌘ + Invio, quindi lì lo lasciamo andare a capo)
@@ -158,15 +136,18 @@ export class ContactSectionComponent {
 
   private validate(id: StepId): string {
     const a = this.answers();
+    const isEn = this.i18n.isEn();
     switch (id) {
-      case 'service': return a.service ? '' : 'Scegli un’opzione per continuare.';
-      case 'timing': return a.timing ? '' : 'Scegli un’opzione per continuare.';
-      case 'budget': return a.budget ? '' : 'Scegli un’opzione per continuare.';
-      case 'project': return a.message.trim().length >= 10 ? '' : 'Bastano un paio di frasi (almeno 10 caratteri).';
-      case 'who': return a.name.trim().length >= 2 ? '' : 'Dicci almeno il tuo nome.';
+      case 'service': return a.service ? '' : (isEn ? 'Please choose an option to continue.' : 'Scegli un’opzione per continuare.');
+      case 'timing': return a.timing ? '' : (isEn ? 'Please choose an option to continue.' : 'Scegli un’opzione per continuare.');
+      case 'budget': return a.budget ? '' : (isEn ? 'Please choose an option to continue.' : 'Scegli un’opzione per continuare.');
+      case 'project': return a.message.trim().length >= 10 ? '' : (isEn ? 'A couple of sentences will do (at least 10 characters).' : 'Bastano un paio di frasi (almeno 10 caratteri).');
+      case 'who': return a.name.trim().length >= 2 ? '' : (isEn ? 'Please tell us at least your name.' : 'Dicci almeno il tuo nome.');
       case 'contact':
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email.trim())) return 'Inserisci un’email valida.';
-        return a.privacy ? '' : 'Conferma di aver letto l\'informativa privacy per inviare la richiesta.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email.trim())) {
+          return isEn ? 'Please enter a valid email address.' : 'Inserisci un’email valida.';
+        }
+        return a.privacy ? '' : (isEn ? 'Please accept the privacy policy to submit your request.' : 'Conferma di aver letto l\'informativa privacy per inviare la richiesta.');
     }
   }
 
@@ -179,7 +160,7 @@ export class ContactSectionComponent {
     const a = this.answers();
     this.submission.set('submitting');
     this.serverError.set('');
-    const message = `${a.message.trim()}\n\n— Tempistiche: ${a.timing}\n— Budget: ${a.budget}`;
+    const message = `${a.message.trim()}\n\n— Tempistiche/Timeline: ${a.timing}\n— Budget: ${a.budget}`;
     try {
       await this.api.post('/public/leads', {
         name: a.name.trim(),
@@ -193,7 +174,7 @@ export class ContactSectionComponent {
       });
       this.submission.set('success');
     } catch (err) {
-      this.serverError.set(err instanceof Error ? err.message : 'Riprova tra poco.');
+      this.serverError.set(err instanceof Error ? err.message : (this.i18n.isEn() ? 'Please try again shortly.' : 'Riprova tra poco.'));
       this.submission.set('error');
     }
   }

@@ -1,18 +1,25 @@
 <header class="site-header">
-  <a class="brand" href="#top" aria-label="Childhood Friendship, torna all'inizio">
+  <a class="brand" href="#top" aria-label="Childhood Friendship">
     <cf-logo class="brand-mark" />
     <span class="brand-name">Childhood <strong>Friendship</strong></span>
   </a>
 
   <nav class="desktop-nav" aria-label="Navigazione principale">
-    <a href="#servizi">Cosa facciamo</a>
-    <a href="#chi-siamo">Chi siamo</a>
-    <a href="#metodo">Come lavoriamo</a>
-    <a href="#progetti">Progetti</a>
+    <a href="#servizi">{{ i18n.landing().header.services }}</a>
+    <a href="#chi-siamo">{{ i18n.landing().header.about }}</a>
+    <a href="#metodo">{{ i18n.landing().header.method }}</a>
+    <a href="#progetti">{{ i18n.landing().header.projects }}</a>
   </nav>
 
   <div class="header-actions">
-    <a class="header-login" href="/login">Area clienti</a>
-    <a class="header-cta" href="#contatti">Parliamone <span aria-hidden="true">↗</span></a>
+    <button type="button" class="lang-toggle-btn" (click)="i18n.toggle()" [attr.aria-label]="i18n.isEn() ? 'Switch to Italian (€)' : 'Switch to English ($)'">
+      @if (i18n.isEn()) {
+        <span>🇺🇸 EN ($)</span>
+      } @else {
+        <span>🇮🇹 IT (€)</span>
+      }
+    </button>
+    <a class="header-login" href="/login">{{ i18n.landing().header.portal }}</a>
+    <a class="header-cta" href="#contatti">{{ i18n.landing().header.cta }} <span aria-hidden="true">↗</span></a>
   </div>
 </header>

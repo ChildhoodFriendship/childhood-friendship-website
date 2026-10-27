@@ -39,7 +39,26 @@
   .header-cta { font-size: .7rem; }
 }
 
-.header-actions { align-items: center; display: flex; gap: 1.4rem; }
+.header-actions { align-items: center; display: flex; gap: 1.1rem; }
+.lang-toggle-btn {
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  color: var(--cf-chalk, #fff);
+  padding: 0.3rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+.lang-toggle-btn:hover {
+  background: rgba(124, 58, 237, 0.3);
+  border-color: #a78bfa;
+  transform: translateY(-1px);
+}
 .header-login { color: var(--cf-color-text-muted); font-size: .78rem; font-weight: 600; text-decoration: none; }
 .header-login:hover, .header-login:focus-visible { color: var(--cf-color-text); }
 @media (max-width: 480px) { .header-login { display: none; } }

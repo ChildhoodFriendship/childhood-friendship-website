@@ -1,16 +1,20 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { LANDING_TRANSLATIONS, type LandingTranslations } from './landing-i18n.data';
 
 export type PortalLang = 'it' | 'en';
 
 @Injectable({ providedIn: 'root' })
 export class PortalI18nService {
-  /** Lingua attiva nel portale clienti: 'it' (EUR €) o 'en' (USD $) */
+  /** Lingua attiva nel sito e nel portale: 'it' (EUR €) o 'en' (USD $) */
   readonly lang = signal<PortalLang>(this.detectInitialLang());
 
   readonly isEn = computed(() => this.lang() === 'en');
   readonly currencySymbol = computed(() => (this.isEn() ? '$' : '€'));
   readonly currencyCode = computed(() => (this.isEn() ? 'USD' : 'EUR'));
   readonly vatRate = computed(() => (this.isEn() ? 0 : 0.22));
+
+  /** Traduzioni reattive della landing page */
+  readonly landing = computed<LandingTranslations>(() => LANDING_TRANSLATIONS[this.lang()]);
 
   private detectInitialLang(): PortalLang {
     if (typeof window === 'undefined') return 'it';

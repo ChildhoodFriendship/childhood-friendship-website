@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CONTACTS } from '../contacts';
-
-const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
+import { PortalI18nService } from '../../core/portal-i18n.service';
 
 /**
  * Finale cinematografico. Con la scena 3D attiva la sezione viene fissata e guidata dallo scroll
@@ -13,24 +12,24 @@ const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
   template: `
     <section class="outro" id="finale" aria-labelledby="outro-title">
       <div class="stage">
-        <p class="kicker">Fine del nostro racconto. Inizio del tuo.</p>
-        <h2 id="outro-title" aria-label="Il prossimo lo costruiamo insieme.">
-          @for (line of lines; track $index) {
+        <p class="kicker">{{ i18n.landing().outro.kicker }}</p>
+        <h2 id="outro-title" [attr.aria-label]="i18n.landing().outro.ariaLabel">
+          @for (line of lines(); track $index) {
             <span class="line" aria-hidden="true">@for (w of line; track $index) {<span class="w">{{ w }}</span> }</span>
           }
         </h2>
       </div>
       <!-- contatti diretti: solo icone -->
-      <nav class="social" aria-label="Contatti diretti">
+      <nav class="social" [attr.aria-label]="i18n.landing().outro.directContacts">
         @if (contacts.email) {
-          <a class="ico" [href]="'mailto:' + contacts.email" aria-label="Scrivici una email" data-cursor="email">
+          <a class="ico" [href]="'mailto:' + contacts.email" [attr.aria-label]="i18n.isEn() ? 'Send us an email' : 'Scrivici una email'" data-cursor="email">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="3" /><path d="M4 7.5l8 6 8-6" /></svg>
           </a>
         }
-          <a class="ico" [href]="contacts.phone ? 'tel:' + phoneHref : '#contatti'" aria-label="Chiamaci" data-cursor="chiama">
+          <a class="ico" [href]="contacts.phone ? 'tel:' + phoneHref : '#contatti'" [attr.aria-label]="i18n.isEn() ? 'Call us' : 'Chiamaci'" [attr.data-cursor]="i18n.isEn() ? 'call' : 'chiama'">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.6 4.2-2 1.3a11.5 11.5 0 0 0 6.2 6.2l1.3-2 4.2 1.6v2.6a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" /></svg>
           </a>
-          <a class="ico" [href]="contacts.instagram ? 'https://instagram.com/' + contacts.instagram : '#contatti'" [attr.target]="contacts.instagram ? '_blank' : null" rel="noopener" aria-label="Seguici su Instagram" data-cursor="instagram">
+          <a class="ico" [href]="contacts.instagram ? 'https://instagram.com/' + contacts.instagram : '#contatti'" [attr.target]="contacts.instagram ? '_blank' : null" rel="noopener" [attr.aria-label]="i18n.isEn() ? 'Follow us on Instagram' : 'Seguici su Instagram'" data-cursor="instagram">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle class="dot" cx="17.2" cy="6.8" r="1" /></svg>
           </a>
       </nav>
@@ -67,7 +66,8 @@ const LINES = [['Il', 'prossimo'], ['lo', 'costruiamo'], ['insieme.']];
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OutroComponent {
+  protected readonly i18n = inject(PortalI18nService);
   protected readonly contacts = CONTACTS;
   protected readonly phoneHref = CONTACTS.phone.replace(/[^\d+]/g, '');
-  protected readonly lines = LINES;
+  protected readonly lines = computed(() => this.i18n.landing().outro.lines);
 }

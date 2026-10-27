@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject, viewChild, viewChildren } from '@angular/core';
 import { PointerService } from '../pointer.service';
+import { PortalI18nService } from '../../core/portal-i18n.service';
 
-const LINES = ['Costruiamo', 'esperienze.'];
 const RADIUS = 260;
 
 /**
@@ -15,9 +15,9 @@ const RADIUS = 260;
       <div class="glow" aria-hidden="true"></div>
       <div class="inner">
         <div class="copy">
-        <p class="kicker">Childhood Friendship, studio di sviluppo software</p>
-        <h1 id="hero-title" [attr.aria-label]="lines.join(' ')">
-          @for (line of lines; track line; let li = $index) {
+        <p class="kicker">{{ i18n.landing().hero.kicker }}</p>
+        <h1 id="hero-title" [attr.aria-label]="lines().join(' ')">
+          @for (line of lines(); track line; let li = $index) {
             <span class="line" aria-hidden="true">
               @for (ch of line.split(''); track $index) {
                 <span #ch class="ch" [style.animation-delay.ms]="li * 120 + $index * 28">{{ ch }}</span>
@@ -26,21 +26,22 @@ const RADIUS = 260;
           }
         </h1>
         <div class="foot">
-          <p class="lede">Siti, web app e app mobile su misura per aziende che vogliono farsi ricordare. Dall'idea al lancio, senza scorciatoie.</p>
-          <a class="cta" href="#contatti" data-cursor="scrivici">Parliamo del tuo progetto</a>
+          <p class="lede">{{ i18n.landing().hero.lede }}</p>
+          <a class="cta" href="#contatti" [attr.data-cursor]="i18n.isEn() ? 'write us' : 'scrivici'">{{ i18n.landing().hero.cta }}</a>
         </div>
         </div>
         <!-- spazio riservato al Builder 3D: la scena lo centra qui -->
         <div class="stage" id="hero-stage" aria-hidden="true"></div>
       </div>
-      <a class="scroll" href="#manifesto" aria-label="Scorri al manifesto"><span></span></a>
+      <a class="scroll" href="#manifesto" [attr.aria-label]="i18n.landing().hero.scrollAria"><span></span></a>
     </section>
   `,
   styleUrl: './hero.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroComponent {
-  protected readonly lines = LINES;
+  protected readonly i18n = inject(PortalI18nService);
+  protected readonly lines = computed(() => this.i18n.landing().hero.lines);
   private readonly pointer = inject(PointerService);
   private readonly section = viewChild.required<ElementRef<HTMLElement>>('section');
   private readonly chars = viewChildren<ElementRef<HTMLElement>>('ch');
@@ -64,6 +65,12 @@ export class HeroComponent {
       void document.fonts?.ready.then(() => setTimeout(measure, 1200));
       window.addEventListener('resize', measure);
       destroyRef.onDestroy(() => window.removeEventListener('resize', measure));
+    });
+
+    effect(() => {
+      // re-trigger measure on language change
+      this.lines();
+      setTimeout(measure, 100);
     });
 
     effect(() => {

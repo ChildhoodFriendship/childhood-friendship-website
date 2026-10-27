@@ -1,51 +1,20 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-
-interface Service {
-  readonly id: string;
-  readonly title: string;
-  readonly line: string;
-  readonly body: string;
-  readonly includes: readonly string[];
-  readonly from: string;
-}
-
-const SERVICES: readonly Service[] = [
-  {
-    id: 'siti', title: 'Siti web e landing page', line: 'Il primo incontro con il tuo brand. Deve lasciare il segno.',
-    body: 'Progettiamo e sviluppiamo siti veloci, leggibili e riconoscibili, pensati per trasformare una visita in un contatto.',
-    includes: ['Design su misura', 'SEO tecnica', 'Caricamento rapido', 'Form e misurazione'], from: 'da 400 €'
-  },
-  {
-    id: 'webapp', title: 'Web app', line: 'Gestionali, portali e piattaforme costruiti sui tuoi processi.',
-    body: 'Software che toglie lavoro invece di aggiungerne: dashboard, aree riservate, integrazioni con i sistemi che usi già.',
-    includes: ['Analisi dei processi', 'Area clienti e ruoli', 'Integrazioni API', 'Database e backup'], from: 'da 800 €'
-  },
-  {
-    id: 'mobile', title: 'App mobile', line: 'Nella tasca dei tuoi clienti, sempre pronta.',
-    body: 'App per iOS e Android con un solo codice: accesso utenti, notifiche e dati sincronizzati con il resto del tuo business.',
-    includes: ['iOS e Android', 'Login e profili', 'Notifiche push', 'Pubblicazione sugli store'], from: 'da 1.200 €'
-  },
-  {
-    id: 'cura', title: 'Cura e crescita', line: 'Il lancio è l\'inizio. Restiamo.',
-    body: 'Aggiornamenti, sicurezza, piccoli interventi e nuove funzioni quando servono. Un canone chiaro o interventi a chiamata.',
-    includes: ['Aggiornamenti e backup', 'Monitoraggio', 'Modifiche rapide', 'Report sullo stato'], from: 'da 20 € / mese'
-  }
-];
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { PortalI18nService } from '../../core/portal-i18n.service';
 
 @Component({
   selector: 'cf-services',
   template: `
     <section class="services" id="servizi" aria-labelledby="services-title">
       <header class="head">
-        <h2 id="services-title">Cosa costruiamo</h2>
-        <p>Quattro modi di lavorare insieme. Scegli da dove partire, al resto pensiamo noi.</p>
+        <h2 id="services-title">{{ i18n.landing().services.title }}</h2>
+        <p>{{ i18n.landing().services.subtitle }}</p>
       </header>
       <ul class="rows" (mouseleave)="hoverOut()">
-        @for (s of services; track s.id) {
+        @for (s of services(); track s.id) {
           @let isOpen = open() === s.id;
           <li class="row" [class.open]="isOpen">
             <button type="button" class="summary" (click)="toggle(s.id)" (mouseenter)="hoverIn(s.id)" [attr.aria-expanded]="isOpen" [attr.aria-controls]="'srv-' + s.id"
-              [attr.data-cursor]="isOpen ? 'chiudi' : 'apri'">
+              [attr.data-cursor]="isOpen ? (i18n.isEn() ? 'close' : 'chiudi') : (i18n.isEn() ? 'open' : 'apri')">
               <span class="title">{{ s.title }}</span>
               <span class="line">{{ s.line }}</span>
               <span class="plus" aria-hidden="true"></span>
@@ -54,20 +23,21 @@ const SERVICES: readonly Service[] = [
               <div class="detail-inner">
                 <p class="body">{{ s.body }}</p>
                 <ul class="incl">@for (i of s.includes; track i) { <li>{{ i }}</li> }</ul>
-                <div class="price"><span>{{ s.from }}</span><a href="#contatti">Chiedi un preventivo</a></div>
+                <div class="price"><span>{{ s.from }}</span><a href="#contatti">{{ i18n.landing().services.askQuote }}</a></div>
               </div>
             </div>
           </li>
         }
       </ul>
-      <p class="note">Hosting, dominio e servizi cloud sono esclusi dai prezzi: li scegliamo insieme e restano intestati a te.</p>
+      <p class="note">{{ i18n.landing().services.note }}</p>
     </section>
   `,
   styleUrl: './services.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServicesComponent {
-  protected readonly services = SERVICES;
+  protected readonly i18n = inject(PortalI18nService);
+  protected readonly services = computed(() => this.i18n.landing().services.items);
   /** All'arrivo sono tutte chiuse: si aprono al click o, col mouse, al passaggio. */
   protected readonly open = signal<string | null>(null);
   private byHover = false;

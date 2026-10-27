@@ -1,13 +1,6 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { ParticleText } from './particle-text';
-
-interface Fact { readonly k: string; readonly v: string; }
-
-const FACTS: readonly Fact[] = [
-  { k: 'Parli con chi costruisce', v: 'Nessun intermediario: ogni domanda arriva a chi progetta e scrive il codice.' },
-  { k: 'Un solo team, dall\'inizio alla fine', v: 'Strategia, design e sviluppo restano nelle stesse mani. Niente pezzi persi nei passaggi.' },
-  { k: 'Il lancio è solo l\'inizio', v: 'Misuriamo, correggiamo, miglioriamo. E restiamo a un messaggio di distanza.' }
-];
+import { PortalI18nService } from '../../core/portal-i18n.service';
 
 /** Chi siamo: titolo a due voci, testo a destra, tre righe di fatti sotto. Le righe si rivelano con lo scroll. */
 @Component({
@@ -16,23 +9,23 @@ const FACTS: readonly Fact[] = [
     <section class="about" id="chi-siamo" aria-labelledby="about-title">
       <div class="inner">
         <div class="head">
-          <p class="kicker"><span aria-hidden="true"></span>Chi siamo</p>
+          <p class="kicker"><span aria-hidden="true"></span>{{ i18n.landing().about.kicker }}</p>
           <div class="title" #area>
           <canvas #cvs class="fx" aria-hidden="true"></canvas>
           <h2 id="about-title" #title>
-            <span class="ln"><span>L'amicizia ci ha</span></span>
-            <span class="ln"><span>dato il nome.</span></span>
-            <span class="ln em"><span>La disciplina</span></span>
-            <span class="ln em"><span>ci definisce.</span></span>
+            <span class="ln"><span>{{ i18n.landing().about.titleL1 }}</span></span>
+            <span class="ln"><span>{{ i18n.landing().about.titleL2 }}</span></span>
+            <span class="ln em"><span>{{ i18n.landing().about.titleL3 }}</span></span>
+            <span class="ln em"><span>{{ i18n.landing().about.titleL4 }}</span></span>
           </h2>
           </div>
         </div>
         <div class="copy">
-          <p>Siamo amici da quando eravamo bambini. Abbiamo imparato a costruire cose insieme molto prima che diventasse un mestiere, e quel modo di lavorare non l'abbiamo più cambiato.</p>
-          <p>Oggi lo mettiamo al servizio delle aziende: pensiero strategico, design essenziale e ingegneria pragmatica, per trasformare obiettivi complessi in prodotti digitali chiari, utili e pronti a crescere.</p>
+          <p>{{ i18n.landing().about.copy1 }}</p>
+          <p>{{ i18n.landing().about.copy2 }}</p>
         </div>
         <ol class="facts" #factsList>
-          @for (f of facts; track f.k; let i = $index) {
+          @for (f of facts(); track f.k; let i = $index) {
             <li [style.--i]="i" [class.active]="i === activeFact()">
               <span class="n">0{{ i + 1 }}</span>
               <strong>{{ f.k }}</strong>
@@ -141,7 +134,8 @@ const FACTS: readonly Fact[] = [
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AboutComponent {
-  protected readonly facts = FACTS;
+  protected readonly i18n = inject(PortalI18nService);
+  protected readonly facts = computed(() => this.i18n.landing().about.facts);
   protected readonly activeFact = signal(0);
   private readonly area = viewChild.required<ElementRef<HTMLElement>>('area');
   private readonly title = viewChild.required<ElementRef<HTMLElement>>('title');

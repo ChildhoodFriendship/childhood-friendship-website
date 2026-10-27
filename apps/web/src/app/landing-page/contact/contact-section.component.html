@@ -2,13 +2,13 @@
   <div class="card">
     <aside class="intro">
       <div class="intro-header">
-        <p class="eyebrow"><span aria-hidden="true"></span>Hai un’idea?</p>
-        <a routerLink="/login" class="card-login-link">Accedi</a>
+        <p class="eyebrow"><span aria-hidden="true"></span>{{ i18n.landing().contact.eyebrow }}</p>
+        <a routerLink="/login" class="card-login-link">{{ i18n.landing().contact.login }}</a>
       </div>
-      <h2 id="contact-title">Diamo forma a qualcosa <em>che resta.</em></h2>
+      <h2 id="contact-title" [innerHTML]="i18n.landing().contact.title"></h2>
       @if (summary().length) {
-        <div class="summary" aria-label="Le tue risposte">
-          <p>Il tuo progetto</p>
+        <div class="summary" [attr.aria-label]="i18n.landing().contact.yourProject">
+          <p>{{ i18n.landing().contact.yourProject }}</p>
           <ul>@for (s of summary(); track s) { <li>{{ s }}</li> }</ul>
         </div>
       }
@@ -16,10 +16,10 @@
 
     <div class="quiz">
       <!-- avanzamento -->
-      <div class="q-progress" role="progressbar" aria-label="Avanzamento" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progress()">
+      <div class="q-progress" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progress()">
         <div class="track"><span class="fill" [style.width.%]="progress()"></span></div>
         <ol class="labels">
-          @for (s of steps; track s.id; let i = $index) {
+          @for (s of steps(); track s.id; let i = $index) {
             <li [class.done]="i < index() || submission() === 'success'" [class.current]="i === index() && submission() !== 'success'">
               <button type="button" (click)="goTo(i)" [disabled]="i >= index() || submission() === 'success'">{{ s.short }}</button>
             </li>
@@ -31,21 +31,17 @@
         <div class="done-screen" aria-live="polite">
           <div class="success-top-pill">
             <span class="pill-dot"></span>
-            RICHIESTA PRESA IN CARICO 🚀
+            {{ i18n.landing().contact.successPill }}
           </div>
-          <h3>Bomba, {{ answers().name.split(' ')[0] }}! Abbiamo tutto.</h3>
-          <p class="lead-subcopy">
-            Lorenzo e Mirko sono già al lavoro sulla tua idea. Presto riceverai un messaggio o un'email a <strong>{{ answers().email }}</strong>.
-          </p>
+          <h3>{{ i18n.landing().contact.successTitle(answers().name.split(' ')[0]) }}</h3>
+          <p class="lead-subcopy" [innerHTML]="i18n.landing().contact.successSubcopy(answers().email)"></p>
 
           <div class="portal-cta-box">
             <div class="portal-cta-text">
-              <p class="portal-cta-desc">
-                Abbiamo predisposto il tuo spazio per seguire il progetto in tempo reale, visualizzare il preventivo commerciale e chattare con noi.
-              </p>
+              <p class="portal-cta-desc">{{ i18n.landing().contact.successDesc }}</p>
             </div>
             <a class="btn-portal-entry" [routerLink]="['/login']" [queryParams]="{ email: answers().email, next: '/portale' }">
-              Crea o Accedi al tuo Account
+              {{ i18n.landing().contact.successCta }}
             </a>
           </div>
         </div>
@@ -54,7 +50,7 @@
           @for (k of [index()]; track k) {
             <fieldset class="step" [class.back]="direction() === 'back'" [attr.aria-describedby]="error() ? 'quiz-error' : null">
               <legend>
-                <span class="count">{{ index() + 1 }}<span>/{{ steps.length }}</span></span>
+                <span class="count">{{ index() + 1 }}<span>/{{ steps().length }}</span></span>
                 {{ step().title }}
               </legend>
 
@@ -64,29 +60,29 @@
                 @case ('budget') { <ng-container [ngTemplateOutlet]="pickList" [ngTemplateOutletContext]="{ key: 'budget' }" /> }
                 @case ('project') {
                   <label class="q-field">
-                    <span>Cosa deve fare, per chi, e cosa ti piacerebbe ottenere</span>
-                    <textarea rows="5" maxlength="4800" placeholder="Es. Un sito per il mio studio con prenotazione delle visite…"
+                    <span>{{ i18n.landing().contact.fieldProjectHint }}</span>
+                    <textarea rows="5" maxlength="4800" [placeholder]="i18n.landing().contact.fieldProjectPlaceholder"
                       [value]="answers().message" (input)="set('message', value($event))" (keydown)="onTextareaKey($event)"></textarea>
                   </label>
                 }
                 @case ('who') {
                   <div class="pair">
-                    <label class="q-field"><span>Nome e cognome *</span>
+                    <label class="q-field"><span>{{ i18n.landing().contact.fieldName }}</span>
                       <input type="text" autocomplete="name" maxlength="120" [value]="answers().name" (input)="set('name', value($event))"></label>
-                    <label class="q-field"><span>Azienda <small>(facoltativo)</small></span>
+                    <label class="q-field"><span>{{ i18n.landing().contact.fieldCompany }} <small>{{ i18n.landing().contact.fieldOptional }}</small></span>
                       <input type="text" autocomplete="organization" maxlength="200" [value]="answers().company" (input)="set('company', value($event))"></label>
                   </div>
                 }
                 @case ('contact') {
                   <div class="pair">
-                    <label class="q-field"><span>Email *</span>
+                    <label class="q-field"><span>{{ i18n.landing().contact.fieldEmail }}</span>
                       <input type="email" autocomplete="email" maxlength="254" [value]="answers().email" (input)="set('email', value($event))"></label>
-                    <label class="q-field"><span>Telefono <small>(facoltativo)</small></span>
+                    <label class="q-field"><span>{{ i18n.landing().contact.fieldPhone }} <small>{{ i18n.landing().contact.fieldOptional }}</small></span>
                       <input type="tel" autocomplete="tel" maxlength="40" [value]="answers().phone" (input)="set('phone', value($event))"></label>
                   </div>
                   <label class="consent">
                     <input type="checkbox" [checked]="answers().privacy" (change)="set('privacy', $any($event.target).checked)">
-                    <span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa privacy</a>: i miei dati servono solo a rispondermi e a prepararmi un preventivo.</span>
+                    <span [innerHTML]="i18n.landing().contact.privacyHtml"></span>
                   </label>
                   <input class="honeypot" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" [value]="answers().website" (input)="set('website', value($event))">
                 }
@@ -99,22 +95,22 @@
 
         <div class="nav">
           <button type="button" class="ghost" (click)="back()" [disabled]="index() === 0">
-            <span aria-hidden="true">←</span> Indietro
+            <span aria-hidden="true">←</span> {{ i18n.landing().contact.btnBack }}
           </button>
           <div class="nav-right">
             <span class="hint" aria-hidden="true">
               @switch (step().id) {
-                @case ('project') { Ctrl + Invio per proseguire }
-                @case ('service') { Premi A–E }
-                @case ('timing') { Premi A–D }
-                @case ('budget') { Premi A–D }
-                @default { Premi Invio ↵ }
+                @case ('project') { {{ i18n.landing().contact.hintProject }} }
+                @case ('service') { {{ i18n.landing().contact.hintKeys5 }} }
+                @case ('timing') { {{ i18n.landing().contact.hintKeys4 }} }
+                @case ('budget') { {{ i18n.landing().contact.hintKeys4 }} }
+                @default { {{ i18n.landing().contact.hintEnter }} }
               }
             </span>
             <button type="button" class="primary" (click)="next()" [disabled]="submission() === 'submitting'">
-              @if (index() === steps.length - 1) {
-                {{ submission() === 'submitting' ? 'Invio in corso…' : 'Invia la richiesta' }}
-              } @else { Avanti }
+              @if (index() === steps().length - 1) {
+                {{ submission() === 'submitting' ? i18n.landing().contact.btnSubmitting : i18n.landing().contact.btnSubmit }}
+              } @else { {{ i18n.landing().contact.btnNext }} }
               <span aria-hidden="true">→</span>
             </button>
           </div>
