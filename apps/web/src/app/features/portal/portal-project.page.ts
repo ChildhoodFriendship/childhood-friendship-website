@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal, viewChild } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import type { PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
@@ -38,18 +37,15 @@ interface SoldServiceModule {
 }
 
 /**
- * Portale Cliente Childhood Friendship — Redesign Mobile App Style
- * - Floating Bottom Dock con SOLO ICONE (Overview, Timeline, Documenti, Pagamenti)
- * - Vista 1: Overview (Stato, Live Preview, Obiettivi di Business, Prodotti/Servizi Venduti)
- * - Vista 2: Timeline (Milestone di progetto, avanzamento fasi, consegne stimate)
- * - Vista 3: Documenti (Contratto B2B firmabile con 1-click, file e materiali di progetto)
- * - Vista 4: Pagamenti (Gestione 2 Tranche, Apple Pay / Card checkout, Scontrino termico ufficiale)
- * - Chat fluttuante con lo studio sincronizzata in tempo reale
+ * Portale Cliente Childhood Friendship — Redesign Minimal & Mobile App Style
+ * - Floating Bottom Dock con 5 ICONE ESSENZIALI (Overview, Timeline, Documenti, Pagamenti, Chat)
+ * - Nessuna bolla fluttuante separata: la chat si apre direttamente dalla navbar
+ * - Rimosse scritte e sezioni ridondanti per la massima pulizia visiva
+ * - Viste minimali e spaziatura rifinita
  */
 @Component({
   selector: 'cf-portal-project-page',
   imports: [
-    DatePipe,
     MessagesThreadComponent,
     ProjectFilesComponent,
     PaymentBoxesComponent,
@@ -60,7 +56,7 @@ interface SoldServiceModule {
     <div class="page portal-container">
       @if (project(); as p) {
 
-        <!-- HEADER PRINCIPALE DEL PROGETTO -->
+        <!-- HEADER MINIMALE DEL PROGETTO -->
         <header class="project-header">
           <div class="header-badge-row">
             @if (isLive(p)) {
@@ -70,7 +66,7 @@ interface SoldServiceModule {
               </span>
               @if (p.targetUrl) {
                 <a class="btn-preview-primary" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   {{ i18n.isEn() ? 'Visit Live App ↗' : 'Visita il sito Live ↗' }}
                 </a>
               }
@@ -82,15 +78,9 @@ interface SoldServiceModule {
 
               @if (p.stagingUrl) {
                 <a class="btn-preview-primary" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" [title]="i18n.isEn() ? 'Open interactive staging preview' : 'Apri anteprima interattiva staging'">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
                   {{ i18n.isEn() ? 'Live Staging Preview ↗' : 'Anteprima Staging ↗' }}
                 </a>
-              }
-
-              @if (p.deadline) {
-                <span class="deadline-badge">
-                  🗓️ {{ i18n.isEn() ? 'Delivery' : 'Consegna' }}: {{ p.deadline | date: (i18n.isEn() ? 'MMMM d, y' : 'd MMMM y') }}
-                </span>
               }
             }
           </div>
@@ -111,7 +101,7 @@ interface SoldServiceModule {
             <section class="tab-view animate-fade-in" aria-labelledby="overview-heading">
               <h2 id="overview-heading" class="sr-only">{{ i18n.isEn() ? 'Project Overview' : 'Panoramica Progetto' }}</h2>
 
-              <!-- Hero Overview Cards -->
+              <!-- Metriche Essenziali -->
               <div class="overview-metrics-grid">
                 <div class="metric-card">
                   <div class="metric-icon-wrap">⚡</div>
@@ -124,7 +114,7 @@ interface SoldServiceModule {
                 <div class="metric-card">
                   <div class="metric-icon-wrap">🛡️</div>
                   <div class="metric-content">
-                    <span class="metric-label">{{ i18n.isEn() ? 'Studio Warranty' : 'Garanzia Studio' }}</span>
+                    <span class="metric-label">{{ i18n.isEn() ? 'Warranty' : 'Garanzia' }}</span>
                     <strong class="metric-val">{{ i18n.isEn() ? '30 Days Post-Launch' : '30 Giorni Inclusi' }}</strong>
                   </div>
                 </div>
@@ -132,35 +122,17 @@ interface SoldServiceModule {
                 <div class="metric-card">
                   <div class="metric-icon-wrap">☁️</div>
                   <div class="metric-content">
-                    <span class="metric-label">{{ i18n.isEn() ? 'Architecture' : 'Infrastruttura' }}</span>
-                    <strong class="metric-val">Vercel Edge & Neon Cloud</strong>
+                    <span class="metric-label">{{ i18n.isEn() ? 'Cloud Stack' : 'Infrastruttura' }}</span>
+                    <strong class="metric-val">Vercel Edge & Neon</strong>
                   </div>
                 </div>
               </div>
 
-              <!-- Quick Banner Action Anteprima -->
-              @if (p.stagingUrl) {
-                <div class="staging-hero-banner">
-                  <div class="staging-banner-info">
-                    <span class="staging-eyebrow">{{ i18n.isEn() ? 'PROTOTYPE PREVIEW READY' : 'ANTEPRIMA PROTOTIPO PRONTA' }}</span>
-                    <h3>{{ i18n.isEn() ? 'Explore the active build on staging environment' : 'Esplora il prototipo attivo nell’ambiente di staging' }}</h3>
-                    <p class="muted small">{{ p.stagingUrl }}</p>
-                  </div>
-                  <a class="btn-hero-launch" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer">
-                    <span>{{ i18n.isEn() ? 'Launch Live Preview' : 'Apri Anteprima Live' }}</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                  </a>
-                </div>
-              }
-
-              <!-- SEZIONE OBIETTIVI DI BUSINESS -->
+              <!-- SEZIONE OBIETTIVI (MINIMAL) -->
               <div class="section-block">
                 <div class="section-title-wrap">
                   <span class="section-icon">🎯</span>
-                  <div>
-                    <h3 class="section-title">{{ i18n.isEn() ? 'Project Targets & Objectives' : 'Obiettivi & Target di Business' }}</h3>
-                    <p class="section-subtitle">{{ i18n.isEn() ? 'Strategic milestones aligned with your operational ROI' : 'Indicatori chiave concordati per massimizzare il ritorno operativo' }}</p>
-                  </div>
+                  <h3 class="section-title">{{ i18n.isEn() ? 'Objectives' : 'Obiettivi' }}</h3>
                 </div>
 
                 <div class="objectives-grid">
@@ -170,7 +142,6 @@ interface SoldServiceModule {
                       <h4>{{ i18n.isEn() ? 'Zero Bounce 1-Tap Emergency Calling' : 'Chiamata Immediata 1-Tap Senza Rimbalzo' }}</h4>
                     </div>
                     <p>{{ i18n.isEn() ? 'Instant mobile dispatch trigger capturing high-intent lockouts without navigation hurdles.' : 'Inoltro telefonico immediato per convertire istantaneamente gli utenti in emergenza da smartphone.' }}</p>
-                    <span class="obj-kpi">{{ i18n.isEn() ? 'Conversion Target: > 35%' : 'Target Conversione: > 35%' }}</span>
                   </div>
 
                   <div class="objective-card">
@@ -179,7 +150,6 @@ interface SoldServiceModule {
                       <h4>{{ i18n.isEn() ? 'Instant Apple Pay Retainer Lock-in' : 'Incasso Acconto Istantaneo Apple Pay' }}</h4>
                     </div>
                     <p>{{ i18n.isEn() ? 'Secures customer booking deposit with biometric Face ID before technician dispatch.' : 'Blocca l’acconto con Face ID / Carta prima della partenza del tecnico, azzerando le uscite a vuoto.' }}</p>
-                    <span class="obj-kpi">{{ i18n.isEn() ? 'Zero No-Shows Target' : 'Azzeramento No-Show' }}</span>
                   </div>
 
                   <div class="objective-card">
@@ -188,7 +158,6 @@ interface SoldServiceModule {
                       <h4>{{ i18n.isEn() ? 'Sub-Second Edge Latency PWA' : 'Latenza Sub-Secondo & PWA Mobile' }}</h4>
                     </div>
                     <p>{{ i18n.isEn() ? 'Global edge caching ensuring near-instant load even under unstable 4G/5G mobile networks.' : 'Caching CDN edge globale per caricamento immediato anche su reti cellulari deboli.' }}</p>
-                    <span class="obj-kpi">{{ i18n.isEn() ? 'Target LCP: < 1.1s' : 'Target LCP: < 1.1s' }}</span>
                   </div>
 
                   <div class="objective-card">
@@ -197,7 +166,6 @@ interface SoldServiceModule {
                       <h4>{{ i18n.isEn() ? 'Local Authority & High Ticket Reach' : 'Dominio Locale Nevada & Alto Spreading' }}</h4>
                     </div>
                     <p>{{ i18n.isEn() ? 'Geotargeted schema markup positioning your service in high-ticket suburbs and commercial zones.' : 'Markup schema.org strutturato per presidiare i quartieri a maggior capacità di spesa.' }}</p>
-                    <span class="obj-kpi">{{ i18n.isEn() ? '100% Geo-Schema Index' : 'Indicizzazione Territoriale 100%' }}</span>
                   </div>
                 </div>
               </div>
@@ -206,10 +174,7 @@ interface SoldServiceModule {
               <div class="section-block">
                 <div class="section-title-wrap">
                   <span class="section-icon">📦</span>
-                  <div>
-                    <h3 class="section-title">{{ i18n.isEn() ? 'Commissioned Services & Modules' : 'Prodotti & Servizi Commissionati' }}</h3>
-                    <p class="section-subtitle">{{ i18n.isEn() ? 'Engineered modules included in your bespoke contract scope' : 'I moduli architetturali e i software inclusi nella fornitura' }}</p>
-                  </div>
+                  <h3 class="section-title">{{ i18n.isEn() ? 'Commissioned Services & Modules' : 'Prodotti & Servizi Commissionati' }}</h3>
                 </div>
 
                 <div class="services-grid">
@@ -224,7 +189,7 @@ interface SoldServiceModule {
                       <ul class="module-features">
                         @for (feat of (i18n.isEn() ? mod.featuresEn : mod.featuresIt); track feat) {
                           <li>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                             <span>{{ feat }}</span>
                           </li>
                         }
@@ -241,16 +206,12 @@ interface SoldServiceModule {
           <!-- ========================================== -->
           @if (activeTab() === 'timeline') {
             <section class="tab-view animate-fade-in" aria-labelledby="timeline-heading">
-              <div class="section-header-row">
-                <div>
-                  <h2 id="timeline-heading" class="section-title">{{ i18n.isEn() ? 'Project Roadmap & Milestones' : 'Roadmap & Milestone di Progetto' }}</h2>
-                  <p class="section-subtitle">{{ i18n.isEn() ? 'Real-time production pipeline from initial kick-off to official live deployment' : 'Avanzamento in tempo reale dalla pianificazione al rilascio ufficiale' }}</p>
-                </div>
-                <div class="progress-pill">
-                  <span class="progress-text">{{ i18n.isEn() ? 'Progress: 60%' : 'Avanzamento: 60%' }}</span>
-                  <div class="progress-bar-mini">
-                    <div class="progress-fill" style="width: 60%"></div>
-                  </div>
+              <h2 id="timeline-heading" class="sr-only">{{ i18n.isEn() ? 'Milestones' : 'Milestone' }}</h2>
+
+              <div class="timeline-top-bar">
+                <span class="progress-text">{{ i18n.isEn() ? 'Progress: 60%' : 'Avanzamento: 60%' }}</span>
+                <div class="progress-bar-mini">
+                  <div class="progress-fill" style="width: 60%"></div>
                 </div>
               </div>
 
@@ -261,7 +222,7 @@ interface SoldServiceModule {
                     <div class="timeline-marker-col">
                       <div class="timeline-marker">
                         @if (m.status === 'completed') {
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                         } @else if (m.status === 'in_progress') {
                           <span class="pulse-ring"></span>
                           <span class="marker-dot"></span>
@@ -288,7 +249,6 @@ interface SoldServiceModule {
                       <p class="step-desc">{{ i18n.isEn() ? m.descEn : m.descIt }}</p>
 
                       <div class="step-deliverables">
-                        <span class="deliverables-title">{{ i18n.isEn() ? 'Deliverables & Artifacts:' : 'Consegne & Risultati:' }}</span>
                         <ul>
                           @for (d of (i18n.isEn() ? m.deliverablesEn : m.deliverablesIt); track d) {
                             <li>
@@ -306,28 +266,33 @@ interface SoldServiceModule {
           }
 
           <!-- ========================================== -->
-          <!-- 3. VISTA DOCUMENTI (Contratto & File) -->
+          <!-- 3. VISTA DOCUMENTI (Fiscale, Contratto & File) -->
           <!-- ========================================== -->
           @if (activeTab() === 'documents') {
             <section class="tab-view animate-fade-in" aria-labelledby="documents-heading">
-              <div class="section-header-row">
-                <div>
-                  <h2 id="documents-heading" class="section-title">{{ i18n.isEn() ? 'Contracts & Project Assets' : 'Contratti & Materiali di Progetto' }}</h2>
-                  <p class="section-subtitle">{{ i18n.isEn() ? 'Official B2B agreement, digital signature audit, and shared project assets' : 'Contratto ufficiale B2B, audit firma digitale e file condivisi' }}</p>
-                </div>
+              <h2 id="documents-heading" class="sr-only">{{ i18n.isEn() ? 'Documents' : 'Documenti' }}</h2>
+
+              <!-- Documento Commerciale Fiscale B2B / Fattura Elettronica SDI -->
+              <div class="receipt-full-wrapper">
+                <cf-quote-receipt [project]="p" />
               </div>
 
-              <!-- Upload Quick Banner -->
+              <!-- Contratto Digitale B2B di Sviluppo Software -->
+              <div class="contract-container">
+                <cf-project-contract [project]="p" />
+              </div>
+
+              <!-- Materiali -->
               <div class="assets-quick-panel">
                 <div class="assets-panel-header">
                   <div class="row-center gap-sm">
                     <span class="panel-icon">📁</span>
-                    <h3 class="panel-title">{{ i18n.isEn() ? 'Your Brand & Media Assets' : 'Materiali & Media del Tuo Brand' }}</h3>
+                    <h3 class="panel-title">{{ i18n.isEn() ? 'Assets' : 'Materiali' }}</h3>
                   </div>
 
                   @if (!p.archivedAt) {
                     <label class="btn-upload-solid">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                       {{ i18n.isEn() ? '+ Upload File' : '+ Carica file' }}
                       <input
                         type="file"
@@ -349,34 +314,19 @@ interface SoldServiceModule {
                   />
                 </div>
               </div>
-
-              <!-- Contratto Digitale B2B di Sviluppo Software -->
-              <div class="contract-container">
-                <cf-project-contract [project]="p" />
-              </div>
             </section>
           }
 
           <!-- ========================================== -->
-          <!-- 4. VISTA PAGAMENTI (Scontrino & Tranche) -->
+          <!-- 4. VISTA PAGAMENTI (Tranche, Apple Pay & Stripe) -->
           <!-- ========================================== -->
           @if (activeTab() === 'payments') {
             <section class="tab-view animate-fade-in" aria-labelledby="payments-heading">
-              <div class="section-header-row">
-                <div>
-                  <h2 id="payments-heading" class="section-title">{{ i18n.isEn() ? 'Payments, Tranches & Invoice' : 'Pagamenti, Tranche & Fatturazione' }}</h2>
-                  <p class="section-subtitle">{{ i18n.isEn() ? 'Split payment schedule (50% Deposit / 50% Balance) and official commercial invoice' : 'Piano a 2 tranche (50% Acconto / 50% Saldo) e scontrino fiscale' }}</p>
-                </div>
-              </div>
+              <h2 id="payments-heading" class="sr-only">{{ i18n.isEn() ? 'Payments' : 'Pagamenti' }}</h2>
 
               <!-- Box Pagamenti Tranche e Apple Pay -->
               <div class="payments-stage-wrapper">
                 <cf-payment-boxes [project]="p" />
-              </div>
-
-              <!-- Scontrino Termico Dettagliato Fiscale -->
-              <div class="receipt-full-wrapper">
-                <cf-quote-receipt [project]="p" />
               </div>
             </section>
           }
@@ -392,8 +342,8 @@ interface SoldServiceModule {
             class="dock-btn"
             [class.active]="activeTab() === 'overview'"
             (click)="setTab('overview')"
-            [attr.aria-label]="i18n.isEn() ? 'Overview & Deliverables' : 'Panoramica & Servizi'"
-            [title]="i18n.isEn() ? 'Overview & Deliverables' : 'Panoramica & Servizi'">
+            [attr.aria-label]="i18n.isEn() ? 'Overview' : 'Panoramica'"
+            [title]="i18n.isEn() ? 'Overview' : 'Panoramica'">
             <!-- Icona 1: Overview / Grid -->
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -401,7 +351,6 @@ interface SoldServiceModule {
               <rect x="14" y="14" width="7" height="7" rx="1.5" />
               <rect x="3" y="14" width="7" height="7" rx="1.5" />
             </svg>
-            <span class="dock-indicator" aria-hidden="true"></span>
           </button>
 
           <button
@@ -417,7 +366,6 @@ interface SoldServiceModule {
               <circle cx="18" cy="18" r="3" />
               <path d="M6 9v3a3 3 0 0 0 3 3h6" />
             </svg>
-            <span class="dock-indicator" aria-hidden="true"></span>
           </button>
 
           <button
@@ -425,8 +373,8 @@ interface SoldServiceModule {
             class="dock-btn"
             [class.active]="activeTab() === 'documents'"
             (click)="setTab('documents')"
-            [attr.aria-label]="i18n.isEn() ? 'Contract & Files' : 'Contratto & File'"
-            [title]="i18n.isEn() ? 'Contract & Files' : 'Contratto & File'">
+            [attr.aria-label]="i18n.isEn() ? 'Documents & Files' : 'Documenti & File'"
+            [title]="i18n.isEn() ? 'Documents & Files' : 'Documenti & File'">
             <!-- Icona 3: Documenti / Contratto -->
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -435,7 +383,6 @@ interface SoldServiceModule {
               <line x1="16" y1="17" x2="8" y2="17" />
               <line x1="10" y1="9" x2="8" y2="9" />
             </svg>
-            <span class="dock-indicator" aria-hidden="true"></span>
           </button>
 
           <button
@@ -452,12 +399,24 @@ interface SoldServiceModule {
               <line x1="6" y1="15" x2="8" y2="15" />
               <line x1="11" y1="15" x2="15" y2="15" />
             </svg>
-            <span class="dock-indicator" aria-hidden="true"></span>
+          </button>
+
+          <!-- Icona 5: Chat con lo Studio integrata direttamente nella dock -->
+          <button
+            type="button"
+            class="dock-btn"
+            [class.active]="chatThread()?.isChatOpen()"
+            (click)="toggleChat()"
+            [attr.aria-label]="i18n.isEn() ? 'Chat with Studio' : 'Chat con lo studio'"
+            [title]="i18n.isEn() ? 'Chat with Studio' : 'Chat con lo studio'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+            </svg>
           </button>
         </nav>
 
-        <!-- FLOATING CHAT CON LO STUDIO -->
-        <cf-messages-thread [projectId]="p.id" [floating]="true" />
+        <!-- CHAT CON LO STUDIO (FAB NASCOSTO: APERTURA DALLA NAVBAR) -->
+        <cf-messages-thread [projectId]="p.id" [floating]="true" [hideFab]="true" />
 
       } @else if (error()) {
         <div class="alert alert-error">{{ error() }} · <a routerLink="/portale">Torna ai progetti</a></div>
@@ -477,33 +436,33 @@ interface SoldServiceModule {
     }
 
     .portal-container {
-      max-width: 1080px;
+      max-width: 980px;
       margin: 0 auto;
-      padding: 24px 20px 140px; /* Spazio sufficiente per non coprire il contenuto col dock in basso */
+      padding: 24px 20px 130px;
     }
 
     /* ----------------------------------------------------
-       PROJECT HEADER
+       PROJECT HEADER (MINIMAL)
        ---------------------------------------------------- */
     .project-header {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      margin-bottom: 32px;
-      gap: 14px;
+      margin-bottom: 28px;
+      gap: 12px;
     }
 
     .header-badge-row {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .project-title {
-      font-size: clamp(2rem, 4.5vw, 2.9rem);
+      font-size: clamp(1.85rem, 4vw, 2.6rem);
       font-weight: 800;
       letter-spacing: -0.03em;
       line-height: 1.15;
@@ -514,21 +473,21 @@ interface SoldServiceModule {
     }
 
     .project-tagline {
-      font-size: 1.05rem;
-      color: rgba(226, 232, 240, 0.8);
-      max-width: 680px;
+      font-size: 0.96rem;
+      color: rgba(226, 232, 240, 0.72);
+      max-width: 620px;
       margin: 0;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
     .tag-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 14px;
+      padding: 4px 12px;
       border-radius: 999px;
       font-family: 'DM Mono', monospace;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -549,34 +508,24 @@ interface SoldServiceModule {
     .btn-preview-primary {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
+      gap: 6px;
+      padding: 5px 14px;
       border-radius: 999px;
       background: linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(99, 102, 241, 0.35));
-      border: 1px solid rgba(167, 139, 250, 0.6);
+      border: 1px solid rgba(167, 139, 250, 0.55);
       color: #FFFFFF !important;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       text-decoration: none !important;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 18px rgba(124, 58, 237, 0.25);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.22);
     }
 
     .btn-preview-primary:hover {
       background: linear-gradient(135deg, rgba(124, 58, 237, 0.6), rgba(99, 102, 241, 0.6));
       border-color: #C4B5FD;
       transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(124, 58, 237, 0.4);
-    }
-
-    .deadline-badge {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
-      color: rgba(226, 232, 240, 0.85);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 4px 12px;
-      border-radius: 999px;
+      box-shadow: 0 6px 22px rgba(124, 58, 237, 0.4);
     }
 
     .dot {
@@ -601,41 +550,41 @@ interface SoldServiceModule {
     }
 
     .animate-fade-in {
-      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Overview Hero Metrics */
+    /* Overview Metriche */
     .overview-metrics-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
       margin-bottom: 24px;
     }
 
     .metric-card {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.07);
       backdrop-filter: blur(12px);
     }
 
     .metric-icon-wrap {
-      width: 44px;
-      height: 44px;
+      width: 38px;
+      height: 38px;
       display: grid;
       place-items: center;
-      font-size: 1.3rem;
+      font-size: 1.15rem;
       background: rgba(124, 58, 237, 0.14);
-      border: 1px solid rgba(167, 139, 250, 0.25);
-      border-radius: 12px;
+      border: 1px solid rgba(167, 139, 250, 0.22);
+      border-radius: 10px;
     }
 
     .metric-content {
@@ -645,121 +594,63 @@ interface SoldServiceModule {
     }
 
     .metric-label {
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: rgba(203, 213, 225, 0.7);
+      color: rgba(203, 213, 225, 0.65);
       font-weight: 600;
     }
 
     .metric-val {
-      font-size: 1.05rem;
+      font-size: 0.96rem;
       font-weight: 700;
       color: #FFFFFF;
-    }
-
-    /* Staging Hero Banner */
-    .staging-hero-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      padding: 24px 28px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, rgba(30, 24, 56, 0.8) 0%, rgba(18, 14, 34, 0.95) 100%);
-      border: 1px solid rgba(167, 139, 250, 0.35);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-    }
-
-    .staging-eyebrow {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      color: #A78BFA;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .staging-banner-info h3 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin: 0 0 6px 0;
-      color: #FFFFFF;
-    }
-
-    .btn-hero-launch {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 24px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #7C3AED, #6366F1);
-      color: #FFFFFF !important;
-      font-weight: 700;
-      font-size: 0.92rem;
-      text-decoration: none !important;
-      transition: all 0.25s ease;
-      box-shadow: 0 6px 24px rgba(124, 58, 237, 0.45);
-    }
-    .btn-hero-launch:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.65);
-      background: linear-gradient(135deg, #8B5CF6, #4F46E5);
     }
 
     /* Section Block Styles */
     .section-block {
-      margin-bottom: 40px;
+      margin-bottom: 34px;
     }
 
     .section-title-wrap {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
 
     .section-icon {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
     }
 
     .section-title {
-      font-size: 1.4rem;
+      font-size: 1.25rem;
       font-weight: 800;
       margin: 0;
       letter-spacing: -0.02em;
       color: #F8FAFC;
     }
 
-    .section-subtitle {
-      font-size: 0.88rem;
-      color: rgba(203, 213, 225, 0.75);
-      margin: 2px 0 0 0;
-    }
-
-    /* Objectives Grid */
+    /* Objectives Grid (Minimal) */
     .objectives-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
     }
 
     .objective-card {
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       transition: transform 0.2s, border-color 0.2s;
     }
     .objective-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(167, 139, 250, 0.4);
+      transform: translateY(-2px);
+      border-color: rgba(167, 139, 250, 0.35);
     }
 
     .obj-header {
@@ -769,60 +660,48 @@ interface SoldServiceModule {
     }
 
     .obj-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: #8B5CF6;
-      box-shadow: 0 0 8px #7C3AED;
+      box-shadow: 0 0 6px #7C3AED;
       flex: none;
     }
 
     .obj-header h4 {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       margin: 0;
       color: #FFFFFF;
     }
 
     .objective-card p {
-      font-size: 0.85rem;
-      color: rgba(226, 232, 240, 0.75);
-      line-height: 1.45;
+      font-size: 0.82rem;
+      color: rgba(226, 232, 240, 0.72);
+      line-height: 1.4;
       margin: 0;
-      flex-grow: 1;
-    }
-
-    .obj-kpi {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: #C4B5FD;
-      background: rgba(124, 58, 237, 0.15);
-      padding: 3px 8px;
-      border-radius: 6px;
-      align-self: flex-start;
     }
 
     /* Services Grid */
     .services-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
     }
 
     .service-module-card {
-      background: linear-gradient(180deg, rgba(22, 17, 38, 0.7) 0%, rgba(13, 10, 24, 0.8) 100%);
-      border: 1px solid rgba(167, 139, 250, 0.22);
-      border-radius: 18px;
-      padding: 24px;
+      background: linear-gradient(180deg, rgba(22, 17, 38, 0.6) 0%, rgba(13, 10, 24, 0.75) 100%);
+      border: 1px solid rgba(167, 139, 250, 0.18);
+      border-radius: 16px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       transition: all 0.2s ease;
     }
     .service-module-card:hover {
-      border-color: rgba(167, 139, 250, 0.5);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(124, 58, 237, 0.15);
+      border-color: rgba(167, 139, 250, 0.45);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     }
 
     .module-top {
@@ -832,22 +711,22 @@ interface SoldServiceModule {
     }
 
     .module-icon {
-      font-size: 1.8rem;
+      font-size: 1.5rem;
     }
 
     .module-badge {
       font-family: 'DM Mono', monospace;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 2px 7px;
+      border-radius: 5px;
       background: rgba(16, 185, 129, 0.16);
       color: #6EE7B7;
       border: 1px solid rgba(16, 185, 129, 0.35);
     }
 
     .module-title {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 700;
       color: #FFFFFF;
       margin: 0;
@@ -855,61 +734,55 @@ interface SoldServiceModule {
     }
 
     .module-desc {
-      font-size: 0.87rem;
-      color: rgba(226, 232, 240, 0.75);
-      line-height: 1.45;
+      font-size: 0.83rem;
+      color: rgba(226, 232, 240, 0.72);
+      line-height: 1.4;
       margin: 0;
     }
 
     .module-features {
       list-style: none;
       padding: 0;
-      margin: 8px 0 0 0;
+      margin: 6px 0 0 0;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
 
     .module-features li {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.82rem;
+      gap: 7px;
+      font-size: 0.78rem;
       color: #E2E8F0;
     }
 
     /* ----------------------------------------------------
        VISTA TIMELINE (Roadmap & Milestones)
        ---------------------------------------------------- */
-    .section-header-row {
+    .timeline-top-bar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
-
-    .progress-pill {
-      display: flex;
-      align-items: center;
+      justify-content: center;
       gap: 12px;
       padding: 8px 16px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      width: fit-content;
+      margin: 0 auto 24px;
     }
 
     .progress-text {
       font-family: 'DM Mono', monospace;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: #C4B5FD;
     }
 
     .progress-bar-mini {
-      width: 80px;
-      height: 8px;
+      width: 70px;
+      height: 6px;
       background: rgba(255, 255, 255, 0.15);
       border-radius: 999px;
       overflow: hidden;
@@ -925,13 +798,13 @@ interface SoldServiceModule {
       display: flex;
       flex-direction: column;
       gap: 0;
-      max-width: 840px;
+      max-width: 780px;
       margin: 0 auto;
     }
 
     .timeline-step {
       display: flex;
-      gap: 20px;
+      gap: 16px;
       position: relative;
     }
 
@@ -943,15 +816,15 @@ interface SoldServiceModule {
     }
 
     .timeline-marker {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: rgba(30, 24, 52, 0.9);
       border: 2px solid rgba(167, 139, 250, 0.3);
       display: grid;
       place-items: center;
       color: rgba(255, 255, 255, 0.6);
-      font-size: 0.82rem;
+      font-size: 0.76rem;
       font-weight: 700;
       z-index: 2;
       position: relative;
@@ -960,8 +833,8 @@ interface SoldServiceModule {
     .timeline-connector {
       width: 2px;
       flex-grow: 1;
-      background: rgba(255, 255, 255, 0.1);
-      margin: 6px 0;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 4px 0;
     }
     .timeline-step:last-child .timeline-connector {
       display: none;
@@ -971,7 +844,7 @@ interface SoldServiceModule {
       background: #10B981;
       border-color: #10B981;
       color: #FFFFFF;
-      box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.45);
     }
     .step-completed .timeline-connector {
       background: #10B981;
@@ -981,18 +854,18 @@ interface SoldServiceModule {
       background: #7C3AED;
       border-color: #C4B5FD;
       color: #FFFFFF;
-      box-shadow: 0 0 16px rgba(124, 58, 237, 0.7);
+      box-shadow: 0 0 14px rgba(124, 58, 237, 0.65);
     }
     .marker-dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #FFFFFF;
       z-index: 2;
     }
     .pulse-ring {
       position: absolute;
-      inset: -4px;
+      inset: -3px;
       border-radius: 50%;
       border: 2px solid #8B5CF6;
       animation: pulsePing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
@@ -1003,38 +876,38 @@ interface SoldServiceModule {
     }
 
     .timeline-card {
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 22px 24px;
-      margin-bottom: 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
       flex-grow: 1;
       backdrop-filter: blur(8px);
     }
 
     .step-active .timeline-card {
-      background: linear-gradient(135deg, rgba(35, 26, 62, 0.7) 0%, rgba(20, 15, 36, 0.8) 100%);
-      border-color: rgba(167, 139, 250, 0.45);
-      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.15);
+      background: linear-gradient(135deg, rgba(35, 26, 62, 0.6) 0%, rgba(20, 15, 36, 0.75) 100%);
+      border-color: rgba(167, 139, 250, 0.4);
+      box-shadow: 0 6px 24px rgba(124, 58, 237, 0.12);
     }
 
     .timeline-card-head {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .step-badge-wrap {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 6px;
+      gap: 10px;
+      margin-bottom: 4px;
     }
 
     .status-pill {
       font-family: 'DM Mono', monospace;
-      font-size: 0.68rem;
+      font-size: 0.66rem;
       font-weight: 800;
       letter-spacing: 0.06em;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       text-transform: uppercase;
     }
@@ -1047,44 +920,34 @@ interface SoldServiceModule {
       color: #DDD6FE;
     }
     .status-upcoming {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.07);
       color: rgba(255, 255, 255, 0.5);
     }
 
     .step-date {
-      font-size: 0.78rem;
-      color: rgba(226, 232, 240, 0.6);
+      font-size: 0.74rem;
+      color: rgba(226, 232, 240, 0.55);
       font-family: 'DM Mono', monospace;
     }
 
     .step-title {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: #FFFFFF;
       margin: 0;
     }
 
     .step-desc {
-      font-size: 0.88rem;
-      color: rgba(226, 232, 240, 0.8);
-      line-height: 1.45;
-      margin: 0 0 14px 0;
+      font-size: 0.84rem;
+      color: rgba(226, 232, 240, 0.75);
+      line-height: 1.4;
+      margin: 0 0 10px 0;
     }
 
     .step-deliverables {
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
-      padding: 12px 16px;
-    }
-
-    .deliverables-title {
-      font-size: 0.74rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #C4B5FD;
-      display: block;
-      margin-bottom: 6px;
+      border-radius: 10px;
+      padding: 10px 14px;
     }
 
     .step-deliverables ul {
@@ -1099,34 +962,34 @@ interface SoldServiceModule {
     .step-deliverables li {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.82rem;
+      gap: 7px;
+      font-size: 0.78rem;
       color: #CBD5E1;
     }
 
     .bullet-check {
       color: #10B981;
       font-weight: 800;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
 
     /* ----------------------------------------------------
        VISTA DOCUMENTI (Contratto & File)
        ---------------------------------------------------- */
     .assets-quick-panel {
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 24px;
-      margin-bottom: 32px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
     }
 
     .assets-panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 16px;
+      gap: 14px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
@@ -1134,11 +997,11 @@ interface SoldServiceModule {
       display: flex;
       align-items: center;
     }
-    .gap-sm { gap: 10px; }
+    .gap-sm { gap: 8px; }
 
-    .panel-icon { font-size: 1.4rem; }
+    .panel-icon { font-size: 1.25rem; }
     .panel-title {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 700;
       margin: 0;
       color: #FFFFFF;
@@ -1147,19 +1010,19 @@ interface SoldServiceModule {
     .btn-upload-solid {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 18px;
+      gap: 6px;
+      padding: 6px 14px;
       border-radius: 999px;
-      background: rgba(124, 58, 237, 0.25);
-      border: 1px solid rgba(167, 139, 250, 0.5);
+      background: rgba(124, 58, 237, 0.22);
+      border: 1px solid rgba(167, 139, 250, 0.45);
       color: #DDD6FE;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
     }
     .btn-upload-solid:hover {
-      background: rgba(124, 58, 237, 0.45);
+      background: rgba(124, 58, 237, 0.4);
       border-color: #C4B5FD;
       color: #FFFFFF;
     }
@@ -1171,48 +1034,48 @@ interface SoldServiceModule {
        VISTA PAGAMENTI
        ---------------------------------------------------- */
     .payments-stage-wrapper {
-      margin-bottom: 36px;
+      margin-bottom: 28px;
     }
 
     .receipt-full-wrapper {
       display: flex;
       justify-content: center;
-      margin: 0 auto;
-      max-width: 480px;
+      margin: 0 auto 32px auto;
+      max-width: 460px;
     }
 
     /* ----------------------------------------------------
-       FLOATING BOTTOM DOCK: MOBILE APP STYLE (SOLO ICONE)
+       FLOATING BOTTOM DOCK: 5 ICONE ESSENZIALI
        ---------------------------------------------------- */
     .bottom-dock {
       position: fixed;
-      bottom: 22px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 90;
+      z-index: 100;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      background: rgba(13, 10, 22, 0.88);
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(13, 10, 22, 0.92);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(167, 139, 250, 0.28);
+      border: 1px solid rgba(167, 139, 250, 0.25);
       border-radius: 999px;
-      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8),
-                  0 0 25px rgba(124, 58, 237, 0.25);
+      box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.8),
+                  0 0 22px rgba(124, 58, 237, 0.22);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .bottom-dock:hover {
-      border-color: rgba(167, 139, 250, 0.45);
-      box-shadow: 0 18px 46px -8px rgba(0, 0, 0, 0.85),
-                  0 0 30px rgba(124, 58, 237, 0.35);
+      border-color: rgba(167, 139, 250, 0.4);
+      box-shadow: 0 18px 42px -6px rgba(0, 0, 0, 0.85),
+                  0 0 28px rgba(124, 58, 237, 0.3);
     }
 
     .dock-btn {
-      width: 50px;
-      height: 50px;
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
       border-radius: 50%;
@@ -1221,14 +1084,14 @@ interface SoldServiceModule {
       border: none;
       cursor: pointer;
       position: relative;
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       outline: none;
     }
 
     .dock-btn svg {
-      width: 22px;
-      height: 22px;
-      transition: transform 0.2s ease, stroke 0.2s ease;
+      width: 20px;
+      height: 20px;
+      transition: transform 0.2s ease;
     }
 
     .dock-btn:hover {
@@ -1238,32 +1101,21 @@ interface SoldServiceModule {
     }
 
     .dock-btn:hover svg {
-      transform: scale(1.1);
+      transform: scale(1.08);
     }
 
     .dock-btn.active {
       color: #FFFFFF;
       background: linear-gradient(135deg, #7C3AED, #6366F1);
-      box-shadow: 0 4px 18px rgba(124, 58, 237, 0.6);
-      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.55);
+      transform: translateY(-2px);
     }
 
-    .dock-indicator {
-      position: absolute;
-      bottom: -4px;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #C4B5FD;
-      box-shadow: 0 0 8px #8B5CF6;
-      opacity: 0;
-      transform: scale(0);
-      transition: all 0.2s ease;
-    }
-
-    .dock-btn.active .dock-indicator {
-      opacity: 1;
-      transform: scale(1);
+    /* Posizionamento chat window sopra la navbar senza sovrapposizioni */
+    :host ::ng-deep .floating-chat-window {
+      bottom: 84px !important;
+      right: 24px !important;
+      z-index: 1000 !important;
     }
 
     /* Screen Reader helper */
@@ -1279,45 +1131,27 @@ interface SoldServiceModule {
       border-width: 0;
     }
 
-    /* Evita sovrapposizione tra floating chat e bottom dock */
-    :host ::ng-deep .floating-chat-fab {
-      bottom: 88px !important;
-      right: 20px !important;
-    }
-    :host ::ng-deep .floating-chat-window {
-      bottom: 154px !important;
-      right: 20px !important;
-    }
-
     @media (max-width: 768px) {
       .portal-container {
-        padding: 16px 14px 130px;
-      }
-      :host ::ng-deep .floating-chat-fab {
-        bottom: 82px !important;
-        right: 14px !important;
-      }
-      :host ::ng-deep .floating-chat-window {
-        bottom: 144px !important;
-        right: 12px !important;
-        left: 12px !important;
+        padding: 16px 14px 110px;
       }
       .bottom-dock {
-        bottom: 16px;
-        padding: 6px 10px;
-        gap: 6px;
+        bottom: 14px;
+        padding: 5px 8px;
+        gap: 5px;
       }
       .dock-btn {
-        width: 46px;
-        height: 46px;
+        width: 42px;
+        height: 42px;
       }
       .dock-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 19px;
+        height: 19px;
       }
-      .staging-hero-banner {
-        flex-direction: column;
-        align-items: flex-start;
+      :host ::ng-deep .floating-chat-window {
+        bottom: 74px !important;
+        right: 12px !important;
+        left: 12px !important;
       }
     }
   `,
@@ -1332,6 +1166,7 @@ export class PortalProjectPage {
   protected readonly error = signal<string | null>(null);
   protected readonly activeTab = signal<PortalTab>('overview');
   protected readonly filesComponent = viewChild(ProjectFilesComponent);
+  protected readonly chatThread = viewChild(MessagesThreadComponent);
 
   /** Servizi e moduli architetturali concordati */
   protected readonly serviceModules: SoldServiceModule[] = [
@@ -1469,6 +1304,10 @@ export class PortalProjectPage {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  toggleChat(): void {
+    this.chatThread()?.toggleChat();
   }
 
   protected onPortalUploadPicked(e: Event): void {

@@ -28,23 +28,25 @@ interface ParsedMessage {
   imports: [DatePipe, FormsModule],
   template: `
     @if (floating()) {
-      <!-- FLOATING ACTION BUTTON FISSO IN BASSO A DESTRA -->
-      <button
-        type="button"
-        class="floating-chat-fab"
-        [class.is-open]="isOpen()"
-        (click)="toggleOpen()"
-        aria-label="Apri o chiudi chat con lo studio"
-        title="Chat con lo studio">
-        @if (!isOpen()) {
-          <span class="fab-icon">💬</span>
-          @if (unreadCount() > 0) {
-            <span class="unread-pill">{{ unreadCount() }}</span>
+      <!-- FLOATING ACTION BUTTON FISSO IN BASSO A DESTRA (se non nascosto) -->
+      @if (!hideFab()) {
+        <button
+          type="button"
+          class="floating-chat-fab"
+          [class.is-open]="isOpen()"
+          (click)="toggleOpen()"
+          aria-label="Apri o chiudi chat con lo studio"
+          title="Chat con lo studio">
+          @if (!isOpen()) {
+            <span class="fab-icon">💬</span>
+            @if (unreadCount() > 0) {
+              <span class="unread-pill">{{ unreadCount() }}</span>
+            }
+          } @else {
+            <span class="fab-icon-close">✕</span>
           }
-        } @else {
-          <span class="fab-icon-close">✕</span>
-        }
-      </button>
+        </button>
+      }
 
       <!-- FINESTRA FLUTTUANTE CHAT A COMPARSA -->
       @if (isOpen()) {
@@ -685,6 +687,7 @@ interface ParsedMessage {
 export class MessagesThreadComponent {
   readonly projectId = input.required<string>();
   readonly floating = input(false);
+  readonly hideFab = input(false);
   private readonly api = inject(Api);
   private readonly toast = inject(ToastService);
   protected readonly me = inject(AuthService).user;
@@ -721,6 +724,14 @@ export class MessagesThreadComponent {
     this.isOpen.set(true);
     this.unreadCount.set(0);
     setTimeout(() => this.scrollToEnd(), 100);
+  }
+
+  public toggleChat(): void {
+    this.toggleOpen();
+  }
+
+  public isChatOpen(): boolean {
+    return this.isOpen();
   }
 
   private async load(projectId: string, silent = false): Promise<void> {
