@@ -3,7 +3,18 @@ import type { Env } from '../config/env.js';
 import type { Database } from '../db/client.js';
 import { users } from '../db/schema.js';
 
-export interface MailMessage { to: string[]; subject: string; text: string; html: string; }
+export interface MailAttachment {
+  filename: string;
+  content: string;
+}
+
+export interface MailMessage {
+  to: string[];
+  subject: string;
+  text: string;
+  html: string;
+  attachments?: MailAttachment[];
+}
 
 /** Invio email: implementazione reale (Resend) in produzione, finta nei test. */
 export interface Mailer { send(msg: MailMessage): Promise<boolean>; }
@@ -17,13 +28,29 @@ export function createMailer(env: Env): Mailer | null {
   return {
     async send(msg) {
       try {
+        const payload: Record<string, unknown> = {
+          from: env.MAIL_FROM,
+          to: msg.to,
+          subject: msg.subject,
+          text: msg.text,
+          html: msg.html
+        };
+        if (msg.attachments && msg.attachments.length > 0) {
+          payload.attachments = msg.attachments.map((att) => ({
+            filename: att.filename,
+            content: Buffer.from(att.content).toString('base64')
+          }));
+        }
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from: env.MAIL_FROM, to: msg.to, subject: msg.subject, text: msg.text, html: msg.html }),
+          body: JSON.stringify(payload),
           signal: AbortSignal.timeout(5000)
         });
-        if (!res.ok) console.error('[mail] Resend ha risposto', res.status);
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          console.error('[mail] Resend ha risposto', res.status, errText);
+        }
         return res.ok;
       } catch (err) {
         console.error('[mail] invio fallito', (err as Error).name);
