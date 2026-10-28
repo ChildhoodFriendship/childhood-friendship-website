@@ -109,20 +109,22 @@ interface SoldServiceModule {
                 <div class="objectives-grid">
                   @for (obj of objectives; track obj.titleIt; let idx = $index) {
                     <div class="objective-card">
-                      <div class="obj-header">
-                        <span class="obj-number">0{{ idx + 1 }}</span>
-                        <h4>{{ i18n.isEn() ? obj.titleEn : obj.titleIt }}</h4>
+                      <div class="obj-num-col">
+                        <span class="obj-big-number">0{{ idx + 1 }}</span>
                       </div>
-                      <p>{{ i18n.isEn() ? obj.descEn : obj.descIt }}</p>
+                      <div class="obj-content-col">
+                        <h4 class="obj-title">{{ i18n.isEn() ? obj.titleEn : obj.titleIt }}</h4>
+                        <p class="obj-desc">{{ i18n.isEn() ? obj.descEn : obj.descIt }}</p>
+                      </div>
                     </div>
                   }
                 </div>
               </div>
 
-              <!-- SEZIONE PRODOTTI E SERVIZI VENDUTI -->
+              <!-- SEZIONE PRODOTTI (MINIMAL) -->
               <div class="section-block">
                 <div class="section-title-wrap">
-                  <h3 class="section-title">{{ i18n.isEn() ? 'Commissioned Services & Modules' : 'Prodotti & Servizi Commissionati' }}</h3>
+                  <h3 class="section-title">{{ i18n.isEn() ? 'Products' : 'Prodotti' }}</h3>
                 </div>
 
                 <div class="services-grid">
@@ -196,7 +198,7 @@ interface SoldServiceModule {
                             </span>
                             <span class="step-date">{{ i18n.isEn() ? m.dateEn : m.dateIt }}</span>
                           </div>
-                          <h3 class="step-title">Phase {{ m.number }}: {{ i18n.isEn() ? m.titleEn : m.titleIt }}</h3>
+                          <h3 class="step-title">{{ i18n.isEn() ? 'Phase ' + m.number : 'Fase ' + m.number }}: {{ i18n.isEn() ? m.titleEn : m.titleIt }}</h3>
                         </div>
 
                         @if (m.status === 'completed') {
@@ -539,11 +541,11 @@ interface SoldServiceModule {
     }
 
     .animate-fade-in {
-      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: fadeIn 0.2s ease-out;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: none; }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     /* Section Block Styles */
@@ -576,7 +578,7 @@ interface SoldServiceModule {
     /* Objectives Grid (Minimal) */
     .objectives-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 14px;
     }
 
@@ -584,10 +586,11 @@ interface SoldServiceModule {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 14px;
-      padding: 16px 18px;
+      padding: 18px 20px;
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 16px;
       transition: transform 0.2s, border-color 0.2s;
     }
     .objective-card:hover {
@@ -595,36 +598,41 @@ interface SoldServiceModule {
       border-color: rgba(167, 139, 250, 0.35);
     }
 
-    .obj-header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      text-align: center;
-    }
-
-    .obj-number {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.72rem;
-      font-weight: 800;
-      color: #A78BFA;
-      background: rgba(124, 58, 237, 0.16);
-      border: 1px solid rgba(167, 139, 250, 0.35);
-      border-radius: 6px;
-      padding: 2px 7px;
+    .obj-num-col {
       flex: none;
+      display: flex;
+      align-items: flex-start;
+      padding-top: 2px;
     }
 
-    .obj-header h4 {
-      font-size: 0.95rem;
+    .obj-big-number {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #A78BFA;
+      opacity: 0.95;
+      text-shadow: 0 0 16px rgba(167, 139, 250, 0.35);
+    }
+
+    .obj-content-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .obj-title {
+      font-size: 0.98rem;
       font-weight: 700;
       margin: 0;
       color: #FFFFFF;
-      text-align: center;
-      line-height: 1.3;
+      text-align: left;
+      line-height: 1.35;
     }
 
-    .objective-card p {
+    .obj-desc {
       font-size: 0.82rem;
       color: rgba(226, 232, 240, 0.72);
       line-height: 1.45;
@@ -659,8 +667,8 @@ interface SoldServiceModule {
       font-weight: 700;
       color: #FFFFFF;
       margin: 0;
-      line-height: 1.3;
-      text-align: center;
+      line-height: 1.35;
+      text-align: left;
     }
 
     .module-desc {

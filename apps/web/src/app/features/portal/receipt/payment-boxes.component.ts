@@ -549,10 +549,17 @@ interface DueItem {
     /* Modal Apple Pay Sheet */
     .apple-pay-backdrop {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(10px);
-      z-index: 9999;
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 99999;
       display: flex;
       justify-content: center;
       align-items: flex-end;
@@ -568,12 +575,14 @@ interface DueItem {
       width: 100%;
       max-width: 480px;
       max-height: 85vh;
+      max-height: 85dvh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       background: #1C1C1E;
       border-radius: 24px 24px 0 0;
-      padding: 16px 20px 32px;
+      padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 16px));
       box-sizing: border-box;
-      box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.85);
       border-top: 1px solid rgba(255, 255, 255, 0.15);
       animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
