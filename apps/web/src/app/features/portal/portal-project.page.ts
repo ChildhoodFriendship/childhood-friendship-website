@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import type { PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
@@ -25,11 +25,11 @@ interface ProjectMilestone {
 }
 
 interface SoldServiceModule {
-  icon: string;
+  icon?: string;
   titleEn: string;
   titleIt: string;
-  badgeEn: string;
-  badgeIt: string;
+  badgeEn?: string;
+  badgeIt?: string;
   descEn: string;
   descIt: string;
   featuresEn: string[];
@@ -107,37 +107,15 @@ interface SoldServiceModule {
                 </div>
 
                 <div class="objectives-grid">
-                  <div class="objective-card">
-                    <div class="obj-header">
-                      <span class="obj-dot"></span>
-                      <h4>{{ i18n.isEn() ? 'Zero Bounce 1-Tap Emergency Calling' : 'Chiamata Immediata 1-Tap Senza Rimbalzo' }}</h4>
+                  @for (obj of objectives; track obj.titleIt; let idx = $index) {
+                    <div class="objective-card">
+                      <div class="obj-header">
+                        <span class="obj-number">0{{ idx + 1 }}</span>
+                        <h4>{{ i18n.isEn() ? obj.titleEn : obj.titleIt }}</h4>
+                      </div>
+                      <p>{{ i18n.isEn() ? obj.descEn : obj.descIt }}</p>
                     </div>
-                    <p>{{ i18n.isEn() ? 'Instant mobile dispatch trigger capturing high-intent lockouts without navigation hurdles.' : 'Inoltro telefonico immediato per convertire istantaneamente gli utenti in emergenza da smartphone.' }}</p>
-                  </div>
-
-                  <div class="objective-card">
-                    <div class="obj-header">
-                      <span class="obj-dot"></span>
-                      <h4>{{ i18n.isEn() ? 'Instant Apple Pay Retainer Lock-in' : 'Incasso Acconto Istantaneo Apple Pay' }}</h4>
-                    </div>
-                    <p>{{ i18n.isEn() ? 'Secures customer booking deposit with biometric Face ID before technician dispatch.' : 'Blocca l’acconto con Face ID / Carta prima della partenza del tecnico, azzerando le uscite a vuoto.' }}</p>
-                  </div>
-
-                  <div class="objective-card">
-                    <div class="obj-header">
-                      <span class="obj-dot"></span>
-                      <h4>{{ i18n.isEn() ? 'Sub-Second Edge Latency PWA' : 'Latenza Sub-Secondo & PWA Mobile' }}</h4>
-                    </div>
-                    <p>{{ i18n.isEn() ? 'Global edge caching ensuring near-instant load even under unstable 4G/5G mobile networks.' : 'Caching CDN edge globale per caricamento immediato anche su reti cellulari deboli.' }}</p>
-                  </div>
-
-                  <div class="objective-card">
-                    <div class="obj-header">
-                      <span class="obj-dot"></span>
-                      <h4>{{ i18n.isEn() ? 'Local Authority & High Ticket Reach' : 'Dominio Locale Nevada & Alto Spreading' }}</h4>
-                    </div>
-                    <p>{{ i18n.isEn() ? 'Geotargeted schema markup positioning your service in high-ticket suburbs and commercial zones.' : 'Markup schema.org strutturato per presidiare i quartieri a maggior capacità di spesa.' }}</p>
-                  </div>
+                  }
                 </div>
               </div>
 
@@ -148,12 +126,8 @@ interface SoldServiceModule {
                 </div>
 
                 <div class="services-grid">
-                  @for (mod of serviceModules; track mod.titleEn) {
+                  @for (mod of serviceModules(); track mod.titleEn) {
                     <div class="service-module-card">
-                      <div class="module-top">
-                        <span class="module-icon">{{ mod.icon }}</span>
-                        <span class="module-badge">{{ i18n.isEn() ? mod.badgeEn : mod.badgeIt }}</span>
-                      </div>
                       <h4 class="module-title">{{ i18n.isEn() ? mod.titleEn : mod.titleIt }}</h4>
                       <p class="module-desc">{{ i18n.isEn() ? mod.descEn : mod.descIt }}</p>
                       <ul class="module-features">
@@ -613,9 +587,7 @@ interface SoldServiceModule {
       padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 8px;
+      gap: 10px;
       transition: transform 0.2s, border-color 0.2s;
     }
     .objective-card:hover {
@@ -627,15 +599,19 @@ interface SoldServiceModule {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 9px;
+      text-align: center;
     }
 
-    .obj-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #8B5CF6;
-      box-shadow: 0 0 6px #7C3AED;
+    .obj-number {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #A78BFA;
+      background: rgba(124, 58, 237, 0.16);
+      border: 1px solid rgba(167, 139, 250, 0.35);
+      border-radius: 6px;
+      padding: 2px 7px;
       flex: none;
     }
 
@@ -644,13 +620,16 @@ interface SoldServiceModule {
       font-weight: 700;
       margin: 0;
       color: #FFFFFF;
+      text-align: center;
+      line-height: 1.3;
     }
 
     .objective-card p {
       font-size: 0.82rem;
       color: rgba(226, 232, 240, 0.72);
-      line-height: 1.4;
+      line-height: 1.45;
       margin: 0;
+      text-align: left;
     }
 
     /* Services Grid */
@@ -667,37 +646,12 @@ interface SoldServiceModule {
       padding: 20px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 10px;
+      gap: 12px;
       transition: all 0.2s ease;
     }
     .service-module-card:hover {
       border-color: rgba(167, 139, 250, 0.45);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    }
-
-    .module-top {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-    }
-
-    .module-icon {
-      font-size: 1.5rem;
-    }
-
-    .module-badge {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 5px;
-      background: rgba(16, 185, 129, 0.16);
-      color: #6EE7B7;
-      border: 1px solid rgba(16, 185, 129, 0.35);
     }
 
     .module-title {
@@ -712,27 +666,32 @@ interface SoldServiceModule {
     .module-desc {
       font-size: 0.83rem;
       color: rgba(226, 232, 240, 0.72);
-      line-height: 1.4;
+      line-height: 1.45;
       margin: 0;
-      text-align: center;
+      text-align: left;
     }
 
     .module-features {
       list-style: none;
       padding: 0;
-      margin: 6px 0 0 0;
+      margin: 4px 0 0 0;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 5px;
+      gap: 7px;
     }
 
     .module-features li {
       display: flex;
-      align-items: center;
-      gap: 7px;
+      align-items: flex-start;
+      gap: 8px;
       font-size: 0.78rem;
       color: #E2E8F0;
+      text-align: left;
+    }
+
+    .module-features li svg {
+      flex: none;
+      margin-top: 2px;
     }
 
     /* ----------------------------------------------------
@@ -1280,14 +1239,39 @@ export class PortalProjectPage {
     });
   }
 
-  /** Servizi e moduli architetturali concordati */
-  protected readonly serviceModules: SoldServiceModule[] = [
+  /** Obiettivi strategici di progetto */
+  protected readonly objectives = [
     {
-      icon: '🚨',
+      titleEn: 'Zero Bounce 1-Tap Emergency Calling',
+      titleIt: 'Chiamata Immediata 1-Tap Senza Rimbalzo',
+      descEn: 'Instant mobile dispatch trigger capturing high-intent lockouts without navigation hurdles.',
+      descIt: 'Inoltro telefonico immediato per convertire istantaneamente gli utenti in emergenza da smartphone.'
+    },
+    {
+      titleEn: 'Instant Apple Pay Retainer Lock-in',
+      titleIt: 'Incasso Acconto Istantaneo Apple Pay',
+      descEn: 'Secures customer booking deposit with biometric Face ID before technician dispatch.',
+      descIt: 'Blocca l’acconto con Face ID / Carta prima della partenza del tecnico, azzerando le uscite a vuoto.'
+    },
+    {
+      titleEn: 'Sub-Second Edge Latency PWA',
+      titleIt: 'Latenza Sub-Secondo & PWA Mobile',
+      descEn: 'Global edge caching ensuring near-instant load even under unstable 4G/5G mobile networks.',
+      descIt: 'Caching CDN edge globale per caricamento immediato anche su reti cellulari deboli.'
+    },
+    {
+      titleEn: 'Local Authority & High Ticket Reach',
+      titleIt: 'Dominio Locale Nevada & Alto Spreading',
+      descEn: 'Geotargeted schema markup positioning your service in high-ticket suburbs and commercial zones.',
+      descIt: 'Markup schema.org strutturato per presidiare i quartieri a maggior capacità di spesa.'
+    }
+  ];
+
+  /** Moduli predefiniti */
+  protected readonly defaultModules: SoldServiceModule[] = [
+    {
       titleEn: 'Emergency 24/7 Dispatch Architecture & 1-Tap Calling',
       titleIt: 'Piattaforma Emergenza 24/7 & Chiamata 1-Tap Istantanea',
-      badgeEn: 'CORE MODULE',
-      badgeIt: 'MODULO CORE',
       descEn: 'Ultra-fast mobile landing interface engineered to convert emergency callers locked out of homes or vehicles.',
       descIt: 'Interfaccia mobile ad alta conversione per catturare istantaneamente clienti bloccati fuori casa o auto.',
       featuresEn: [
@@ -1304,11 +1288,8 @@ export class PortalProjectPage {
       ]
     },
     {
-      icon: '',
       titleEn: 'Apple Pay & Stripe Real-Time Retainer Checkout Gateway',
       titleIt: 'Gateway Checkout Acconto Apple Pay & Stripe in Tempo Reale',
-      badgeEn: 'FINTECH GATEWAY',
-      badgeIt: 'GATEWAY FINTECH',
       descEn: 'Instant deposit authorization via Apple Pay, Google Pay and Cards to secure emergency calls prior to technician roll-out.',
       descIt: 'Autorizzazione immediata acconto con Face ID o carta per garantire l’uscita del tecnico e azzerare i no-show.',
       featuresEn: [
@@ -1325,11 +1306,8 @@ export class PortalProjectPage {
       ]
     },
     {
-      icon: '⚡',
       titleEn: 'High-Speed Mobile PWA & Nevada Local SEO Engine',
       titleIt: 'PWA Mobile Ultra-Rapida & Motore SEO Locale Nevada',
-      badgeEn: 'PERFORMANCE & SEO',
-      badgeIt: 'PERFORMANCE & SEO',
       descEn: 'Progressive Web App deployable directly on smartphone home screens with localized schema markup for Nevada search dominancy.',
       descIt: 'Web App installabile su home screen con ottimizzazione schema.org per dominare le ricerche locali a Las Vegas e Henderson.',
       featuresEn: [
@@ -1346,6 +1324,44 @@ export class PortalProjectPage {
       ]
     }
   ];
+
+  /** Servizi e moduli architetturali concordati — popolati dinamicamente dai quoteItems del progetto admin */
+  protected readonly serviceModules = computed<SoldServiceModule[]>(() => {
+    const p = this.project();
+    const items = p?.quoteItems;
+    if (!items || items.length === 0) {
+      return this.defaultModules;
+    }
+
+    return items.map(item => {
+      const name = item.name.trim();
+      const match = this.defaultModules.find(m =>
+        m.titleEn.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(m.titleEn.toLowerCase()) ||
+        m.titleIt.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(m.titleIt.toLowerCase())
+      );
+      if (match) {
+        return match;
+      }
+      return {
+        titleEn: name,
+        titleIt: name,
+        descEn: `Module and feature specifications commissioned and verified under official project scope.`,
+        descIt: `Modulo e specifiche architetturali concordate e commissionate nel preventivo di progetto.`,
+        featuresEn: [
+          `Full responsive implementation and mobile UX optimization`,
+          `Continuous integration and verified staging release`,
+          `Cloud security and production compliance`
+        ],
+        featuresIt: [
+          `Implementazione responsive e ottimizzazione mobile UX`,
+          `Rilascio e collaudo continuo in ambiente staging`,
+          `Sicurezza cloud e conformità standard di produzione`
+        ]
+      };
+    });
+  });
 
   /** Roadmap e Milestones di Progetto */
   protected readonly milestones: ProjectMilestone[] = [
