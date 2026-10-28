@@ -15,13 +15,29 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
           <span>{{ i18n.isEn() ? 'Client Portal' : 'Area clienti' }}</span>
         </a>
         <nav class="row">
-          <button
-            type="button"
-            class="lang-switch-btn font-mono"
-            (click)="i18n.toggle()"
-            [title]="i18n.isEn() ? 'Switch to Italian (EUR €)' : 'Switch to English (USD $)'">
-            {{ i18n.isEn() ? '🇺🇸 USD ($)' : '🇮🇹 EUR (€)' }}
-          </button>
+          <!-- Switch Dual-Segmented Paese & Valuta: Italia (EUR €) vs USA (USD $) -->
+          <div class="country-segmented-control" role="group" aria-label="Selettore Paese e Valuta">
+            <button
+              type="button"
+              class="segment-btn"
+              [class.active]="!i18n.isEn()"
+              (click)="i18n.setLang('it')"
+              [title]="'Italia (EUR €)'"
+              [attr.aria-pressed]="!i18n.isEn()">
+              <span class="flag" aria-hidden="true">🇮🇹</span>
+              <span class="code font-mono">IT · €</span>
+            </button>
+            <button
+              type="button"
+              class="segment-btn"
+              [class.active]="i18n.isEn()"
+              (click)="i18n.setLang('en')"
+              [title]="'United States (USD $)'"
+              [attr.aria-pressed]="i18n.isEn()">
+              <span class="flag" aria-hidden="true">🇺🇸</span>
+              <span class="code font-mono">US · $</span>
+            </button>
+          </div>
 
           <!-- Avatar rotondo con iniziali e menu a tendina -->
           <div class="user-menu-wrapper">
@@ -81,9 +97,6 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
         </nav>
       </header>
       <main id="main"><router-outlet /></main>
-      <footer class="foot muted small no-print">
-        {{ i18n.isEn() ? 'Childhood Friendship — Bespoke Code, Solid Foundations' : 'Childhood Friendship — Codice su misura, radici solide' }}
-      </footer>
     </div>
   `,
   styles: `
@@ -91,7 +104,7 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 24px;
+      padding: 12px 24px;
       border-bottom: 1px solid var(--cf-color-border);
       position: sticky;
       top: 0;
@@ -110,24 +123,50 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
     }
     .brand-mark { width: 32px; height: 32px; flex: none; }
     .row { display: flex; align-items: center; gap: 12px; }
-    .lang-switch-btn {
+
+    /* Segmented Switch Italia / America */
+    .country-segmented-control {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: #FFFFFF;
-      font-size: 0.76rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      padding: 3px;
+      gap: 2px;
     }
-    .lang-switch-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
-      border-color: rgba(255, 255, 255, 0.35);
-      transform: translateY(-1px);
+    .segment-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.65);
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      line-height: 1;
+    }
+    .segment-btn:hover:not(.active) {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .segment-btn.active {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.7) 0%, rgba(99, 102, 241, 0.7) 100%);
+      color: #FFFFFF;
+      border-color: rgba(167, 139, 250, 0.6);
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.45);
+      font-weight: 700;
+    }
+    .segment-btn .flag {
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+    .segment-btn .code {
+      letter-spacing: 0.3px;
     }
 
     /* Avatar & Dropdown */
@@ -270,10 +309,9 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
       color: #EF4444;
     }
 
-    .foot { text-align: center; padding: 32px 16px; }
-
     @media (max-width: 600px) {
-      .bar { padding: 12px 16px; }
+      .bar { padding: 10px 14px; }
+      .segment-btn { padding: 4px 8px; font-size: 0.7rem; }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush

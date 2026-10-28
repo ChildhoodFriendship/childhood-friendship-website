@@ -172,9 +172,20 @@ interface ParsedMessage {
         </aside>
       }
     } @else {
-      <!-- MODALITÀ EMBEDDED (Pannello Admin) CON TUTTI I MIGLIORAMENTI -->
+      <!-- MODALITÀ EMBEDDED / VISTA DEDICATA CON HEADER COMPLETO -->
       <div class="embedded-chat-card card stack-sm">
-        
+        <header class="chat-header">
+          <div class="chat-header-info">
+            <div class="avatar-cf">CF</div>
+            <div>
+              <h4 class="chat-title">Messaggi con lo studio</h4>
+              <div class="chat-status-line">
+                <span class="pulse-online" aria-hidden="true"></span>
+                <span class="chat-status-text">Team Childhood Friendship · Supporto Diretto</span>
+              </div>
+            </div>
+          </div>
+        </header>
 
         <div #list class="chat-body embedded-body" role="log" aria-live="polite">
           @if (loading() && !messages().length) {
@@ -237,7 +248,7 @@ interface ParsedMessage {
           <input #fileInputEmbedded type="file" accept="image/*,video/*" style="display: none" (change)="onFilePicked($event)" />
           <button type="button" class="btn-attach" (click)="fileInputEmbedded.click()" title="Allega foto o video">📎</button>
           <input type="text" class="composer-input" [(ngModel)]="draft" name="body" placeholder="Scrivi un messaggio…" />
-          <button type="submit" class="btn btn-primary btn-sm" [disabled]="(!draft.trim() && !pendingMedia()) || sending() || uploadingMedia()">Invia</button>
+          <button type="submit" class="btn-send" [disabled]="(!draft.trim() && !pendingMedia()) || sending() || uploadingMedia()" aria-label="Invia messaggio">➤</button>
         </form>
       </div>
     }
@@ -660,8 +671,9 @@ interface ParsedMessage {
       border-bottom: 1px solid var(--cf-color-border);
     }
     .embedded-body {
-      min-height: 280px;
-      max-height: 520px;
+      min-height: 380px;
+      max-height: min(620px, calc(100vh - 340px));
+      height: 480px;
     }
     .embedded-composer {
       border-radius: 0 0 16px 16px;

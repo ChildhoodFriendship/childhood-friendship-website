@@ -9,7 +9,7 @@ import { PaymentBoxesComponent } from './receipt/payment-boxes.component';
 import { QuoteReceiptComponent } from './receipt/quote-receipt.component';
 import { ProjectContractComponent } from './contract/project-contract.component';
 
-export type PortalTab = 'overview' | 'timeline' | 'documents' | 'payments';
+export type PortalTab = 'overview' | 'timeline' | 'documents' | 'payments' | 'chat';
 
 interface ProjectMilestone {
   number: number;
@@ -100,33 +100,6 @@ interface SoldServiceModule {
           @if (activeTab() === 'overview') {
             <section class="tab-view animate-fade-in" aria-labelledby="overview-heading">
               <h2 id="overview-heading" class="sr-only">{{ i18n.isEn() ? 'Project Overview' : 'Panoramica Progetto' }}</h2>
-
-              <!-- Metriche Essenziali -->
-              <div class="overview-metrics-grid">
-                <div class="metric-card">
-                  <div class="metric-icon-wrap">⚡</div>
-                  <div class="metric-content">
-                    <span class="metric-label">{{ i18n.isEn() ? 'Current Stage' : 'Stato Attuale' }}</span>
-                    <strong class="metric-val">{{ isLive(p) ? 'Production Live' : (i18n.isEn() ? 'Phase 3: Core Engineering' : 'Fase 3: Sviluppo Core') }}</strong>
-                  </div>
-                </div>
-
-                <div class="metric-card">
-                  <div class="metric-icon-wrap">🛡️</div>
-                  <div class="metric-content">
-                    <span class="metric-label">{{ i18n.isEn() ? 'Warranty' : 'Garanzia' }}</span>
-                    <strong class="metric-val">{{ i18n.isEn() ? '30 Days Post-Launch' : '30 Giorni Inclusi' }}</strong>
-                  </div>
-                </div>
-
-                <div class="metric-card">
-                  <div class="metric-icon-wrap">☁️</div>
-                  <div class="metric-content">
-                    <span class="metric-label">{{ i18n.isEn() ? 'Cloud Stack' : 'Infrastruttura' }}</span>
-                    <strong class="metric-val">Vercel Edge & Neon</strong>
-                  </div>
-                </div>
-              </div>
 
               <!-- SEZIONE OBIETTIVI (MINIMAL) -->
               <div class="section-block">
@@ -233,31 +206,53 @@ interface SoldServiceModule {
                       <div class="timeline-connector"></div>
                     </div>
 
-                    <div class="timeline-card">
-                      <div class="timeline-card-head">
-                        <div class="step-badge-wrap">
-                          <span class="status-pill status-{{ m.status }}">
-                            @if (m.status === 'completed') { {{ i18n.isEn() ? 'COMPLETED' : 'COMPLETATO' }} }
-                            @else if (m.status === 'in_progress') { {{ i18n.isEn() ? 'IN PROGRESS' : 'IN CORSO' }} }
-                            @else { {{ i18n.isEn() ? 'UPCOMING' : 'IN ARRIVO' }} }
-                          </span>
-                          <span class="step-date">{{ i18n.isEn() ? m.dateEn : m.dateIt }}</span>
+                    <div class="timeline-card" [class.is-collapsed]="m.status === 'completed' && !isExpanded(m)">
+                      <div
+                        class="timeline-card-head"
+                        [class.clickable]="m.status === 'completed'"
+                        (click)="m.status === 'completed' ? toggleMilestone(m) : null"
+                        [attr.role]="m.status === 'completed' ? 'button' : null"
+                        [attr.tabindex]="m.status === 'completed' ? 0 : null"
+                        [attr.aria-expanded]="m.status === 'completed' ? isExpanded(m) : null"
+                        (keydown.enter)="m.status === 'completed' && toggleMilestone(m)"
+                        (keydown.space)="m.status === 'completed' && toggleMilestone(m); $event.preventDefault()">
+                        <div class="step-head-main">
+                          <div class="step-badge-wrap">
+                            <span class="status-pill status-{{ m.status }}">
+                              @if (m.status === 'completed') { {{ i18n.isEn() ? 'COMPLETED' : 'COMPLETATO' }} }
+                              @else if (m.status === 'in_progress') { {{ i18n.isEn() ? 'IN PROGRESS' : 'IN CORSO' }} }
+                              @else { {{ i18n.isEn() ? 'UPCOMING' : 'IN ARRIVO' }} }
+                            </span>
+                            <span class="step-date">{{ i18n.isEn() ? m.dateEn : m.dateIt }}</span>
+                          </div>
+                          <h3 class="step-title">Phase {{ m.number }}: {{ i18n.isEn() ? m.titleEn : m.titleIt }}</h3>
                         </div>
-                        <h3 class="step-title">Phase {{ m.number }}: {{ i18n.isEn() ? m.titleEn : m.titleIt }}</h3>
+
+                        @if (m.status === 'completed') {
+                          <span class="step-expand-icon" [class.rotated]="isExpanded(m)" aria-hidden="true">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                          </span>
+                        }
                       </div>
 
-                      <p class="step-desc">{{ i18n.isEn() ? m.descEn : m.descIt }}</p>
+                      @if (isExpanded(m)) {
+                        <div class="step-collapsible-body animate-fade-in">
+                          <p class="step-desc">{{ i18n.isEn() ? m.descEn : m.descIt }}</p>
 
-                      <div class="step-deliverables">
-                        <ul>
-                          @for (d of (i18n.isEn() ? m.deliverablesEn : m.deliverablesIt); track d) {
-                            <li>
-                              <span class="bullet-check">✓</span>
-                              <span>{{ d }}</span>
-                            </li>
-                          }
-                        </ul>
-                      </div>
+                          <div class="step-deliverables">
+                            <ul>
+                              @for (d of (i18n.isEn() ? m.deliverablesEn : m.deliverablesIt); track d) {
+                                <li>
+                                  <span class="bullet-check">✓</span>
+                                  <span>{{ d }}</span>
+                                </li>
+                              }
+                            </ul>
+                          </div>
+                        </div>
+                      }
                     </div>
                   </div>
                 }
@@ -327,6 +322,22 @@ interface SoldServiceModule {
               <!-- Box Pagamenti Tranche e Apple Pay -->
               <div class="payments-stage-wrapper">
                 <cf-payment-boxes [project]="p" />
+              </div>
+            </section>
+          }
+
+          <!-- ========================================== -->
+          <!-- 5. VISTA CHAT DEDICATA (Thread a Schermo)  -->
+          <!-- ========================================== -->
+          @if (activeTab() === 'chat') {
+            <section class="tab-view animate-fade-in chat-view-section" aria-labelledby="chat-heading">
+              <h2 id="chat-heading" class="sr-only">{{ i18n.isEn() ? 'Direct Studio Chat' : 'Chat con lo Studio' }}</h2>
+
+              <div class="chat-dedicated-card">
+                <cf-messages-thread
+                  [projectId]="p.id"
+                  [floating]="false"
+                />
               </div>
             </section>
           }
@@ -401,22 +412,19 @@ interface SoldServiceModule {
             </svg>
           </button>
 
-          <!-- Icona 5: Chat con lo Studio integrata direttamente nella dock -->
+          <!-- Icona 5: Chat con lo Studio integrata direttamente nella dock (Vista Dedicata) -->
           <button
             type="button"
             class="dock-btn"
-            [class.active]="chatThread()?.isChatOpen()"
-            (click)="toggleChat()"
-            [attr.aria-label]="i18n.isEn() ? 'Chat with Studio' : 'Chat con lo studio'"
-            [title]="i18n.isEn() ? 'Chat with Studio' : 'Chat con lo studio'">
+            [class.active]="activeTab() === 'chat'"
+            (click)="setTab('chat')"
+            [attr.aria-label]="i18n.isEn() ? 'Studio Chat' : 'Chat con lo studio'"
+            [title]="i18n.isEn() ? 'Studio Chat' : 'Chat con lo studio'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             </svg>
           </button>
         </nav>
-
-        <!-- CHAT CON LO STUDIO (FAB NASCOSTO: APERTURA DALLA NAVBAR) -->
-        <cf-messages-thread [projectId]="p.id" [floating]="true" [hideFab]="true" />
 
       } @else if (error()) {
         <div class="alert alert-error">{{ error() }} · <a routerLink="/portale">Torna ai progetti</a></div>
@@ -438,7 +446,9 @@ interface SoldServiceModule {
     .portal-container {
       max-width: 980px;
       margin: 0 auto;
-      padding: 24px 20px 130px;
+      padding: 24px 16px 130px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     /* ----------------------------------------------------
@@ -555,56 +565,6 @@ interface SoldServiceModule {
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Overview Metriche */
-    .overview-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-
-    .metric-card {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 18px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      backdrop-filter: blur(12px);
-    }
-
-    .metric-icon-wrap {
-      width: 38px;
-      height: 38px;
-      display: grid;
-      place-items: center;
-      font-size: 1.15rem;
-      background: rgba(124, 58, 237, 0.14);
-      border: 1px solid rgba(167, 139, 250, 0.22);
-      border-radius: 10px;
-    }
-
-    .metric-content {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .metric-label {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: rgba(203, 213, 225, 0.65);
-      font-weight: 600;
-    }
-
-    .metric-val {
-      font-size: 0.96rem;
-      font-weight: 700;
-      color: #FFFFFF;
     }
 
     /* Section Block Styles */
@@ -765,10 +725,9 @@ interface SoldServiceModule {
       align-items: center;
       justify-content: center;
       gap: 12px;
-      padding: 8px 16px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.09);
+      padding: 0;
+      background: transparent;
+      border: none;
       width: fit-content;
       margin: 0 auto 24px;
     }
@@ -799,6 +758,7 @@ interface SoldServiceModule {
       flex-direction: column;
       gap: 0;
       max-width: 780px;
+      width: 100%;
       margin: 0 auto;
     }
 
@@ -880,9 +840,16 @@ interface SoldServiceModule {
       border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 16px;
       padding: 18px 20px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       flex-grow: 1;
+      min-width: 0;
       backdrop-filter: blur(8px);
+      transition: background 0.2s ease, border-color 0.2s ease, padding 0.2s ease;
+    }
+
+    .timeline-card.is-collapsed {
+      padding: 12px 18px;
+      margin-bottom: 12px;
     }
 
     .step-active .timeline-card {
@@ -892,14 +859,61 @@ interface SoldServiceModule {
     }
 
     .timeline-card-head {
-      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .timeline-card-head.clickable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .timeline-card-head.clickable:hover .step-title {
+      color: #DDD6FE;
+    }
+
+    .step-head-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .step-expand-icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(226, 232, 240, 0.65);
+      flex: none;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, color 0.2s ease;
+    }
+
+    .timeline-card-head:hover .step-expand-icon {
+      background: rgba(124, 58, 237, 0.25);
+      color: #DDD6FE;
+    }
+
+    .step-expand-icon.rotated {
+      transform: rotate(180deg);
+    }
+
+    .step-collapsible-body {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .step-badge-wrap {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .status-pill {
@@ -1040,8 +1054,30 @@ interface SoldServiceModule {
     .receipt-full-wrapper {
       display: flex;
       justify-content: center;
-      margin: 0 auto 32px auto;
-      max-width: 460px;
+      margin: 0 auto 28px auto;
+      max-width: 760px;
+      width: 100%;
+    }
+
+    /* ----------------------------------------------------
+       VISTA CHAT DEDICATA
+       ---------------------------------------------------- */
+    .chat-view-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .chat-dedicated-card {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      background: rgba(18, 14, 28, 0.88);
+      border: 1px solid rgba(167, 139, 250, 0.22);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
     }
 
     /* ----------------------------------------------------
@@ -1133,25 +1169,63 @@ interface SoldServiceModule {
 
     @media (max-width: 768px) {
       .portal-container {
-        padding: 16px 14px 110px;
+        padding: 14px 10px 115px;
+      }
+      .project-title {
+        font-size: 1.75rem;
+      }
+      .timeline-step {
+        gap: 10px;
+      }
+      .timeline-marker {
+        width: 28px;
+        height: 28px;
+        font-size: 0.72rem;
+      }
+      .timeline-card {
+        padding: 14px 14px;
+        border-radius: 13px;
+      }
+      .timeline-card.is-collapsed {
+        padding: 10px 12px;
+      }
+      .step-title {
+        font-size: 0.98rem;
+      }
+      .objectives-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .objective-card {
+        padding: 14px 14px;
+      }
+      .services-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .service-module-card {
+        padding: 16px 14px;
+      }
+      .assets-quick-panel {
+        padding: 16px 14px;
       }
       .bottom-dock {
-        bottom: 14px;
+        bottom: 12px;
         padding: 5px 8px;
         gap: 5px;
       }
       .dock-btn {
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
       }
       .dock-btn svg {
-        width: 19px;
-        height: 19px;
+        width: 20px;
+        height: 20px;
       }
       :host ::ng-deep .floating-chat-window {
         bottom: 74px !important;
-        right: 12px !important;
-        left: 12px !important;
+        right: 10px !important;
+        left: 10px !important;
       }
     }
   `,
@@ -1166,7 +1240,27 @@ export class PortalProjectPage {
   protected readonly error = signal<string | null>(null);
   protected readonly activeTab = signal<PortalTab>('overview');
   protected readonly filesComponent = viewChild(ProjectFilesComponent);
-  protected readonly chatThread = viewChild(MessagesThreadComponent);
+  protected readonly expandedMilestones = signal<Set<number>>(new Set());
+
+  protected isExpanded(m: ProjectMilestone): boolean {
+    if (m.status === 'completed') {
+      return this.expandedMilestones().has(m.number);
+    }
+    return true;
+  }
+
+  protected toggleMilestone(m: ProjectMilestone): void {
+    if (m.status !== 'completed') return;
+    this.expandedMilestones.update(prev => {
+      const next = new Set(prev);
+      if (next.has(m.number)) {
+        next.delete(m.number);
+      } else {
+        next.add(m.number);
+      }
+      return next;
+    });
+  }
 
   /** Servizi e moduli architetturali concordati */
   protected readonly serviceModules: SoldServiceModule[] = [
@@ -1304,10 +1398,6 @@ export class PortalProjectPage {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }
-
-  toggleChat(): void {
-    this.chatThread()?.toggleChat();
   }
 
   protected onPortalUploadPicked(e: Event): void {

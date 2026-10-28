@@ -15,11 +15,60 @@ interface DisplayReceiptItem {
   selector: 'cf-quote-receipt',
   imports: [DatePipe],
   template: `
-    <div class="receipt-container">
-      <!-- Scontrino termico fedele alla copia fisica -->
-      <article class="receipt">
-        <!-- Taglio carta dentellato superiore -->
-        <div class="tear-edge tear-top" aria-hidden="true"></div>
+    <section class="collapsible-card receipt-card">
+      <!-- Header della Card Scontrino / Ricevuta Fiscale -->
+      <div class="collapsible-header">
+        <div
+          class="collapsible-title-wrap"
+          (click)="isOpen.set(!isOpen())"
+          role="button"
+          tabindex="0"
+          [attr.aria-expanded]="isOpen()">
+          <span class="collapsible-icon">🧾</span>
+          <div class="title-and-badge">
+            <h3 class="collapsible-title">
+              {{ i18n.isEn() ? 'Fiscal Commercial Invoice' : 'Documento Fiscale B2B / Ricevuta SDI' }}
+            </h3>
+            <span class="status-fiscal-text">
+              {{ i18n.isEn() ? 'Doc. ' + receiptDocNumber() : 'Doc. SDI ' + receiptDocNumber() }}
+            </span>
+          </div>
+        </div>
+
+        <div class="collapsible-header-actions">
+          <span class="total-quick-pill font-mono">
+            {{ formatMoney(totalWithVat()) }}
+          </span>
+
+          <button
+            type="button"
+            class="btn-print-receipt no-print"
+            (click)="printReceipt($event)"
+            [title]="i18n.isEn() ? 'Print or save receipt as PDF' : 'Stampa o salva scontrino come PDF'">
+            🖨️ PDF
+          </button>
+
+          <button
+            type="button"
+            class="btn-arrow-wrap"
+            (click)="isOpen.set(!isOpen())"
+            [attr.aria-expanded]="isOpen()"
+            [attr.aria-label]="isOpen() ? (i18n.isEn() ? 'Collapse receipt' : 'Comprimi scontrino') : (i18n.isEn() ? 'Expand receipt' : 'Espandi scontrino')">
+            <svg class="chevron-icon" [class.open]="isOpen()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scontrino Fisico (espandibile) -->
+      @if (isOpen()) {
+        <div class="collapsible-body receipt-body">
+          <div class="receipt-container">
+            <!-- Scontrino termico fedele alla copia fisica -->
+            <article class="receipt">
+              <!-- Taglio carta dentellato superiore -->
+              <div class="tear-edge tear-top" aria-hidden="true"></div>
 
         <!-- Header Azienda -->
         <header class="receipt-header">
@@ -150,11 +199,210 @@ interface DisplayReceiptItem {
         <div class="tear-edge tear-bottom" aria-hidden="true"></div>
       </article>
     </div>
-  `,
+  </div>
+} @else {
+  <!-- Anteprima sintetica quando ridotto -->
+  <div class="collapsed-summary-card" (click)="isOpen.set(true)" role="button" tabindex="0">
+    <div class="summary-left">
+      <span class="summary-status-dot"></span>
+      <div class="summary-meta">
+        <strong>{{ i18n.isEn() ? 'B2B Software Development & Digital Solutions' : 'Prestazione Sviluppo Software & Soluzioni Digitali' }}</strong>
+        <span class="muted small">{{ i18n.isEn() ? 'Cross-border EU-US tax-exempt ex Art. 7-ter' : 'Operazione soggetta a Fattura Elettronica SDI' }}</span>
+      </div>
+    </div>
+    <div class="summary-right">
+      <span class="summary-total font-mono">{{ formatMoney(totalWithVat()) }}</span>
+      <span class="summary-hint">{{ i18n.isEn() ? 'Click to expand ↗' : 'Clicca per aprire ↗' }}</span>
+    </div>
+  </div>
+}
+</section>
+`,
   styles: `
     :host {
       display: block;
       width: 100%;
+    }
+
+    .receipt-card {
+      background: rgba(18, 12, 30, 0.7);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(12px);
+      width: 100%;
+    }
+
+    .collapsible-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .collapsible-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .collapsible-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .title-and-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .collapsible-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin: 0;
+    }
+
+    .status-fiscal-text {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #A78BFA;
+      background: rgba(167, 139, 250, 0.14);
+      border: 1px solid rgba(167, 139, 250, 0.35);
+      padding: 2px 7px;
+      border-radius: 999px;
+      letter-spacing: 0.03em;
+    }
+
+    .collapsible-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .total-quick-pill {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #34D399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 3px 8px;
+      border-radius: 8px;
+    }
+
+    .btn-print-receipt {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #FFFFFF;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-print-receipt:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .btn-arrow-wrap {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #DDD6FE;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-arrow-wrap:hover {
+      background: rgba(167, 139, 250, 0.2);
+      color: #FFFFFF;
+    }
+
+    .chevron-icon {
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: rotate(90deg);
+    }
+    .chevron-icon.open {
+      transform: rotate(-90deg);
+    }
+
+    .receipt-body {
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* Anteprima ridotta */
+    .collapsed-summary-card {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .collapsed-summary-card:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .summary-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .summary-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+      flex-shrink: 0;
+    }
+    .summary-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .summary-meta strong {
+      font-size: 0.88rem;
+      color: #FFFFFF;
+    }
+    .summary-meta span {
+      font-size: 0.74rem;
+      color: rgba(255, 255, 255, 0.55);
+    }
+    .summary-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+    }
+    .summary-total {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #34D399;
+    }
+    .summary-hint {
+      font-size: 0.72rem;
+      color: #A78BFA;
+      font-weight: 600;
     }
 
     .receipt-container {
@@ -410,6 +658,7 @@ interface DisplayReceiptItem {
 })
 export class QuoteReceiptComponent {
   readonly project = input.required<PortalProjectDto>();
+  readonly isOpen = signal(true);
   protected readonly i18n = inject(PortalI18nService);
   protected readonly localPaidOverride = signal<number | null>(null);
 
@@ -566,7 +815,10 @@ export class QuoteReceiptComponent {
     return this.i18n.formatMoney(val);
   }
 
-  protected printReceipt(): void {
-    window.print();
+  protected printReceipt(event?: MouseEvent): void {
+    event?.stopPropagation();
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   }
 }
