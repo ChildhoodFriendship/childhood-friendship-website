@@ -36,18 +36,6 @@ interface DisplayReceiptItem {
         </div>
 
         <div class="collapsible-header-actions">
-          <span class="total-quick-pill font-mono">
-            {{ formatMoney(totalWithVat()) }}
-          </span>
-
-          <button
-            type="button"
-            class="btn-print-receipt no-print"
-            (click)="printReceipt($event)"
-            [title]="i18n.isEn() ? 'Print or save receipt as PDF' : 'Stampa o salva scontrino come PDF'">
-            🖨️ PDF
-          </button>
-
           <button
             type="button"
             class="btn-arrow-wrap"
@@ -65,6 +53,15 @@ interface DisplayReceiptItem {
       @if (isOpen()) {
         <div class="collapsible-body receipt-body">
           <div class="receipt-container">
+            <div class="receipt-actions-bar no-print">
+              <button
+                type="button"
+                class="btn-print-receipt"
+                (click)="printReceipt($event)"
+                [title]="i18n.isEn() ? 'Print or save receipt as PDF' : 'Stampa o salva scontrino come PDF'">
+                🖨️ {{ i18n.isEn() ? 'Print / Download PDF' : 'Stampa o salva come PDF' }}
+              </button>
+            </div>
             <!-- Scontrino termico fedele alla copia fisica -->
             <article class="receipt">
               <!-- Taglio carta dentellato superiore -->
@@ -198,21 +195,6 @@ interface DisplayReceiptItem {
         <!-- Taglio carta dentellato inferiore -->
         <div class="tear-edge tear-bottom" aria-hidden="true"></div>
       </article>
-    </div>
-  </div>
-} @else {
-  <!-- Anteprima sintetica quando ridotto -->
-  <div class="collapsed-summary-card" (click)="isOpen.set(true)" role="button" tabindex="0">
-    <div class="summary-left">
-      <span class="summary-status-dot"></span>
-      <div class="summary-meta">
-        <strong>{{ i18n.isEn() ? 'B2B Software Development & Digital Solutions' : 'Prestazione Sviluppo Software & Soluzioni Digitali' }}</strong>
-        <span class="muted small">{{ i18n.isEn() ? 'Cross-border EU-US tax-exempt ex Art. 7-ter' : 'Operazione soggetta a Fattura Elettronica SDI' }}</span>
-      </div>
-    </div>
-    <div class="summary-right">
-      <span class="summary-total font-mono">{{ formatMoney(totalWithVat()) }}</span>
-      <span class="summary-hint">{{ i18n.isEn() ? 'Click to expand ↗' : 'Clicca per aprire ↗' }}</span>
     </div>
   </div>
 }
@@ -407,9 +389,18 @@ interface DisplayReceiptItem {
 
     .receipt-container {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
       padding: 10px 0;
       width: 100%;
+    }
+
+    .receipt-actions-bar {
+      display: flex;
+      justify-content: flex-end;
+      width: 100%;
+      max-width: 400px;
     }
 
     .receipt {
@@ -658,7 +649,7 @@ interface DisplayReceiptItem {
 })
 export class QuoteReceiptComponent {
   readonly project = input.required<PortalProjectDto>();
-  readonly isOpen = signal(true);
+  readonly isOpen = signal(false);
   protected readonly i18n = inject(PortalI18nService);
   protected readonly localPaidOverride = signal<number | null>(null);
 

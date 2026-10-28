@@ -93,7 +93,11 @@ interface SignatureRecord {
             <header class="doc-header">
               <div class="doc-brand">CHILDHOOD FRIENDSHIP</div>
               <h2 class="doc-title">
-                {{ i18n.isEn() ? 'B2B SOFTWARE DEVELOPMENT, DIGITAL SOLUTIONS & USAGE LICENSE AGREEMENT' : 'CONTRATTO DI SVILUPPO SOFTWARE, SOLUZIONI DIGITALI E LICENZA D\'USO' }}
+                @if (i18n.isEn()) {
+                  B2B SOFTWARE DEVELOPMENT, DIGITAL SOLUTIONS & USAGE LICENSE AGREEMENT
+                } @else {
+                  CONTRATTO DI SVILUPPO SOFTWARE, SOLUZIONI DIGITALI E LICENZA D'USO
+                }
               </h2>
               <p class="doc-sub">
                 {{ i18n.isEn() 

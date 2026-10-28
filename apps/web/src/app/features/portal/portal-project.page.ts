@@ -86,9 +86,6 @@ interface SoldServiceModule {
           </div>
 
           <h1 class="project-title">{{ p.name }}</h1>
-          @if (p.description) {
-            <p class="project-tagline">{{ p.description }}</p>
-          }
         </header>
 
         <!-- CONTENUTO DELLE 4 VISTE SELEZIONABILI -->
@@ -459,8 +456,8 @@ interface SoldServiceModule {
       flex-direction: column;
       align-items: center;
       text-align: center;
-      margin-bottom: 28px;
-      gap: 12px;
+      margin-bottom: 20px;
+      gap: 10px;
     }
 
     .header-badge-row {
@@ -1074,7 +1071,7 @@ interface SoldServiceModule {
       max-width: 760px;
       margin: 0 auto;
       background: rgba(18, 14, 28, 0.88);
-      border: 1px solid rgba(167, 139, 250, 0.22);
+      border: none;
       border-radius: 18px;
       overflow: hidden;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);

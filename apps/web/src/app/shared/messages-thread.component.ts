@@ -173,7 +173,7 @@ interface ParsedMessage {
       }
     } @else {
       <!-- MODALITÀ EMBEDDED / VISTA DEDICATA CON HEADER COMPLETO -->
-      <div class="embedded-chat-card card stack-sm">
+      <div class="embedded-chat-card">
         <header class="chat-header">
           <div class="chat-header-info">
             <div class="avatar-cf">CF</div>
@@ -665,10 +665,18 @@ interface ParsedMessage {
     .embedded-chat-card {
       border-radius: 18px;
       overflow: hidden;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+    .embedded-chat-card .chat-header {
+      background: transparent;
+      border-bottom: none;
+      padding: 12px 14px 4px;
     }
     .embedded-header {
       padding: 12px 16px;
-      border-bottom: 1px solid var(--cf-color-border);
+      border-bottom: none;
     }
     .embedded-body {
       min-height: 380px;
