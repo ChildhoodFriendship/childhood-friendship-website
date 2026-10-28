@@ -11,12 +11,19 @@ interface DueItem {
   dueDate: string;
 }
 
+interface ProjectBillingItem {
+  id: string;
+  name: string;
+  amount: number;
+  isPaid: boolean;
+}
+
 @Component({
   selector: 'cf-payment-boxes',
   template: `
-    <div class="payment-boxes-row no-print" [class.has-single-box]="isFullyPaid() || unpaidItems().length === 0 || alreadyPaid() <= 0">
+    <div class="payment-boxes-row no-print" [class.has-single-box]="isFullyPaid() || alreadyPaid() <= 0">
       <!-- Box Sinistra: DA PAGARE / AMOUNT DUE -->
-      @if (!isFullyPaid() && unpaidItems().length > 0) {
+      @if (!isFullyPaid() && remainingToPay() > 0) {
         <div
           class="pay-box pay-box-due clickable-pay-card"
           (click)="openApplePaySheet()"
@@ -28,35 +35,19 @@ interface DueItem {
           <div class="pay-box-header">
             <div class="pay-box-header-left">
               <span class="pay-dot dot-due"></span>
-              <span class="pay-box-title">
-                {{ alreadyPaid() > 0 
-                  ? (i18n.isEn() ? 'FINAL 50% BALANCE' : 'SALDO 50% A CONSEGNA') 
-                  : (i18n.isEn() ? 'AMOUNT DUE (2 TRANCHES)' : 'DA PAGARE (2 TRANCHE)') }}
-              </span>
+              <span class="pay-box-title">{{ alreadyPaid() > 0 ? (i18n.isEn() ? 'FINAL BALANCE' : 'SALDO') : (i18n.isEn() ? 'AMOUNT DUE' : 'DA PAGARE') }}</span>
             </div>
             <div class="pay-box-header-right">
-              @if (alreadyPaid() <= 0) {
-                <span class="pay-tranche-badge font-mono">{{ i18n.isEn() ? '50% Retainer' : 'Acconto 50%' }}</span>
-              } @else {
-                <span class="pay-tranche-badge font-mono">{{ i18n.isEn() ? 'Final Tranche' : 'Tranche Saldo' }}</span>
-              }
               <span class="pay-action-pill font-mono"> Pay ↗</span>
             </div>
           </div>
 
-          <div class="due-items-list">
-            @for (item of unpaidItems(); track item.id) {
-              <div class="due-item-row">
-                <div class="due-item-info">
-                  <span class="due-item-name" [title]="item.name">{{ item.name }}</span>
-                  <div class="due-item-amount font-mono">{{ formatMoney(item.amount) }}</div>
-                </div>
-                <div class="due-item-date">
-                  <span class="due-date-label">{{ i18n.isEn() ? 'Due Date' : 'Scadenza' }}</span>
-                  <strong class="due-date-val">{{ item.dueDate }}</strong>
-                </div>
-              </div>
-            }
+          <div class="due-summary-row">
+            <div class="due-amount-big font-mono">{{ formatMoney(currentDueAmount()) }}</div>
+            <div class="due-date-col">
+              <span class="due-date-label">{{ i18n.isEn() ? 'Due Date' : 'Scadenza' }}</span>
+              <strong class="due-date-val">{{ primaryDueDate() }}</strong>
+            </div>
           </div>
         </div>
       }
@@ -82,6 +73,41 @@ interface DueItem {
           </div>
         </div>
       }
+    </div>
+
+    <!-- SEZIONE RIEPILOGO TUTTE LE VOCI DI PROGETTO -->
+    <div class="project-items-section no-print">
+      <div class="items-section-header">
+        <span class="items-section-title">{{ i18n.isEn() ? 'Project Items Breakdown' : 'Riepilogo Voci di Progetto' }}</span>
+      </div>
+
+      <div class="project-items-list">
+        @for (item of allProjectItems(); track item.id) {
+          <div class="project-item-row" [class.item-saldata]="item.isPaid" [class.item-normale]="!item.isPaid">
+            <div class="item-left-col">
+              <span class="item-status-icon" aria-hidden="true">
+                @if (item.isPaid) {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                } @else {
+                  <span class="unpaid-bullet"></span>
+                }
+              </span>
+              <div class="item-name-wrap">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-badge-status font-mono">
+                  {{ item.isPaid 
+                    ? (i18n.isEn() ? 'Settled' : 'Saldata') 
+                    : (i18n.isEn() ? 'Pending' : 'Da saldare') }}
+                </span>
+              </div>
+            </div>
+
+            <div class="item-right-col">
+              <span class="item-amount font-mono">{{ formatMoney(item.amount) }}</span>
+            </div>
+          </div>
+        }
+      </div>
     </div>
 
     <!-- Modal Apple Pay Sheet -->
@@ -463,55 +489,27 @@ interface DueItem {
       white-space: nowrap;
     }
 
-    .due-items-list {
+    .due-summary-row {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .due-item-row {
-      display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
-      gap: 12px;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(245, 158, 11, 0.15);
-    }
-    .due-item-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
+      gap: 16px;
+      margin-top: 8px;
     }
 
-    .due-item-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .due-item-name {
-      font-size: 0.78rem;
-      color: rgba(246, 241, 255, 0.85);
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 220px;
-    }
-
-    .due-item-amount {
-      font-size: 1.25rem;
+    .due-amount-big {
+      font-size: 1.65rem;
       font-weight: 800;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
       color: #FFFFFF;
-      line-height: 1.2;
+      line-height: 1.1;
     }
 
-    .due-item-date {
+    .due-date-col {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 1px;
+      gap: 2px;
       flex-shrink: 0;
     }
 
@@ -524,9 +522,156 @@ interface DueItem {
 
     .due-date-val {
       font-family: 'DM Mono', monospace;
-      font-size: 0.82rem;
+      font-size: 0.88rem;
       font-weight: 700;
       color: #FBBF24;
+    }
+
+    /* ----------------------------------------------------
+       VOCI DI PROGETTO SOTTO LA SCHEDA
+       ---------------------------------------------------- */
+    .project-items-section {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .items-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+
+    .items-section-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(226, 232, 240, 0.6);
+    }
+
+    .project-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .project-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    /* Voci normali (da saldare) */
+    .project-item-row.item-normale {
+      background: rgba(22, 17, 38, 0.65);
+      border: 1px solid rgba(167, 139, 250, 0.22);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      opacity: 1;
+    }
+    .item-normale .item-name {
+      color: #F8FAFC;
+      font-weight: 600;
+      font-size: 0.86rem;
+      line-height: 1.35;
+    }
+    .item-normale .item-amount {
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 0.96rem;
+    }
+    .item-normale .unpaid-bullet {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #F59E0B;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+      display: inline-block;
+    }
+    .item-normale .item-badge-status {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #F59E0B;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 1px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    /* Voci saldate (in grigio trasparente) */
+    .project-item-row.item-saldata {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      opacity: 0.38; /* Grigio trasparente richiesto dall'utente! */
+    }
+    .project-item-row.item-saldata:hover {
+      opacity: 0.6;
+    }
+    .item-saldata .item-name {
+      color: #94A3B8;
+      font-weight: 500;
+      font-size: 0.84rem;
+      line-height: 1.35;
+    }
+    .item-saldata .item-amount {
+      color: #94A3B8;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+    .item-saldata .item-status-icon {
+      color: #10B981;
+      display: inline-flex;
+      align-items: center;
+    }
+    .item-saldata .item-badge-status {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 1px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    .item-left-col {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .item-status-icon {
+      margin-top: 3px;
+      flex: none;
+    }
+
+    .item-name-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .item-right-col {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
 
     .pay-box-amount {
@@ -924,6 +1069,66 @@ export class PaymentBoxesComponent {
 
   protected readonly depositAmount = computed(() => {
     return Number((this.totalWithVat() * 0.5).toFixed(2));
+  });
+
+  protected readonly currentDueAmount = computed(() => {
+    if (this.alreadyPaid() <= 0) {
+      return this.depositAmount();
+    }
+    return this.remainingToPay();
+  });
+
+  protected readonly primaryDueDate = computed(() => {
+    const p = this.project();
+    const baseDeadline = p.paymentDeadline || p.deadline;
+    return this.calcDueDate(false, baseDeadline);
+  });
+
+  protected readonly allProjectItems = computed<ProjectBillingItem[]>(() => {
+    const p = this.project();
+    const items = p.quoteItems as QuoteItem[] | undefined;
+    const vatMultiplier = 1 + this.i18n.vatRate();
+    const totalPaid = this.alreadyPaid();
+    let paidAccumulator = totalPaid;
+
+    if (items && items.length > 0) {
+      return items
+        .filter(it => (it.priceCents || 0) > 0)
+        .map((it, idx) => {
+          const itemAmount = Number((((it.priceCents || 0) / 100) * vatMultiplier).toFixed(2));
+          let isPaid = false;
+          if (paidAccumulator >= itemAmount) {
+            isPaid = true;
+            paidAccumulator = Number((paidAccumulator - itemAmount).toFixed(2));
+          } else if (this.isFullyPaid()) {
+            isPaid = true;
+          }
+          return {
+            id: it.id || `item-${idx}`,
+            name: it.name,
+            amount: itemAmount,
+            isPaid
+          };
+        });
+    }
+
+    const tot = this.totalWithVat();
+    const half = Number((tot * 0.5).toFixed(2));
+    const rest = Number((tot - half).toFixed(2));
+    return [
+      {
+        id: 'tranche-1',
+        name: this.i18n.isEn() ? 'Tranche 1: 50% Kickoff Deposit' : 'Tranche 1: Acconto 50% Avvio Lavori',
+        amount: half,
+        isPaid: totalPaid >= half || this.isFullyPaid()
+      },
+      {
+        id: 'tranche-2',
+        name: this.i18n.isEn() ? 'Tranche 2: 50% Final Staging Balance' : 'Tranche 2: Saldo 50% Collaudo & Rilascio',
+        amount: rest,
+        isPaid: this.isFullyPaid()
+      }
+    ];
   });
 
   protected readonly currentChargeAmount = computed(() => {
