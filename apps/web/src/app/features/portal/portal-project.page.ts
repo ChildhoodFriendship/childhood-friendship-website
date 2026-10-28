@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
-import type { PortalProjectDto } from '@cf/shared/types';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import type { MessageDto, PortalProjectDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
 import { PortalI18nService } from '../../core/portal-i18n.service';
@@ -390,12 +390,16 @@ interface SoldServiceModule {
             type="button"
             class="dock-btn"
             [class.active]="activeTab() === 'chat'"
+            [class.has-team-notifications]="teamUnreadCount() > 0 && activeTab() !== 'chat'"
             (click)="setTab('chat')"
             [attr.aria-label]="i18n.isEn() ? 'Chat & Files' : 'Chat & Materiali'"
             [title]="i18n.isEn() ? 'Chat & Files' : 'Chat & Materiali'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             </svg>
+            @if (teamUnreadCount() > 0 && activeTab() !== 'chat') {
+              <span class="dock-badge font-mono" aria-label="Nuovi messaggi dal team">{{ teamUnreadCount() > 99 ? '99+' : teamUnreadCount() }}</span>
+            }
           </button>
         </nav>
 
@@ -1139,6 +1143,74 @@ interface SoldServiceModule {
       transform: translateY(-2px);
     }
 
+    /* Notifiche da parte del Team: VERDE ACCESO con glow e numeretto in alto a destra */
+    .dock-btn.has-team-notifications {
+      color: #FFFFFF !important;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.85), 0 0 35px rgba(16, 185, 129, 0.45), 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+      animation: teamNotifyGlow 2.2s infinite ease-in-out;
+    }
+
+    .dock-btn.has-team-notifications svg {
+      stroke: #FFFFFF !important;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+    }
+
+    .dock-btn.has-team-notifications:hover {
+      transform: translateY(-3px) scale(1.08);
+      box-shadow: 0 0 26px rgba(16, 185, 129, 1), 0 0 45px rgba(16, 185, 129, 0.65), 0 6px 18px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    @keyframes teamNotifyGlow {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 18px rgba(16, 185, 129, 0.8), 0 0 32px rgba(16, 185, 129, 0.4), 0 4px 14px rgba(0, 0, 0, 0.5);
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 28px rgba(0, 255, 136, 0.95), 0 0 48px rgba(16, 185, 129, 0.65), 0 6px 18px rgba(0, 0, 0, 0.6);
+      }
+    }
+
+    /* Badge con numeretto dei nuovi messaggi in piccolo nell'angolo destro */
+    .dock-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #00FF88;
+      color: #042F1A;
+      font-family: var(--cf-display, sans-serif);
+      font-size: 0.72rem;
+      font-weight: 900;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #07050E;
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.9), 0 2px 6px rgba(0, 0, 0, 0.7);
+      pointer-events: none;
+      z-index: 5;
+      animation: badgePop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes badgePop {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      80% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
     /* Posizionamento chat window sopra la navbar senza sovrapposizioni */
     :host ::ng-deep .floating-chat-window {
       bottom: 84px !important;
@@ -1231,6 +1303,9 @@ export class PortalProjectPage {
   protected readonly project = signal<PortalProjectDto | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly activeTab = signal<PortalTab>('overview');
+  protected readonly teamUnreadCount = signal<number>(0);
+  protected readonly allMessages = signal<MessageDto[]>([]);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly filesComponent = viewChild(ProjectFilesComponent);
   protected readonly expandedMilestones = signal<Set<number>>(new Set());
 
@@ -1444,8 +1519,64 @@ export class PortalProjectPage {
 
   setTab(tab: PortalTab): void {
     this.activeTab.set(tab);
+    if (tab === 'chat') {
+      this.markTeamMessagesAsRead();
+    }
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  private markTeamMessagesAsRead(): void {
+    this.teamUnreadCount.set(0);
+    const pid = this.projectId();
+    if (!pid || typeof window === 'undefined') return;
+    const msgs = this.allMessages();
+    const lastMsgTime = msgs.length > 0 ? msgs[msgs.length - 1]!.createdAt : new Date().toISOString();
+    try {
+      localStorage.setItem(`cf_portal_team_msg_last_seen_${pid}`, lastMsgTime);
+    } catch {
+      // safe fallback
+    }
+  }
+
+  private async checkTeamNotifications(projectId: string): Promise<void> {
+    try {
+      const rows = await this.api.get<MessageDto[]>(`/projects/${projectId}/messages`, { limit: 50 });
+      this.allMessages.set(rows);
+
+      const teamMessages = rows.filter(m => m.authorRole === 'admin' || m.authorRole === 'staff');
+      const storageKey = `cf_portal_team_msg_last_seen_${projectId}`;
+
+      if (this.activeTab() === 'chat') {
+        if (rows.length > 0) {
+          const latestTime = rows[rows.length - 1]!.createdAt;
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(storageKey, latestTime);
+            } catch {}
+          }
+        }
+        this.teamUnreadCount.set(0);
+        return;
+      }
+
+      let lastSeenTime = '';
+      if (typeof window !== 'undefined') {
+        try {
+          lastSeenTime = localStorage.getItem(storageKey) || '';
+        } catch {}
+      }
+
+      if (!lastSeenTime) {
+        this.teamUnreadCount.set(teamMessages.length);
+      } else {
+        const lastSeenDate = new Date(lastSeenTime).getTime();
+        const unread = teamMessages.filter(m => new Date(m.createdAt).getTime() > lastSeenDate);
+        this.teamUnreadCount.set(unread.length);
+      }
+    } catch {
+      // background polling
     }
   }
 
@@ -1459,7 +1590,20 @@ export class PortalProjectPage {
   }
 
   constructor() {
-    effect(() => { void this.load(this.projectId()); });
+    effect(() => {
+      const pid = this.projectId();
+      void this.load(pid);
+      void this.checkTeamNotifications(pid);
+    });
+
+    const pollTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        const pid = this.projectId();
+        if (pid) void this.checkTeamNotifications(pid);
+      }
+    }, 12_000);
+
+    this.destroyRef.onDestroy(() => clearInterval(pollTimer));
   }
 
   protected isLive(p: PortalProjectDto): boolean {
