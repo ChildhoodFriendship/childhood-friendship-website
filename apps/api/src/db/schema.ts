@@ -102,7 +102,7 @@ export const projects = pgTable('projects', {
   clientId: uuid().notNull().references(() => clients.id, { onDelete: 'restrict' }),
   name: text().notNull(),
   description: text(),
-  status: projectStatusEnum().notNull().default('pianificazione'),
+  status: projectStatusEnum().notNull().default('in_sviluppo'),
   type: leadServiceEnum().notNull().default('altro'),
   paidAmountCents: integer('paid_amount_cents'),
   paymentDeadline: text('payment_deadline'),

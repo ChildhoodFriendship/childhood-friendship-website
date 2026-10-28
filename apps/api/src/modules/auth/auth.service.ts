@@ -58,8 +58,11 @@ export class AuthService {
     const cleanEmail = email.toLowerCase().trim();
     const [user] = await db.select().from(users).where(eq(sql`lower(${users.email})`, cleanEmail)).limit(1);
     if (!user) {
+      if (password.length < 6) {
+        throw unauthorized('Credenziali non valide');
+      }
       // Accesso unificato: crea e attiva l'account al primo accesso
-      return this.register(cleanEmail.split('@')[0], cleanEmail, password, userAgent);
+      return this.register(cleanEmail.split('@')[0] ?? 'utente', cleanEmail, password, userAgent);
     }
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       throw new HttpError(423, 'locked', 'Account temporaneamente bloccato per troppi tentativi. Riprova più tardi.');
@@ -126,7 +129,7 @@ export class AuthService {
       .from(leads)
       .where(eq(sql`lower(${leads.email})`, cleanEmail))
       .limit(1);
-    const cleanName = (lead?.name || lead?.company || name || cleanEmail.split('@')[0]).trim();
+    const cleanName = (lead?.name || lead?.company || name || cleanEmail.split('@')[0] || 'utente').trim();
     const passwordHash = await hashPassword(password);
 
     const user = await db.transaction(async (tx) => {
@@ -168,6 +171,7 @@ export class AuthService {
       try {
         const mail = renderWelcomeMail({
           name: user.name,
+          email: user.email,
           portalUrl: appUrl(this.ctx.env, 'portale')
         });
         void this.ctx.mailer.send({

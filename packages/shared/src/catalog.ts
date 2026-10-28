@@ -162,4 +162,4 @@ export const AI_FEATURES = ['document', 'suggestions', 'swot', 'pestel', 'campai
 export type AiFeature = (typeof AI_FEATURES)[number];
 
 /** Campi del progetto che il cliente non deve ricevere dall'API. */
-export const PORTAL_HIDDEN_PROJECT_FIELDS = ['repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus'] as const;
+export const PORTAL_HIDDEN_PROJECT_FIELDS = ['repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus', 'quoteItems'] as const;

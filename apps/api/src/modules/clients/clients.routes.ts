@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { count, eq, ilike, or } from 'drizzle-orm';
+import { and, count, eq, ilike, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { clientInputSchema, clientPatchSchema } from '@cf/shared/schemas';
 import type { AppContext } from '../../context.js';
@@ -72,7 +72,7 @@ export function clientsRouter(ctx: AppContext): Router {
     }
     const authService = new AuthService(ctx);
     const result = await authService.adminGenerateResetLink(clientUser.id);
-    const resetUrl = appUrl(env, `reset-password/${result.token}`);
+    const resetUrl = appUrl(ctx.env, `reset-password/${result.token}`);
     let emailSent = false;
     if (ctx.mailer) {
       emailSent = await ctx.mailer.send({

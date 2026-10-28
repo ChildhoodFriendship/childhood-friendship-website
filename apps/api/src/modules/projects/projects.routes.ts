@@ -125,7 +125,7 @@ export function projectsRouter(ctx: AppContext): Router {
     });
 
     const credRows = await ctx.db.select().from(credentials).where(eq(credentials.projectId, project.id));
-    const credsWithUrl = credRows.filter((c) => c.url && /^https?:\/\//i.test(c.url)).slice(0, 6);
+    const credsWithUrl = credRows.filter((c): c is typeof c & { url: string } => Boolean(c.url && /^https?:\/\//i.test(c.url))).slice(0, 6);
     const accessProbes = await Promise.all(credsWithUrl.map(async (c) => {
       const p = await probe(c.url);
       return {

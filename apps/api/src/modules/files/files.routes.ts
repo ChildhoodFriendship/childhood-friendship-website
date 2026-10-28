@@ -89,8 +89,8 @@ export function filesRouter(ctx: AppContext): Router {
     const project = currentProject(res);
     assertWritable(project);
     const file = await load(parse(uuidParam, req.params['fileId']), project.id);
-    const canDelete = isTeam(req) || file.uploadedById === req.user!.id || (req.user?.clientId != null && req.user.clientId === project.clientId);
-    if (!canDelete) throw forbidden('Puoi eliminare solo i file del tuo progetto o caricati da te');
+    const canDelete = isTeam(req) || file.uploadedById === req.user!.id;
+    if (!canDelete) throw forbidden('Puoi eliminare solo i file caricati da te');
     if (ctx.storage) {
       try {
         await ctx.storage.remove(file.url);

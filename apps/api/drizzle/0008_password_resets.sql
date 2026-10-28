@@ -6,5 +6,7 @@ CREATE TABLE IF NOT EXISTS "password_resets" (
 	"used_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
+--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "password_resets_token_uq" ON "password_resets"("token_hash");
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "password_resets_user_idx" ON "password_resets"("user_id");
