@@ -850,17 +850,22 @@ export class BuilderScene {
       if (this.bound) this.setManifestoHidden(z < 0.999 && window.scrollY < this.pinEnd - 1);
 
       if (this.opts.mobile) {
-        // Su mobile: elimina i modelli 3D non appena si entra nel manifesto
-        // e falli ricomparire SOLO quando ricominciano a camminare per tornare in centro nel finale (fin >= 0.03)
-        // Mai mostrare i personaggi mentre escono ai lati o prima dell'inizio del finale!
-        const inHero = window.scrollY < (this.pinEnd || window.innerHeight) && z < 0.98;
+        // Su mobile: nella hero, il tablet/PC che il Builder regge NON scompare mai
+        // (evita qualsiasi buco nero visivo nello scrolling prima che il manifesto prenda il suo posto)
+        const inHero = window.scrollY <= (this.pinEnd || window.innerHeight) + 10;
         const inFinale = fin >= 0.03;
         const show3D = inHero || inFinale;
 
         this.root.visible = show3D;
         this.pRoot.visible = inFinale && !!this.partner;
-        this.device.visible = inHero && this.device.visible;
-        this.rings.visible = (inHero && z < 0.98) || (inFinale && fin >= 0.02);
+        // Il tablet/PC in mano resta sempre visibile durante l'hero
+        this.device.visible = inHero;
+        this.rings.visible = (inHero && z < 0.95) || (inFinale && fin >= 0.02);
+
+        // Se durante lo zoom ravvicinato il corpo del personaggio viene nascosto per far spazio allo schermo:
+        if (this.builder) {
+          this.builder.visible = inHero ? z < 0.95 : inFinale;
+        }
 
         if (!show3D) {
           this.root.visible = false;
@@ -923,7 +928,9 @@ export class BuilderScene {
       // il laptop serve solo nella prima parte: sparisce quando la storia va avanti
       const lap = Math.max(0, Math.min(1, 1 - (s.rings - 0.35) / 0.25));
       this.device.scale.setScalar(Math.max(0.0001, lap));
-      this.device.visible = lap > 0.01;
+      if (!this.opts.mobile) {
+        this.device.visible = lap > 0.01;
+      }
 
       // anelli: piccoli dietro il Builder all'inizio, protagonisti alla fine
       this.rings.rotation.y = t * 0.25;

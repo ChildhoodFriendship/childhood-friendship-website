@@ -13,10 +13,8 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
           <div class="title" #area>
           <canvas #cvs class="fx" aria-hidden="true"></canvas>
           <h2 id="about-title" #title>
-            <span class="ln"><span>{{ i18n.landing().about.titleL1 }}</span></span>
-            <span class="ln"><span>{{ i18n.landing().about.titleL2 }}</span></span>
-            <span class="ln em"><span>{{ i18n.landing().about.titleL3 }}</span></span>
-            <span class="ln em"><span>{{ i18n.landing().about.titleL4 }}</span></span>
+            <span class="ln"><span>{{ i18n.landing().about.titleL1 }} {{ i18n.landing().about.titleL2 }}</span></span>
+            <span class="ln em"><span>{{ i18n.landing().about.titleL3 }} {{ i18n.landing().about.titleL4 }}</span></span>
           </h2>
           </div>
         </div>
@@ -43,9 +41,9 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
 
     .kicker { display: flex; align-items: center; gap: .7rem; margin: 0 0 1.5rem; font-family: var(--cf-display); font-size: .78rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: #A78BFA; }
     .kicker span { width: .5rem; height: .5rem; border-radius: 2px; background: var(--cf-violet); box-shadow: 0 0 16px var(--cf-violet); }
-    h2 { margin: 0; font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 80, 'opsz' 96; font-size: clamp(2.7rem, 6.2vw, 6.4rem); line-height: .9; letter-spacing: -.035em; }
+    h2 { margin: 0; font-family: var(--cf-display); font-weight: 800; font-variation-settings: 'wdth' 80, 'opsz' 96; font-size: clamp(2rem, 4.2vw, 4.6rem); line-height: 1.04; letter-spacing: -.03em; }
     .ln { display: block; overflow: hidden; padding-bottom: .06em; }
-    .ln > span { display: inline-block; }
+    .ln > span { display: inline-block; white-space: nowrap; }
     .em { color: #A78BFA; }
     /* titolo a particelle: il canvas sborda per far volare la polvere; il testo vero compare a riposo */
     .title { position: relative; }
@@ -75,9 +73,7 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
     @supports (animation-timeline: view()) {
       @media (prefers-reduced-motion: no-preference) {
         .ln > span { animation: rise linear both; animation-timeline: view(); animation-range: entry 10% cover 32%; }
-        .ln:nth-child(2) > span { animation-range: entry 16% cover 35%; }
-        .ln:nth-child(3) > span { animation-range: entry 22% cover 38%; }
-        .ln:nth-child(4) > span { animation-range: entry 28% cover 41%; }
+        .ln:nth-child(2) > span { animation-range: entry 18% cover 36%; }
         .copy > * { animation: fade linear both; animation-timeline: view(); animation-range: entry 20% cover 35%; }
         .facts { animation: line linear both; animation-timeline: view(); animation-range: entry 30% cover 40%; }
         .facts li { animation: fade linear both; animation-timeline: view(); animation-range: entry 40% cover 45%; }
@@ -89,6 +85,8 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
 
     @media (max-width: 899px) {
       .inner { grid-template-columns: 1fr; row-gap: 2rem; }
+      h2 { font-size: clamp(1.8rem, 6.5vw, 3rem); line-height: 1.08; }
+      .ln > span { white-space: normal; }
       .facts { grid-template-columns: 1fr; margin-top: 1rem; }
       .facts li {
         animation: none !important;
