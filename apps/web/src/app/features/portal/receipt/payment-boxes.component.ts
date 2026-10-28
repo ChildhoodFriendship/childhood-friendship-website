@@ -554,8 +554,12 @@ interface DueItem {
       backdrop-filter: blur(10px);
       z-index: 9999;
       display: flex;
-      align-items: flex-end;
-      justify-content: center;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      overflow-y: auto;
+      padding-top: 20px;
+      box-sizing: border-box;
       animation: fadeIn 0.2s ease;
     }
 
@@ -567,8 +571,7 @@ interface DueItem {
     .apple-pay-sheet {
       width: 100%;
       max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
+      margin-top: auto;
       background: #1C1C1E;
       border-radius: 24px 24px 0 0;
       padding: 16px 20px 32px;
