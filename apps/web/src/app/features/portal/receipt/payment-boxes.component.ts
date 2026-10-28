@@ -567,9 +567,11 @@ interface DueItem {
     .apple-pay-sheet {
       width: 100%;
       max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
       background: #1C1C1E;
       border-radius: 24px 24px 0 0;
-      padding: 16px 24px 32px;
+      padding: 16px 20px 32px;
       box-sizing: border-box;
       box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.8);
       border-top: 1px solid rgba(255, 255, 255, 0.15);
