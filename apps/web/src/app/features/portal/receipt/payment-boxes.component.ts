@@ -15,6 +15,7 @@ interface ProjectBillingItem {
   id: string;
   name: string;
   amount: number;
+  dueDate: string;
   isPaid: boolean;
 }
 
@@ -103,6 +104,10 @@ interface ProjectBillingItem {
             </div>
 
             <div class="item-right-col">
+              <div class="item-date-col">
+                <span class="item-date-label">{{ i18n.isEn() ? 'Due' : 'Scadenza' }}</span>
+                <span class="item-date-val font-mono">{{ item.dueDate }}</span>
+              </div>
               <span class="item-amount font-mono">{{ formatMoney(item.amount) }}</span>
             </div>
           </div>
@@ -557,7 +562,6 @@ interface ProjectBillingItem {
     .project-items-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
     }
 
     .project-item-row {
@@ -565,28 +569,32 @@ interface ProjectBillingItem {
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      padding: 14px 16px;
-      border-radius: 12px;
+      padding: 14px 2px;
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
       transition: all 0.2s ease;
+    }
+    .project-item-row:last-child {
+      border-bottom: none !important;
     }
 
     /* Voci normali (da saldare) */
     .project-item-row.item-normale {
-      background: rgba(22, 17, 38, 0.65);
-      border: 1px solid rgba(167, 139, 250, 0.22);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
       opacity: 1;
     }
     .item-normale .item-name {
       color: #F8FAFC;
       font-weight: 600;
-      font-size: 0.86rem;
+      font-size: 0.88rem;
       line-height: 1.35;
     }
     .item-normale .item-amount {
       color: #FFFFFF;
       font-weight: 800;
-      font-size: 0.96rem;
+      font-size: 1rem;
     }
     .item-normale .unpaid-bullet {
       width: 6px;
@@ -611,23 +619,21 @@ interface ProjectBillingItem {
 
     /* Voci saldate (in grigio trasparente) */
     .project-item-row.item-saldata {
-      background: rgba(255, 255, 255, 0.015);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      opacity: 0.38; /* Grigio trasparente richiesto dall'utente! */
+      opacity: 0.38; /* Grigio trasparente */
     }
     .project-item-row.item-saldata:hover {
-      opacity: 0.6;
+      opacity: 0.65;
     }
     .item-saldata .item-name {
       color: #94A3B8;
       font-weight: 500;
-      font-size: 0.84rem;
+      font-size: 0.86rem;
       line-height: 1.35;
     }
     .item-saldata .item-amount {
       color: #94A3B8;
       font-weight: 600;
-      font-size: 0.92rem;
+      font-size: 0.95rem;
     }
     .item-saldata .item-status-icon {
       color: #10B981;
@@ -656,7 +662,7 @@ interface ProjectBillingItem {
     }
 
     .item-status-icon {
-      margin-top: 3px;
+      margin-top: 4px;
       flex: none;
     }
 
@@ -670,8 +676,27 @@ interface ProjectBillingItem {
     .item-right-col {
       flex: none;
       display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .item-date-col {
+      display: flex;
       align-items: center;
-      justify-content: flex-end;
+      gap: 5px;
+    }
+
+    .item-date-label {
+      font-size: 0.64rem;
+      color: rgba(226, 232, 240, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .item-date-val {
+      font-size: 0.76rem;
+      color: rgba(226, 232, 240, 0.75);
     }
 
     .pay-box-amount {
@@ -1090,6 +1115,7 @@ export class PaymentBoxesComponent {
     const vatMultiplier = 1 + this.i18n.vatRate();
     const totalPaid = this.alreadyPaid();
     let paidAccumulator = totalPaid;
+    const baseDeadline = p.paymentDeadline || p.deadline;
 
     if (items && items.length > 0) {
       return items
@@ -1105,8 +1131,9 @@ export class PaymentBoxesComponent {
           }
           return {
             id: it.id || `item-${idx}`,
-            name: it.name,
+            name: it.name.replace(/^(Tranche\s*\d+\s*:\s*)/i, '').trim(),
             amount: itemAmount,
+            dueDate: this.calcDueDate(!!it.monthly, baseDeadline),
             isPaid
           };
         });
@@ -1115,17 +1142,21 @@ export class PaymentBoxesComponent {
     const tot = this.totalWithVat();
     const half = Number((tot * 0.5).toFixed(2));
     const rest = Number((tot - half).toFixed(2));
+    const date1 = this.calcDueDate(false, baseDeadline);
+    const date2 = this.calcDueDate(false, p.deadline || '2026-11-30');
     return [
       {
-        id: 'tranche-1',
-        name: this.i18n.isEn() ? 'Tranche 1: 50% Kickoff Deposit' : 'Tranche 1: Acconto 50% Avvio Lavori',
+        id: 'acconto-50',
+        name: this.i18n.isEn() ? '50% Kickoff Deposit' : 'Acconto 50% Avvio Lavori',
         amount: half,
+        dueDate: date1,
         isPaid: totalPaid >= half || this.isFullyPaid()
       },
       {
-        id: 'tranche-2',
-        name: this.i18n.isEn() ? 'Tranche 2: 50% Final Staging Balance' : 'Tranche 2: Saldo 50% Collaudo & Rilascio',
+        id: 'saldo-50',
+        name: this.i18n.isEn() ? '50% Final Staging Balance' : 'Saldo 50% Collaudo & Rilascio',
         amount: rest,
+        dueDate: date2,
         isPaid: this.isFullyPaid()
       }
     ];
