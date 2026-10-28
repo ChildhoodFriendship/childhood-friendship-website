@@ -69,8 +69,8 @@ interface SoldServiceModule {
                 </span>
                 @if (p.targetUrl) {
                   <a class="btn-preview-primary" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    {{ i18n.isEn() ? 'Visit Live App ↗' : 'Visita il sito Live ↗' }}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    {{ i18n.isEn() ? 'Live' : 'Live' }}
                   </a>
                 }
               } @else {
@@ -80,9 +80,9 @@ interface SoldServiceModule {
                 </span>
 
                 @if (p.stagingUrl) {
-                  <a class="btn-preview-primary" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" [title]="i18n.isEn() ? 'Open interactive staging preview' : 'Apri anteprima interattiva staging'">
+                  <a class="btn-preview-primary" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" [title]="i18n.isEn() ? 'Open preview' : 'Apri anteprima'">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                    {{ i18n.isEn() ? 'Live Staging Preview ↗' : 'Anteprima Staging ↗' }}
+                    {{ i18n.isEn() ? 'Preview' : 'Anteprima' }}
                   </a>
                 }
               }
@@ -103,7 +103,6 @@ interface SoldServiceModule {
               <!-- SEZIONE OBIETTIVI (MINIMAL) -->
               <div class="section-block">
                 <div class="section-title-wrap">
-                  <span class="section-icon">🎯</span>
                   <h3 class="section-title">{{ i18n.isEn() ? 'Objectives' : 'Obiettivi' }}</h3>
                 </div>
 
@@ -145,7 +144,6 @@ interface SoldServiceModule {
               <!-- SEZIONE PRODOTTI E SERVIZI VENDUTI -->
               <div class="section-block">
                 <div class="section-title-wrap">
-                  <span class="section-icon">📦</span>
                   <h3 class="section-title">{{ i18n.isEn() ? 'Commissioned Services & Modules' : 'Prodotti & Servizi Commissionati' }}</h3>
                 </div>
 
@@ -475,6 +473,7 @@ interface SoldServiceModule {
       justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
+      margin-top: 14px;
     }
 
     .project-title {
@@ -581,8 +580,10 @@ interface SoldServiceModule {
     .section-title-wrap {
       display: flex;
       align-items: center;
+      justify-content: center;
+      text-align: center;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .section-icon {
@@ -595,6 +596,7 @@ interface SoldServiceModule {
       margin: 0;
       letter-spacing: -0.02em;
       color: #F8FAFC;
+      text-align: center;
     }
 
     /* Objectives Grid (Minimal) */
@@ -611,6 +613,8 @@ interface SoldServiceModule {
       padding: 16px 18px;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      text-align: center;
       gap: 8px;
       transition: transform 0.2s, border-color 0.2s;
     }
@@ -622,6 +626,7 @@ interface SoldServiceModule {
     .obj-header {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
     }
 
@@ -662,6 +667,8 @@ interface SoldServiceModule {
       padding: 20px;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      text-align: center;
       gap: 10px;
       transition: all 0.2s ease;
     }
@@ -673,7 +680,9 @@ interface SoldServiceModule {
     .module-top {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
     }
 
     .module-icon {
@@ -697,6 +706,7 @@ interface SoldServiceModule {
       color: #FFFFFF;
       margin: 0;
       line-height: 1.3;
+      text-align: center;
     }
 
     .module-desc {
@@ -704,6 +714,7 @@ interface SoldServiceModule {
       color: rgba(226, 232, 240, 0.72);
       line-height: 1.4;
       margin: 0;
+      text-align: center;
     }
 
     .module-features {
@@ -712,6 +723,7 @@ interface SoldServiceModule {
       margin: 6px 0 0 0;
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 5px;
     }
 

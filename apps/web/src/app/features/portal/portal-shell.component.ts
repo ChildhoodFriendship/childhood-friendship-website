@@ -24,7 +24,6 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
               (click)="i18n.setLang('it')"
               [title]="'Italia (EUR €)'"
               [attr.aria-pressed]="!i18n.isEn()">
-              <span class="flag" aria-hidden="true">🇮🇹</span>
               <span class="code font-mono">IT · €</span>
             </button>
             <button
@@ -34,7 +33,6 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
               (click)="i18n.setLang('en')"
               [title]="'United States (USD $)'"
               [attr.aria-pressed]="i18n.isEn()">
-              <span class="flag" aria-hidden="true">🇺🇸</span>
               <span class="code font-mono">US · $</span>
             </button>
           </div>
