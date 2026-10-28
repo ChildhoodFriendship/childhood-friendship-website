@@ -234,11 +234,11 @@ interface SoldServiceModule {
           }
 
           <!-- ========================================== -->
-          <!-- 3. VISTA DOCUMENTI (Fiscale, Contratto & File) -->
+          <!-- 3. VISTA DOCUMENTI (Fiscale & Contratto)  -->
           <!-- ========================================== -->
           @if (activeTab() === 'documents') {
             <section class="tab-view animate-fade-in" aria-labelledby="documents-heading">
-              <h2 id="documents-heading" class="sr-only">{{ i18n.isEn() ? 'Documents' : 'Documenti' }}</h2>
+              <h2 id="documents-heading" class="sr-only">{{ i18n.isEn() ? 'Documents & Contracts' : 'Documenti e Contratti' }}</h2>
 
               <!-- Documento Commerciale Fiscale B2B / Fattura Elettronica SDI -->
               <div class="receipt-full-wrapper">
@@ -249,13 +249,43 @@ interface SoldServiceModule {
               <div class="contract-container">
                 <cf-project-contract [project]="p" />
               </div>
+            </section>
+          }
 
-              <!-- Materiali -->
-              <div class="assets-quick-panel">
+          <!-- ========================================== -->
+          <!-- 4. VISTA PAGAMENTI (Tranche, Apple Pay & Stripe) -->
+          <!-- ========================================== -->
+          @if (activeTab() === 'payments') {
+            <section class="tab-view animate-fade-in" aria-labelledby="payments-heading">
+              <h2 id="payments-heading" class="sr-only">{{ i18n.isEn() ? 'Payments' : 'Pagamenti' }}</h2>
+
+              <!-- Box Pagamenti Tranche e Apple Pay -->
+              <div class="payments-stage-wrapper">
+                <cf-payment-boxes [project]="p" />
+              </div>
+            </section>
+          }
+
+          <!-- ========================================== -->
+          <!-- 5. VISTA CHAT DEDICATA & MATERIALI         -->
+          <!-- ========================================== -->
+          @if (activeTab() === 'chat') {
+            <section class="tab-view animate-fade-in chat-view-section" aria-labelledby="chat-heading">
+              <h2 id="chat-heading" class="sr-only">{{ i18n.isEn() ? 'Direct Studio Chat' : 'Chat con lo Studio' }}</h2>
+
+              <div class="chat-dedicated-card">
+                <cf-messages-thread
+                  [projectId]="p.id"
+                  [floating]="false"
+                />
+              </div>
+
+              <!-- Materiali & File Condivisi (Spostato nella vista Chat) -->
+              <div class="assets-quick-panel chat-assets-panel">
                 <div class="assets-panel-header">
                   <div class="row-center gap-sm">
                     <span class="panel-icon">📁</span>
-                    <h3 class="panel-title">{{ i18n.isEn() ? 'Assets' : 'Materiali' }}</h3>
+                    <h3 class="panel-title">{{ i18n.isEn() ? 'Shared Assets & Files' : 'Materiali' }}</h3>
                   </div>
 
                   @if (!p.archivedAt) {
@@ -281,36 +311,6 @@ interface SoldServiceModule {
                     hint=""
                   />
                 </div>
-              </div>
-            </section>
-          }
-
-          <!-- ========================================== -->
-          <!-- 4. VISTA PAGAMENTI (Tranche, Apple Pay & Stripe) -->
-          <!-- ========================================== -->
-          @if (activeTab() === 'payments') {
-            <section class="tab-view animate-fade-in" aria-labelledby="payments-heading">
-              <h2 id="payments-heading" class="sr-only">{{ i18n.isEn() ? 'Payments' : 'Pagamenti' }}</h2>
-
-              <!-- Box Pagamenti Tranche e Apple Pay -->
-              <div class="payments-stage-wrapper">
-                <cf-payment-boxes [project]="p" />
-              </div>
-            </section>
-          }
-
-          <!-- ========================================== -->
-          <!-- 5. VISTA CHAT DEDICATA (Thread a Schermo)  -->
-          <!-- ========================================== -->
-          @if (activeTab() === 'chat') {
-            <section class="tab-view animate-fade-in chat-view-section" aria-labelledby="chat-heading">
-              <h2 id="chat-heading" class="sr-only">{{ i18n.isEn() ? 'Direct Studio Chat' : 'Chat con lo Studio' }}</h2>
-
-              <div class="chat-dedicated-card">
-                <cf-messages-thread
-                  [projectId]="p.id"
-                  [floating]="false"
-                />
               </div>
             </section>
           }
@@ -357,8 +357,8 @@ interface SoldServiceModule {
             class="dock-btn"
             [class.active]="activeTab() === 'documents'"
             (click)="setTab('documents')"
-            [attr.aria-label]="i18n.isEn() ? 'Documents & Files' : 'Documenti & File'"
-            [title]="i18n.isEn() ? 'Documents & Files' : 'Documenti & File'">
+            [attr.aria-label]="i18n.isEn() ? 'Documents & Contracts' : 'Documenti e Contratti'"
+            [title]="i18n.isEn() ? 'Documents & Contracts' : 'Documenti e Contratti'">
             <!-- Icona 3: Documenti / Contratto -->
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -385,14 +385,14 @@ interface SoldServiceModule {
             </svg>
           </button>
 
-          <!-- Icona 5: Chat con lo Studio integrata direttamente nella dock (Vista Dedicata) -->
+          <!-- Icona 5: Chat con lo Studio & Materiali Condivisi -->
           <button
             type="button"
             class="dock-btn"
             [class.active]="activeTab() === 'chat'"
             (click)="setTab('chat')"
-            [attr.aria-label]="i18n.isEn() ? 'Studio Chat' : 'Chat con lo studio'"
-            [title]="i18n.isEn() ? 'Studio Chat' : 'Chat con lo studio'">
+            [attr.aria-label]="i18n.isEn() ? 'Chat & Files' : 'Chat & Materiali'"
+            [title]="i18n.isEn() ? 'Chat & Files' : 'Chat & Materiali'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             </svg>
@@ -1063,6 +1063,13 @@ interface SoldServiceModule {
       border-radius: 18px;
       overflow: hidden;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .chat-assets-panel {
+      width: 100%;
+      max-width: 760px;
+      margin: 24px auto 30px auto;
+      box-sizing: border-box;
     }
 
     /* ----------------------------------------------------
