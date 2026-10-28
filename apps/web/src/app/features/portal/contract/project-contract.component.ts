@@ -1,14 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import type { PortalProjectDto } from '@cf/shared/types';
+import { Api } from '../../../core/api';
 import { ToastService } from '../../../core/toast.service';
 import { PortalI18nService } from '../../../core/portal-i18n.service';
 
 interface SignatureRecord {
+  id?: string;
   signerName: string;
+  signerEmail?: string;
   signedAt: string;
   signatureHash: string;
-  ipPlaceholder: string;
+  signerIp?: string;
+  signerUserAgent?: string;
 }
 
 @Component({
@@ -72,16 +76,22 @@ interface SignatureRecord {
                     {{ i18n.isEn() ? 'Document Executed with Advanced Electronic Signature' : 'Documento Sottoscritto con Firma Elettronica Avanzata' }}
                   </h4>
                   <p class="cert-meta">
-                    {{ i18n.isEn() ? 'Signed by: ' : 'Sottoscritto da: ' }}<strong>{{ sig.signerName }}</strong> · 
+                    {{ i18n.isEn() ? 'Signed by: ' : 'Sottoscritto da: ' }}<strong>{{ sig.signerName }}</strong> @if (sig.signerEmail) { &lt;{{ sig.signerEmail }}&gt; } · 
                     {{ i18n.isEn() ? 'UTC Timestamp: ' : 'Data e Ora UTC: ' }}<strong>{{ sig.signedAt | date: (i18n.isEn() ? 'MM/dd/yyyy HH:mm:ss' : 'dd/MM/yyyy HH:mm:ss') }}</strong>
                   </p>
+                  @if (sig.signerIp) {
+                    <p class="cert-meta cert-audit-line">
+                      {{ i18n.isEn() ? 'Verified IP: ' : 'Indirizzo IP Verificato: ' }}<strong>{{ sig.signerIp }}</strong> · 
+                      {{ i18n.isEn() ? 'Device: ' : 'Browser / Client: ' }}<span>{{ sig.signerUserAgent || 'Web Browser' }}</span>
+                    </p>
+                  }
                 </div>
               </div>
               <div class="cert-footer">
-                <span class="cert-hash">{{ i18n.isEn() ? 'Certificate Hash: ' : 'Codice Certificato: ' }}{{ sig.signatureHash }}</span>
+                <span class="cert-hash"><strong>{{ i18n.isEn() ? 'SHA-256 Hash: ' : 'Hash SHA-256: ' }}</strong>{{ sig.signatureHash }}</span>
                 <span class="cert-valid">
                   {{ i18n.isEn() 
-                    ? 'Full Legal Validity under US ESIGN Act (15 U.S.C. § 7001), UETA & EU eIDAS ✓' 
+                    ? 'Full Legal Validity under US E-SIGN Act (15 U.S.C. § 7001), UETA & EU eIDAS ✓' 
                     : 'Validità Legale ex art. 1326 c.c. & Reg. UE 910/2014 (eIDAS) ✓' }}
                 </span>
               </div>
@@ -133,30 +143,30 @@ interface SignatureRecord {
                   </p>
                 </div>
 
-                <div class="article-item">
-                  <h5>SECTION 2 - FEES, INVOICING & PAYMENT TERMS</h5>
+                <div class="article-item highlight-article">
+                  <h5>SECTION 2 - FEES, INVOICING & NON-REFUNDABLE KICKOFF DEPOSIT</h5>
                   <p>
-                    2.1 Total compensation is set forth in the attached commercial invoice and estimate (Tax-exempt cross-border B2B service ex Art. 7-ter DPR 633/72).<br>
-                    2.2 Payments shall be processed via verified electronic transaction (Apple Pay, Credit/Debit Card or Wire Transfer): 
-                    50% initial retainer upon agreement execution, and 50% final balance upon final staging approval prior to Live deployment.<br>
-                    2.3 Official commercial invoice and receipt are electronically transmitted upon charge authorization.
+                    2.1 Total compensation is set forth in the attached commercial invoice and estimate (Tax-exempt cross-border B2B digital service ex Art. 7-ter DPR 633/72).<br>
+                    2.2 <strong>Non-Refundable Deposit:</strong> The initial 50% Kickoff Deposit constitutes liquidated consideration allocated immediately to non-recoverable cloud provisioning, technical diagnostics, and initial scoping/architecture. The Deposit is strictly non-refundable once development operations have commenced.<br>
+                    2.3 <strong>Milestone Payments:</strong> 50% initial retainer upon agreement execution, and 50% final balance upon final staging approval prior to Live deployment and domain DNS pointing.<br>
+                    2.4 Official commercial invoice and receipt are electronically transmitted upon charge authorization.
                   </p>
                 </div>
 
                 <div class="article-item highlight-article">
-                  <h5>SECTION 3 - INTELLECTUAL PROPERTY & RETENTION OF TITLE</h5>
+                  <h5>SECTION 3 - INTELLECTUAL PROPERTY & RETENTION OF TITLE (CONDITIONED IP TRANSFER)</h5>
                   <p>
-                    3.1 All bespoke source code, 3D assets, custom layouts, and digital deliverables <strong>SHALL REMAIN THE EXCLUSIVE PROPERTY OF THE PROVIDER 
-                    UNTIL FINAL, COMPLETE SETTLEMENT OF THE AGREED COMPENSATION</strong>.<br>
-                    3.2 Upon receipt of full and final payment, the Provider transfers to the Client full commercial ownership and operational license to the custom solution, reserving the Provider's standard portfolio presentation rights.<br>
-                    3.3 Failure to complete payment shall entitle the Provider to suspend cloud hosting and revoke deployment access without penalty.
+                    3.1 <strong>Retention of Title:</strong> All bespoke source code, 3D assets, custom layouts, repository commits, and digital deliverables <strong>SHALL REMAIN THE EXCLUSIVE INTELLECTUAL PROPERTY OF THE PROVIDER UNTIL FULL, FINAL, AND UNCONDITIONAL SETTLEMENT OF THE ENTIRE CONTRACT PRICE</strong>.<br>
+                    3.2 <strong>Conditioned Assignment:</strong> Upon receipt of the full 50% final balance, Provider assigns to Client commercial operational rights and ownership of custom deliverables, reserving Provider's standard portfolio presentation rights.<br>
+                    3.3 Failure to complete payment shall entitle Provider to suspend cloud hosting, lock staging environments, and revoke deployment access without penalty.
                   </p>
                 </div>
 
-                <div class="article-item">
-                  <h5>SECTION 4 - STAGING REVIEW & ACCEPTANCE</h5>
+                <div class="article-item highlight-article">
+                  <h5>SECTION 4 - STAGING REVIEW & 10-DAY DEEMED ACCEPTANCE</h5>
                   <p>
-                    Upon delivery of the staging prototype, the Client shall have <strong>10 (ten) business days</strong> to review deliverables and report any discrepancies. If no written notice is provided within this period, the project shall be deemed formally accepted and approved.
+                    4.1 Upon delivery of the staging prototype, Client shall have <strong>10 (ten) calendar days</strong> to inspect deliverables and provide written notice specifying any material non-conformities.<br>
+                    4.2 <strong>Deemed Acceptance (Silenzio-Assenso):</strong> If no written punch-list is received within said 10-day period, the deliverables shall be <strong>irrevocably deemed approved and accepted</strong>, and the remaining 50% balance shall become immediately due and payable.
                   </p>
                 </div>
 
@@ -181,10 +191,18 @@ interface SignatureRecord {
                   </p>
                 </div>
 
-                <div class="article-item">
-                  <h5>SECTION 8 - DISPUTE RESOLUTION & JURISDICTION</h5>
+                <div class="article-item highlight-article">
+                  <h5>SECTION 8 - DISPUTE RESOLUTION & CHARGEBACK WAIVER</h5>
                   <p>
-                    This Agreement shall be construed under international commercial standards for cross-border software agreements, with exclusive legal venue in the competent court of Padua, Italy.
+                    8.1 <strong>Chargeback Waiver:</strong> Client confirms that payments processed via Stripe or Apple Pay constitute voluntary payments for professional digital services and expressly waives any right to initiate an ungrounded credit card chargeback without first engaging in good-faith written negotiation for a period of thirty (30) days.<br>
+                    8.2 <strong>Exclusive Venue:</strong> This Agreement shall be construed under international commercial standards for cross-border software agreements, with exclusive legal venue in the competent court of Padua, Italy.
+                  </p>
+                </div>
+
+                <div class="article-item">
+                  <h5>SECTION 9 - US TAX STATUS & IRS FORM W-8BEN-E COMPLIANCE</h5>
+                  <p>
+                    The Provider certifies that it is an Italian resident legal entity operating with zero permanent establishment in the United States. Services are rendered ex Art. 7-ter DPR 633/72 (0% Italian VAT). Provider provides certified <strong>IRS Form W-8BEN-E</strong> certifying exemption from 30% US backup withholding under Article 7 (Business Profits) of the US-Italy Income Tax Treaty.
                   </p>
                 </div>
               </div>
@@ -193,9 +211,9 @@ interface SignatureRecord {
               <div class="vexatious-box">
                 <h6 class="vexatious-title">EXPRESS ACKNOWLEDGMENT OF SPECIAL COMMERCIAL TERMS</h6>
                 <p class="vexatious-text">
-                  The Client confirms having thoroughly reviewed and expressly agreed to: <strong>Section 2</strong> (Payment Schedule & Staging Pre-Condition), 
-                  <strong>Section 3</strong> (Retention of Title & Code Transfer upon Final Settlement), <strong>Section 4</strong> (10-Day Deemed Acceptance), 
-                  <strong>Section 5</strong> (30-Day Technical Warranty), and <strong>Section 8</strong> (Jurisdiction).
+                  The Client confirms having thoroughly reviewed and expressly agreed to: <strong>Section 2</strong> (50% Non-Refundable Kickoff Deposit), 
+                  <strong>Section 3</strong> (Conditioned IP Assignment & Retention of Title until Final Balance), <strong>Section 4</strong> (10-Day Deemed Acceptance), 
+                  <strong>Section 5</strong> (30-Day Technical Warranty), <strong>Section 8</strong> (Chargeback Waiver & Dispute Venue), and <strong>Section 9</strong> (W-8BEN-E Tax Exemption).
                 </p>
               </div>
             } @else {
@@ -210,13 +228,13 @@ interface SignatureRecord {
                   </p>
                 </div>
 
-                <div class="article-item">
-                  <h5>ART. 2 - CORRISPETTIVO, FATTURAZIONE E TERMINI DI PAGAMENTO</h5>
+                <div class="article-item highlight-article">
+                  <h5>ART. 2 - CORRISPETTIVO, FATTURAZIONE E ACCONTO NON RIMBORSABILE</h5>
                   <p>
-                    2.1 Il corrispettivo complessivo è determinato dalle voci del preventivo allegato (maggiorato di IVA 22%).<br>
-                    2.2 Il pagamento avverrà tramite transazione elettronica tracciata (Apple Pay, carta o bonifico):
-                    acconto del 50% all'accettazione e saldo del 50% al collaudo finale prima della pubblicazione (Live).<br>
-                    2.3 Ciascun incasso è assoggettato a regolare <strong>Fattura Elettronica SDI</strong> emessa e trasmessa telematicamente all'Agenzia delle Entrate.
+                    2.1 Il corrispettivo complessivo è determinato dalle voci del preventivo allegato (maggiorato di IVA 22% per clienti italiani, o esente ex Art. 7-ter DPR 633/72 per clienti esteri).<br>
+                    2.2 <strong>Acconto di Avvio non rimborsabile:</strong> Il pagamento dell'acconto del 50% costituisce corrispettivo a copertura delle spese vive di setup cloud, analisi e architettura ed è espressamente non rimborsabile ad avvio attività.<br>
+                    2.3 Saldo del 50% al collaudo finale prima della pubblicazione (Live) e del rilascio del dominio.<br>
+                    2.4 Ciascun incasso è assoggettato a regolare <strong>Fattura Elettronica SDI</strong> o Commercial Invoice internazionale.
                   </p>
                 </div>
 
@@ -233,12 +251,12 @@ interface SignatureRecord {
                   </p>
                 </div>
 
-                <div class="article-item">
-                  <h5>ART. 4 - COLLAUDO, REVISIONE E ACCETTAZIONE TACITA</h5>
+                <div class="article-item highlight-article">
+                  <h5>ART. 4 - COLLAUDO, REVISIONE E ACCETTAZIONE TACITA (SILENZIO-ASSENSO)</h5>
                   <p>
                     Al completamento della versione in staging, il Committente dispone di <strong>10 (dieci) giorni lavorativi</strong> 
-                    per verificare la conformità e segnalare eventuali anomalie. Trascorso tale termine senza contestazioni scritte, 
-                    l'opera si intende <strong>definitivamente accettata e collaudata</strong>.
+                    per verificare la conformità e segnalare eventuali anomalie scritte. Trascorso tale termine senza contestazioni formali, 
+                    l'opera si intende <strong>definitivamente accettata e collaudata con conseguente esigibilità del saldo</strong>.
                   </p>
                 </div>
 
@@ -267,11 +285,18 @@ interface SignatureRecord {
                   </p>
                 </div>
 
-                <div class="article-item">
-                  <h5>ART. 8 - FORO COMPETENTE ESCLUSIVO</h5>
+                <div class="article-item highlight-article">
+                  <h5>ART. 8 - FORO COMPETENTE ESCLUSIVO E RINUNCIA A CHARGEBACK</h5>
                   <p>
-                    Per qualsiasi controversia derivante dall'interpretazione, validità o esecuzione del presente accordo 
-                    sarà competente in via esclusiva il <strong>Foro di Padova</strong>.
+                    8.1 Il Committente riconosce che i pagamenti elettronici (Apple Pay / Stripe) rappresentano corrispettivo per servizi professionali svolti e rinuncia ad attivare contestazioni bancarie o chargeback senza aver preventivamente attivato un tentativo di conciliazione di 30 giorni.<br>
+                    8.2 Per qualsiasi controversia sarà competente in via esclusiva il <strong>Foro di Padova</strong>.
+                  </p>
+                </div>
+
+                <div class="article-item">
+                  <h5>ART. 9 - REGIME FISCALE INTERNAZIONALE</h5>
+                  <p>
+                    Per i committenti esteri (extra-UE) le prestazioni sono rese in regime di non imponibilità IVA ex Art. 7-ter D.P.R. 633/1972, con rilascio del modulo W-8BEN-E per esenzione da ritenute estere.
                   </p>
                 </div>
               </div>
@@ -281,10 +306,10 @@ interface SignatureRecord {
                 <h6 class="vexatious-title">APPROVAZIONE SPECIFICA DELLE CLAUSOLE PARTICOLARI (Artt. 1341 e 1342 C.C.)</h6>
                 <p class="vexatious-text">
                   Il Committente dichiara di aver preso visione e di approvare specificamente per iscritto le disposizioni 
-                  degli articoli: <strong>Art. 2</strong> (Termini di pagamento e sospensione), <strong>Art. 3</strong> (Riserva 
+                  degli articoli: <strong>Art. 2</strong> (Acconto non rimborsabile e termini a tranche), <strong>Art. 3</strong> (Riserva 
                   di proprietà intellettuale fino al saldo), <strong>Art. 4</strong> (Accettazione tacita entro 10 giorni), 
                   <strong>Art. 5</strong> (Garanzia limitata a 30 giorni), <strong>Art. 6</strong> (Esonero responsabilità disservizi terzi), 
-                  <strong>Art. 8</strong> (Competenza esclusiva Foro di Padova).
+                  <strong>Art. 8</strong> (Competenza esclusiva Foro di Padova e rinuncia a chargeback), <strong>Art. 9</strong> (Regime fiscale Art. 7-ter).
                 </p>
               </div>
             }
@@ -322,14 +347,18 @@ interface SignatureRecord {
                   <button
                     type="button"
                     class="btn-sign-contract"
-                    [disabled]="!canSign()"
+                    [disabled]="!canSign() || submitting()"
                     (click)="submitSignature()">
-                    ✍️ {{ i18n.isEn() ? 'Sign Agreement Digitally (1-Click)' : 'Firma Digitalmente il Contratto' }}
+                    @if (submitting()) {
+                      ⏳ {{ i18n.isEn() ? 'Securing Cryptographic Signature...' : 'Generazione Firma Crittografica...' }}
+                    } @else {
+                      ✍️ {{ i18n.isEn() ? 'Sign Agreement Digitally (1-Click E-SIGN)' : 'Firma Digitalmente il Contratto' }}
+                    }
                   </button>
                   <span class="sign-legal-hint">
                     {{ i18n.isEn() 
-                      ? 'Advanced Electronic Signature with cryptographic audit hash and timestamp verification' 
-                      : 'Apposizione di Firma Elettronica Avanzata con marcatura oraria e tracciamento audit' }}
+                      ? 'Advanced Electronic Signature with verified IP, UTC timestamp and SHA-256 audit trail pursuant to 15 U.S.C. § 7001' 
+                      : 'Apposizione di Firma Elettronica Avanzata con marcatura oraria, IP verificato e tracciamento audit a norma di legge' }}
                   </span>
                 </div>
               </div>
@@ -797,12 +826,14 @@ interface SignatureRecord {
 })
 export class ProjectContractComponent {
   readonly project = input.required<PortalProjectDto>();
+  private readonly api = inject(Api);
   private readonly toast = inject(ToastService);
   protected readonly i18n = inject(PortalI18nService);
 
   protected readonly isOpen = signal(true);
   protected readonly signerInputName = signal('');
   protected readonly vexatiousAccepted = signal(false);
+  protected readonly submitting = signal(false);
   protected readonly signature = signal<SignatureRecord | null>(null);
 
   protected readonly isSigned = computed(() => !!this.signature());
@@ -811,47 +842,68 @@ export class ProjectContractComponent {
     effect(() => {
       const proj = this.project();
       if (!proj) return;
-      const saved = localStorage.getItem(`cf_contract_signed_${proj.id}`);
+      this.signerInputName.set(proj.clientName || (this.i18n.isEn() ? 'Client' : 'Cliente'));
+      void this.loadSignature(proj.id);
+    });
+  }
+
+  private async loadSignature(projectId: string): Promise<void> {
+    try {
+      const res = await this.api.get<{ signed: boolean; signature: SignatureRecord | null }>(`/projects/${projectId}/contract`);
+      if (res.signed && res.signature) {
+        this.signature.set(res.signature);
+        this.isOpen.set(false);
+        return;
+      }
+    } catch {
+      // safe fallback
+    }
+
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`cf_contract_signed_${projectId}`);
       if (saved) {
         try {
           const parsed = JSON.parse(saved) as SignatureRecord;
           this.signature.set(parsed);
           this.isOpen.set(false);
-        } catch {
-          // Ignora parse error
-        }
-      } else {
-        this.signerInputName.set(proj.clientName || (this.i18n.isEn() ? 'Client' : 'Cliente'));
+        } catch {}
       }
-    });
+    }
   }
 
   protected readonly canSign = computed(() => {
     return this.signerInputName().trim().length >= 3 && this.vexatiousAccepted();
   });
 
-  protected submitSignature(): void {
-    if (!this.canSign()) return;
+  protected async submitSignature(): Promise<void> {
+    if (!this.canSign() || this.submitting()) return;
+    this.submitting.set(true);
     const p = this.project();
     const name = this.signerInputName().trim();
-    const now = new Date().toISOString();
-    const hash = 'ESIGN-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
 
-    const record: SignatureRecord = {
-      signerName: name,
-      signedAt: now,
-      signatureHash: hash,
-      ipPlaceholder: 'HMAC-SHA256-CERTIFIED'
-    };
+    try {
+      const res = await this.api.post<{ signed: boolean; signature: SignatureRecord }>(
+        `/projects/${p.id}/contract/sign`,
+        { signerName: name, vexatiousAccepted: true }
+      );
 
-    localStorage.setItem(`cf_contract_signed_${p.id}`, JSON.stringify(record));
-    this.signature.set(record);
+      if (res.signature) {
+        this.signature.set(res.signature);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`cf_contract_signed_${p.id}`, JSON.stringify(res.signature));
+        }
+      }
 
-    const successMsg = this.i18n.isEn()
-      ? `Agreement signed with full legal validity! Copy sent to ${name} and childhood.friendship.official@gmail.com.`
-      : `Contratto firmato con valore legale! Copia inviata per email a childhood.friendship.official@gmail.com.`;
+      const successMsg = this.i18n.isEn()
+        ? `Agreement digitally executed with full legal validity under US E-SIGN Act! Official audit trail sent to your email and childhood.friendship.official@gmail.com.`
+        : `Contratto firmato con pieno valore legale! Certificato di audit trail inviato alla tua email e a childhood.friendship.official@gmail.com.`;
 
-    this.toast.success(successMsg);
+      this.toast.success(successMsg);
+    } catch (err) {
+      this.toast.error(err);
+    } finally {
+      this.submitting.set(false);
+    }
   }
 
   protected printContract(e: Event): void {

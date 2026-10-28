@@ -27,15 +27,31 @@ interface DisplayReceiptItem {
           <span class="collapsible-icon">🧾</span>
           <div class="title-and-badge">
             <h3 class="collapsible-title">
-              {{ i18n.isEn() ? 'Fiscal Commercial Invoice' : 'Documento Fiscale B2B / Ricevuta SDI' }}
+              {{ i18n.isEn() ? 'Commercial Invoice & Tax Receipt' : 'Documento Fiscale B2B / Ricevuta SDI' }}
             </h3>
             <span class="status-fiscal-text">
-              {{ i18n.isEn() ? 'Doc. ' + receiptDocNumber() : 'Doc. SDI ' + receiptDocNumber() }}
+              {{ i18n.isEn() ? 'Invoice n. ' + receiptDocNumber() : 'Doc. SDI ' + receiptDocNumber() }}
             </span>
           </div>
         </div>
 
         <div class="collapsible-header-actions">
+          @if (i18n.isEn()) {
+            <button
+              type="button"
+              class="btn-w8ben-trigger no-print"
+              (click)="showW8BenModal.set(true); $event.stopPropagation()"
+              title="View US Tax Exemption Certificate (IRS Form W-8BEN-E)">
+              🏛️ Form W-8BEN-E
+            </button>
+          }
+          <button
+            type="button"
+            class="btn-print-receipt no-print"
+            (click)="printReceipt($event)"
+            [title]="i18n.isEn() ? 'Print or save invoice as PDF' : 'Stampa o salva come PDF'">
+            🖨️ PDF
+          </button>
           <button
             type="button"
             class="btn-arrow-wrap"
@@ -73,11 +89,11 @@ interface DisplayReceiptItem {
 
         <!-- Intestazione Commerciale / Fiscale B2B -->
         <div class="receipt-type">
-          <strong class="mode-title">{{ i18n.isEn() ? 'COMMERCIAL INVOICE & ESTIMATE' : 'DOCUMENTO COMMERCIALE B2B' }}</strong>
-          <span class="mode-sub">{{ i18n.isEn() ? 'B2B SOFTWARE DEVELOPMENT & DIGITAL DESIGN' : 'RICEVUTA DI PRESTAZIONE E SVILUPPO SOFTWARE' }}</span>
+          <strong class="mode-title">{{ i18n.isEn() ? 'COMMERCIAL INVOICE & TAX RECEIPT' : 'DOCUMENTO COMMERCIALE B2B' }}</strong>
+          <span class="mode-sub">{{ i18n.isEn() ? 'B2B BESPOKE SOFTWARE ENGINEERING & DIGITAL SOLUTIONS' : 'RICEVUTA DI PRESTAZIONE E SVILUPPO SOFTWARE' }}</span>
           <span class="mode-desc">
             {{ i18n.isEn() 
-              ? 'Tax-exempt cross-border B2B service (EU-US) ex Art. 7-ter DPR 633/72' 
+              ? 'Tax-exempt cross-border B2B service (EU-US) ex Art. 7-ter DPR 633/72 (0% VAT - Reverse Charge)' 
               : 'Operazione soggetta a Fattura Elettronica SDI' }}
           </span>
         </div>
@@ -189,6 +205,91 @@ interface DisplayReceiptItem {
     </div>
   </div>
 }
+
+      <!-- MODALE UFFICIALE IRS FORM W-8BEN-E (Certificate of Foreign Status) -->
+      @if (showW8BenModal()) {
+        <div class="w8ben-backdrop animate-fade-in" (click)="showW8BenModal.set(false)">
+          <div class="w8ben-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="w8ben-title">
+            <header class="w8ben-header">
+              <div class="w8ben-title-badge">
+                <span class="irs-seal">🏛️</span>
+                <div>
+                  <h3 id="w8ben-title" class="w8ben-h3">IRS Form W-8BEN-E</h3>
+                  <p class="w8ben-subtitle">Certificate of Status of Beneficial Owner for United States Tax Withholding and Reporting</p>
+                </div>
+              </div>
+              <button type="button" class="btn-close-w8ben" (click)="showW8BenModal.set(false)" aria-label="Close modal">✕</button>
+            </header>
+
+            <div class="w8ben-body">
+              <div class="w8ben-alert">
+                <strong>US Tax Exemption Verified:</strong> Childhood Friendship is an Italian independent product studio with zero permanent establishment in the United States. Under Article 7 (Business Profits) of the US-Italy Tax Convention, payments for software engineering and digital services are subject to <strong>0% US federal tax withholding</strong>.
+              </div>
+
+              <div class="w8ben-grid">
+                <div class="w8ben-field">
+                  <span class="w8ben-label">1. Name of Organization</span>
+                  <span class="w8ben-val font-mono">Childhood Friendship (Studio Sviluppo Software)</span>
+                </div>
+                <div class="w8ben-field">
+                  <span class="w8ben-label">2. Country of Incorporation</span>
+                  <span class="w8ben-val">Italy (European Union)</span>
+                </div>
+                <div class="w8ben-field">
+                  <span class="w8ben-label">4. Chapter 3 Status</span>
+                  <span class="w8ben-val">Active NFFE / Foreign Service Provider</span>
+                </div>
+                <div class="w8ben-field">
+                  <span class="w8ben-label">5. Chapter 4 Status (FATCA)</span>
+                  <span class="w8ben-val">Active NFFE (Section 1472)</span>
+                </div>
+                <div class="w8ben-field full-width">
+                  <span class="w8ben-label">6. Permanent Residence Address</span>
+                  <span class="w8ben-val">Via Roma 99, 35122 Padova (PD), Italy</span>
+                </div>
+                <div class="w8ben-field">
+                  <span class="w8ben-label">9b. Foreign Tax Identifying Number (TIN)</span>
+                  <span class="w8ben-val font-mono">IT04982710284</span>
+                </div>
+                <div class="w8ben-field">
+                  <span class="w8ben-label">Reference Number (Project Scope)</span>
+                  <span class="w8ben-val font-mono">{{ project().id.slice(0, 13).toUpperCase() }}</span>
+                </div>
+              </div>
+
+              <div class="w8ben-section-box">
+                <h5 class="w8ben-box-title">Part III - Claim of Tax Treaty Benefits</h5>
+                <p class="w8ben-box-text">
+                  The beneficial owner certifies that it is a resident of <strong>Italy</strong> within the meaning of the income tax treaty between the United States and Italy. The beneficial owner meets the conditions of <strong>Article 7 (Business Profits)</strong> to claim a <strong>0% rate of withholding</strong> on payments received for cross-border software architecture and bespoke platform design.
+                </p>
+              </div>
+
+              <div class="w8ben-cert-signature">
+                <div class="sig-seal-box">
+                  <span class="seal-icon">✓</span>
+                  <div>
+                    <strong class="seal-title">Under Penalties of Perjury Certified</strong>
+                    <span class="seal-desc">Electronically certified and filed for cross-border client compliance.</span>
+                  </div>
+                </div>
+                <div class="sig-date-box">
+                  <span class="sig-date-label">Certified Date:</span>
+                  <span class="sig-date-val font-mono">{{ receiptDate() | date: 'MM/dd/yyyy' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <footer class="w8ben-footer no-print">
+              <button type="button" class="btn-print-w8ben" (click)="printReceipt()">
+                🖨️ Print / Save as PDF
+              </button>
+              <button type="button" class="btn-done-w8ben" (click)="showW8BenModal.set(false)">
+                Done
+              </button>
+            </footer>
+          </div>
+        </div>
+      }
 </section>
 `,
   styles: `
@@ -288,6 +389,245 @@ interface DisplayReceiptItem {
     .btn-print-receipt:hover {
       background: rgba(255, 255, 255, 0.16);
       transform: translateY(-1px);
+    }
+
+    .btn-w8ben-trigger {
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.38);
+      color: #34D399;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .btn-w8ben-trigger:hover {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #10B981;
+      color: #FFFFFF;
+      transform: translateY(-1px);
+    }
+
+    /* Modale W-8BEN-E */
+    .w8ben-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .w8ben-modal {
+      background: #0E091B;
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      border-radius: 20px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(16, 185, 129, 0.15);
+      overflow: hidden;
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .w8ben-header {
+      padding: 18px 22px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .w8ben-title-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .irs-seal {
+      font-size: 1.8rem;
+    }
+    .w8ben-h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+    .w8ben-subtitle {
+      font-size: 0.72rem;
+      color: rgba(226, 232, 240, 0.65);
+      margin: 2px 0 0;
+    }
+    .btn-close-w8ben {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #E2E8F0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-close-w8ben:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #EF4444;
+      color: #FFFFFF;
+    }
+    .w8ben-body {
+      padding: 22px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .w8ben-alert {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #D1FAE5;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    .w8ben-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .w8ben-field {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 10px 12px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .w8ben-field.full-width {
+      grid-column: 1 / -1;
+    }
+    .w8ben-label {
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(226, 232, 240, 0.5);
+    }
+    .w8ben-val {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+    .w8ben-section-box {
+      background: rgba(124, 58, 237, 0.08);
+      border: 1px solid rgba(124, 58, 237, 0.25);
+      padding: 14px 16px;
+      border-radius: 12px;
+    }
+    .w8ben-box-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #DDD6FE;
+      margin: 0 0 6px;
+    }
+    .w8ben-box-text {
+      font-size: 0.78rem;
+      color: rgba(226, 232, 240, 0.8);
+      line-height: 1.5;
+      margin: 0;
+    }
+    .w8ben-cert-signature {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 16px;
+      border-radius: 12px;
+    }
+    .sig-seal-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .seal-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #10B981;
+      color: #042F1A;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+    .seal-title {
+      display: block;
+      font-size: 0.82rem;
+      color: #FFFFFF;
+    }
+    .seal-desc {
+      display: block;
+      font-size: 0.7rem;
+      color: rgba(226, 232, 240, 0.6);
+    }
+    .sig-date-box {
+      text-align: right;
+    }
+    .sig-date-label {
+      display: block;
+      font-size: 0.66rem;
+      color: rgba(226, 232, 240, 0.5);
+    }
+    .sig-date-val {
+      font-size: 0.84rem;
+      color: #34D399;
+      font-weight: 700;
+    }
+    .w8ben-footer {
+      padding: 14px 22px;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn-print-w8ben {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #FFFFFF;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-done-w8ben {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      border: none;
+      color: #FFFFFF;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .btn-arrow-wrap {
@@ -632,6 +972,7 @@ interface DisplayReceiptItem {
 export class QuoteReceiptComponent {
   readonly project = input.required<PortalProjectDto>();
   readonly isOpen = signal(false);
+  protected readonly showW8BenModal = signal(false);
   protected readonly i18n = inject(PortalI18nService);
   protected readonly localPaidOverride = signal<number | null>(null);
 
@@ -776,7 +1117,7 @@ export class QuoteReceiptComponent {
   protected readonly receiptDocNumber = computed(() => {
     const p = this.project();
     const cleanId = p.id.replace(/-/g, '').slice(0, 10).toUpperCase();
-    return `INV2026${cleanId}`;
+    return this.i18n.isEn() ? `US-${cleanId}` : `INV2026${cleanId}`;
   });
 
   protected readonly barcodeCode = computed(() => {

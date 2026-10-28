@@ -256,3 +256,90 @@ export function renderPasswordResetMail(opts: PasswordResetMailOptions): Pick<Ma
 
   return { subject, text, html };
 }
+
+export interface ContractExecutedMailOptions {
+  projectName: string;
+  signerName: string;
+  signerEmail: string;
+  signedAtIso: string;
+  ipAddress: string;
+  userAgent: string;
+  signatureHash: string;
+  portalUrl: string;
+  isEn?: boolean;
+}
+
+/** Notifica transazionale di avvenuta esecuzione contrattuale con audit trail */
+export function renderContractExecutedMail(opts: ContractExecutedMailOptions): Pick<MailMessage, 'subject' | 'text' | 'html'> {
+  const isEn = !!opts.isEn;
+  const subject = isEn
+    ? `Contract Executed & Confirmed — ${opts.projectName}`
+    : `Contratto Sottoscritto & Esecutivo — ${opts.projectName}`;
+
+  const text = isEn
+    ? `Master Services Agreement executed for ${opts.projectName}.\nSigner: ${opts.signerName} (${opts.signerEmail})\nTimestamp: ${opts.signedAtIso}\nIP Address: ${opts.ipAddress}\nSHA-256 Hash: ${opts.signatureHash}\n\nAccess portal: ${opts.portalUrl}`
+    : `Il contratto di sviluppo per ${opts.projectName} è stato firmato con valore legale.\nFirmatario: ${opts.signerName} (${opts.signerEmail})\nData: ${opts.signedAtIso}\nIP: ${opts.ipAddress}\nHash crittografico: ${opts.signatureHash}\n\nAccedi al portale: ${opts.portalUrl}`;
+
+  const html = `<!doctype html>
+<html lang="${isEn ? 'en' : 'it'}">
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:24px;background:#0d0717;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#f3f0fa;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#150d24;border:1px solid #281944;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,0.5);">
+          <tr>
+            <td style="padding:28px 32px;background:linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(124,58,237,0.1) 100%);border-bottom:1px solid #281944;">
+              <span style="display:inline-block;padding:4px 10px;background:rgba(16,185,129,0.2);border:1px solid #10b981;border-radius:999px;font-size:11px;font-weight:700;color:#10b981;letter-spacing:0.05em;text-transform:uppercase;">
+                ${isEn ? 'E-SIGN VERIFIED & EXECUTED' : 'CONTRATTO SOTTOSCRITTO A NORMA'}
+              </span>
+              <h1 style="margin:12px 0 4px 0;font-size:22px;font-weight:800;color:#ffffff;">${esc(opts.projectName)}</h1>
+              <p style="margin:0;font-size:13px;color:#a79bc2;">
+                ${isEn ? 'Electronic Signature Audit Certificate (15 U.S.C. § 7001)' : 'Certificato di Sottoscrizione Elettronica (Reg. UE 910/2014)'}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px;">
+              <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;color:#d8d1e8;">
+                ${isEn 
+                  ? `The Master Services Agreement for <strong>${esc(opts.projectName)}</strong> has been legally signed and countersigned.`
+                  : `Il Contratto Quadro di Sviluppo per <strong>${esc(opts.projectName)}</strong> è stato sottoscritto con pieno valore legale ed efficacia esecutiva.`
+                }
+              </p>
+              
+              <div style="background:#0a0513;border:1px solid #281944;border-radius:12px;padding:16px;margin:20px 0;">
+                <div style="font-size:11px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
+                  ${isEn ? 'Audit Trail Evidence' : 'Tracciamento Probatorio e Impronta'}
+                </div>
+                <table style="width:100%;font-size:12px;color:#c7bedb;border-collapse:collapse;">
+                  <tr><td style="padding:4px 0;color:#7e729a;width:110px;">${isEn ? 'Signer:' : 'Firmatario:'}</td><td style="color:#ffffff;font-weight:600;">${esc(opts.signerName)}</td></tr>
+                  <tr><td style="padding:4px 0;color:#7e729a;">Email:</td><td>${esc(opts.signerEmail)}</td></tr>
+                  <tr><td style="padding:4px 0;color:#7e729a;">Timestamp (UTC):</td><td style="font-family:monospace;">${esc(opts.signedAtIso)}</td></tr>
+                  <tr><td style="padding:4px 0;color:#7e729a;">IP Address:</td><td style="font-family:monospace;color:#10b981;">${esc(opts.ipAddress)}</td></tr>
+                  <tr><td style="padding:4px 0;color:#7e729a;">SHA-256 Hash:</td><td style="font-family:monospace;font-size:10px;word-break:break-all;color:#a855f7;">${esc(opts.signatureHash)}</td></tr>
+                </table>
+              </div>
+
+              <div style="text-align:center;margin-top:24px;">
+                <a href="${esc(opts.portalUrl)}" style="display:inline-block;background:linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">
+                  ${isEn ? 'Open Project Portal ↗' : 'Accedi al Portale Progetto ↗'}
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 24px 32px;border-top:1px solid #23163d;text-align:center;font-size:11px;color:#6b5f85;">
+              Childhood Friendship Studio · Ingegneria Software & Sistemi Digitali<br>
+              <a href="mailto:childhood.friendship.official@gmail.com" style="color:#a855f7;text-decoration:none;">childhood.friendship.official@gmail.com</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, text, html };
+}

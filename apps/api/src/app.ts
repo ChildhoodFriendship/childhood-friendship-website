@@ -13,6 +13,7 @@ import { clientsRouter } from './modules/clients/clients.routes.js';
 import { credentialsRouter } from './modules/credentials/credentials.routes.js';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import { documentsRouter } from './modules/documents/documents.routes.js';
+import { contractRouter } from './modules/contract/contract.routes.js';
 import { leadsRouter, publicLeadsRouter } from './modules/leads/leads.routes.js';
 import { marketingRouter } from './modules/marketing/marketing.routes.js';
 import { messagesRouter } from './modules/messages/messages.routes.js';
@@ -66,6 +67,7 @@ export function createApp(ctx: AppContext): Express {
   nested.use(scope);
   nested.use('/tasks', tasksRouter(ctx));
   nested.use('/documents', documentsRouter(ctx));
+  nested.use('/contract', contractRouter(ctx));
   nested.use('/messages', messagesRouter(ctx));
   nested.use('/credentials', credentialsRouter(ctx));
   nested.use('/marketing', marketingRouter(ctx));

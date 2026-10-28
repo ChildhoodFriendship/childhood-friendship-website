@@ -137,6 +137,22 @@ export const tasks = pgTable('tasks', {
   updatedAt: updatedAt()
 }, (t) => [index('tasks_project_idx').on(t.projectId, t.position)]);
 
+export const contractSignatures = pgTable('contract_signatures', {
+  id: id(),
+  projectId: uuid().notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  contractVersion: text().notNull().default('1.0'),
+  signerName: text().notNull(),
+  signerEmail: text().notNull(),
+  signerRole: text().notNull().default('client'),
+  signerIp: text().notNull(),
+  signerUserAgent: text().notNull(),
+  signatureHash: text().notNull(),
+  signedAt: ts().notNull(),
+  legalConsentText: text().notNull(),
+  metadata: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: createdAt()
+}, (t) => [index('contract_signatures_project_idx').on(t.projectId, t.signedAt)]);
+
 export const documents = pgTable('documents', {
   id: id(),
   projectId: uuid().notNull().references(() => projects.id, { onDelete: 'cascade' }),

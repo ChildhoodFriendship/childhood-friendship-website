@@ -64,6 +64,22 @@ export interface DocumentVersionDto { version: number; title: string; createdAt:
 
 export interface MessageDto { id: string; projectId: string; authorId: string; authorName: string; authorRole: Role; body: string; createdAt: string; }
 
+export interface ContractSignatureDto {
+  id: string;
+  projectId: string;
+  contractVersion: string;
+  signerName: string;
+  signerEmail: string;
+  signerRole: string;
+  signerIp: string;
+  signerUserAgent: string;
+  signatureHash: string;
+  signedAt: string;
+  legalConsentText: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface CredentialDto { id: string; service: string; url: string | null; username: string | null; hasSecret: boolean; notes: string | null; updatedAt: string; }
 
 /** Il cliente non vede gli assegnatari dei task. */
