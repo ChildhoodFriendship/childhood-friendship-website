@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env src/scripts/migrate.ts",
     "admin:create": "tsx --env-file-if-exists=.env src/scripts/create-admin.ts",
-    "client:create": "tsx --env-file-if-exists=.env src/scripts/create-client-user.ts"
+    "client:create": "tsx --env-file-if-exists=.env src/scripts/create-client-user.ts",
+    "leads:seed": "tsx --env-file-if-exists=.env src/scripts/seed-us-leads.ts"
   },
   "dependencies": {
     "@cf/shared": "*",

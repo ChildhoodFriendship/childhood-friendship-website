@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import type { PortalProjectDto, QuoteItem } from '@cf/shared/types';
 import { PortalI18nService } from '../../../core/portal-i18n.service';
@@ -88,8 +88,10 @@ interface DisplayReceiptItem {
           <div class="total-row">
             <span class="total-label">
               {{ isFullyPaid() 
-                ? (i18n.isEn() ? 'Amount Paid (100% Settled)' : 'Importo pagato (Saldato 100%)') 
-                : (i18n.isEn() ? 'Amount Paid (Retainer)' : 'Importo pagato (Acconto)') }}
+                ? (i18n.isEn() ? 'Amount Paid (100% Settled ✓)' : 'Importo pagato (Saldato 100% ✓)') 
+                : (alreadyPaid() > 0 
+                  ? (i18n.isEn() ? 'Amount Paid (Tranche 1/2: 50% Retainer ✓)' : 'Importo pagato (Tranche 1/2: Acconto 50% ✓)')
+                  : (i18n.isEn() ? 'Amount Paid (Pending)' : 'Importo pagato (In attesa)')) }}
             </span>
             <span class="total-val">{{ formatMoney(alreadyPaid()) }}</span>
           </div>
@@ -97,8 +99,8 @@ interface DisplayReceiptItem {
             <div class="total-row">
               <span class="total-label">
                 {{ i18n.isEn() 
-                  ? 'Balance Due (Due: ' + deadlineFormatted() + ')' 
-                  : 'Residuo da versare (Scad. ' + deadlineFormatted() + ')' }}
+                  ? (alreadyPaid() > 0 ? 'Balance Due (Tranche 2/2 Due on Delivery)' : 'Balance Due (Due: ' + deadlineFormatted() + ')') 
+                  : (alreadyPaid() > 0 ? 'Residuo a Consegna (Tranche 2/2)' : 'Residuo da versare (Scad. ' + deadlineFormatted() + ')') }}
               </span>
               <span class="total-val">{{ formatMoney(remainingToPay()) }}</span>
             </div>
@@ -409,6 +411,23 @@ interface DisplayReceiptItem {
 export class QuoteReceiptComponent {
   readonly project = input.required<PortalProjectDto>();
   protected readonly i18n = inject(PortalI18nService);
+  protected readonly localPaidOverride = signal<number | null>(null);
+
+  constructor() {
+    effect(() => {
+      const proj = this.project();
+      if (!proj || typeof window === 'undefined') return;
+      const check = () => {
+        const saved = localStorage.getItem(`cf_paid_override_${proj.id}`);
+        if (saved) {
+          const val = parseFloat(saved);
+          if (!isNaN(val)) this.localPaidOverride.set(val);
+        }
+      };
+      check();
+      window.addEventListener('storage', check);
+    });
+  }
 
   protected readonly barcodeBars = [
     { w: 3, g: 2 }, { w: 1, g: 3 }, { w: 2, g: 1 }, { w: 4, g: 2 },
@@ -510,11 +529,13 @@ export class QuoteReceiptComponent {
   });
 
   protected readonly alreadyPaid = computed(() => {
+    const override = this.localPaidOverride();
+    if (override !== null) return override;
     const p = this.project();
     if (p.paidAmountCents !== undefined && p.paidAmountCents !== null) {
       return Number((p.paidAmountCents / 100).toFixed(2));
     }
-    return Number((this.totalWithVat() * 0.5).toFixed(2));
+    return 0;
   });
 
   protected readonly remainingToPay = computed(() => {

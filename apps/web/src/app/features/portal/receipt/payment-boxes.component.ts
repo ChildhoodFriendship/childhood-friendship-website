@@ -28,11 +28,17 @@ interface DueItem {
           <div class="pay-box-header">
             <div class="pay-box-header-left">
               <span class="pay-dot dot-due"></span>
-              <span class="pay-box-title">{{ i18n.isEn() ? 'AMOUNT DUE' : 'DA PAGARE' }}</span>
+              <span class="pay-box-title">
+                {{ alreadyPaid() > 0 
+                  ? (i18n.isEn() ? 'FINAL 50% BALANCE' : 'SALDO 50% A CONSEGNA') 
+                  : (i18n.isEn() ? 'AMOUNT DUE (2 TRANCHES)' : 'DA PAGARE (2 TRANCHE)') }}
+              </span>
             </div>
             <div class="pay-box-header-right">
-              @if (unpaidItems().length > 1) {
-                <span class="pay-box-header-total font-mono">Tot. {{ formatMoney(remainingToPay()) }}</span>
+              @if (alreadyPaid() <= 0) {
+                <span class="pay-tranche-badge font-mono">{{ i18n.isEn() ? '50% Retainer' : 'Acconto 50%' }}</span>
+              } @else {
+                <span class="pay-tranche-badge font-mono">{{ i18n.isEn() ? 'Final Tranche' : 'Tranche Saldo' }}</span>
               }
               <span class="pay-action-pill font-mono"> Pay ↗</span>
             </div>
@@ -61,15 +67,17 @@ interface DueItem {
           <div class="pay-box-header">
             <span class="pay-dot dot-paid"></span>
             <span class="pay-box-title">
-              {{ isFullyPaid() ? (i18n.isEn() ? 'PAID IN FULL 100%' : 'SALDATO 100%') : (i18n.isEn() ? 'PAID' : 'PAGATO') }}
+              {{ isFullyPaid() 
+                ? (i18n.isEn() ? 'PAID IN FULL 100%' : 'SALDATO 100%') 
+                : (i18n.isEn() ? 'TRANCHE 1/2 (50% DEPOSIT PAID)' : 'TRANCHE 1/2 (ACCONTO 50% VERSATO)') }}
             </span>
           </div>
           <div class="pay-box-amount font-mono text-green">{{ formatMoney(alreadyPaid()) }}</div>
           <div class="pay-box-sub text-green-light">
             <span>
               {{ isFullyPaid() 
-                ? (i18n.isEn() ? 'All items settled successfully ✓' : 'Tutte le voci saldate con successo ✓') 
-                : (i18n.isEn() ? 'Retainer received ✓' : 'Importo versato ✓') }}
+                ? (i18n.isEn() ? 'All project tranches settled successfully ✓' : 'Tutte le voci e tranche saldate con successo ✓') 
+                : (i18n.isEn() ? '50% Retainer confirmed. Final 50% due on deployment ✓' : 'Acconto 50% confermato. Saldo 50% dovuto alla consegna ✓') }}
             </span>
           </div>
         </div>
@@ -89,6 +97,51 @@ interface DueItem {
             <button type="button" class="btn-close-sheet" (click)="closeApplePaySheet()" [attr.aria-label]="i18n.isEn() ? 'Close' : 'Chiudi'">✕</button>
           </div>
 
+          <!-- Selezione Tranche (Acconto 50% vs Saldo 100%) -->
+          @if (alreadyPaid() <= 0) {
+            <div class="sheet-tranche-picker">
+              <span class="sheet-label">{{ i18n.isEn() ? 'SELECT PAYMENT FORMULA' : 'FORMULA DI PAGAMENTO' }}</span>
+              <div class="tranche-cards-row">
+                <button
+                  type="button"
+                  class="tranche-card"
+                  [class.active]="selectedTranche() === 'deposit'"
+                  (click)="selectedTranche.set('deposit')">
+                  <div class="card-pill font-mono">{{ i18n.isEn() ? 'POPULAR' : 'CONSIGLIATO' }}</div>
+                  <div class="card-heading">{{ i18n.isEn() ? 'Tranche 1 (50% Deposit)' : 'Tranche 1 (Acconto 50%)' }}</div>
+                  <div class="card-price font-mono text-green">{{ formatMoney(depositAmount()) }}</div>
+                  <div class="card-caption">{{ i18n.isEn() ? 'Locks kickoff date & starts development' : 'Blocca avvio lavori & sviluppo immediato' }}</div>
+                </button>
+
+                <button
+                  type="button"
+                  class="tranche-card"
+                  [class.active]="selectedTranche() === 'full'"
+                  (click)="selectedTranche.set('full')">
+                  <div class="card-pill font-mono">{{ i18n.isEn() ? 'FULL' : 'SALDO' }}</div>
+                  <div class="card-heading">{{ i18n.isEn() ? '100% Full Payment' : 'Pagamento Unico 100%' }}</div>
+                  <div class="card-price font-mono text-green">{{ formatMoney(totalWithVat()) }}</div>
+                  <div class="card-caption">{{ i18n.isEn() ? 'Settle entire project with zero remaining' : 'Saldo totale progetto senza rate residue' }}</div>
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="sheet-progress-box">
+              <span class="sheet-label">{{ i18n.isEn() ? 'TRANCHE PROGRESS' : 'STATO TRANCHE' }}</span>
+              <div class="progress-steps-row">
+                <div class="p-step done">
+                  <span class="step-check">✓</span>
+                  <span class="step-label">{{ i18n.isEn() ? 'Tranche 1 (50% Paid)' : 'Tranche 1 (50% Pagato)' }}</span>
+                </div>
+                <div class="p-divider">➔</div>
+                <div class="p-step active">
+                  <span class="step-number">2</span>
+                  <span class="step-label font-bold text-green">{{ i18n.isEn() ? 'Tranche 2 (50% Balance)' : 'Tranche 2 (50% Saldo)' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
           <div class="sheet-details">
             <div class="sheet-merchant">
               <span class="sheet-label">{{ i18n.isEn() ? 'BENEFICIARY' : 'BENEFICIARIO' }}</span>
@@ -96,13 +149,23 @@ interface DueItem {
             </div>
 
             <div class="sheet-card-info">
-              <span class="sheet-label">{{ i18n.isEn() ? 'PAYMENT METHOD' : 'METODO DI PAGAMENTO' }}</span>
-              <span class="sheet-val">{{ i18n.isEn() ? 'Apple Pay / Card •••• 8921' : 'Carta Apple Pay •••• 8921' }}</span>
+              <span class="sheet-label">{{ i18n.isEn() ? 'PAYMENT METHODS (STRIPE SECURE)' : 'METODI DI PAGAMENTO (STRIPE)' }}</span>
+              <div class="sheet-methods-tags">
+                <span class="method-badge"> Apple Pay</span>
+                <span class="method-badge">G Pay</span>
+                <span class="method-badge">💳 Credit / Debit Card</span>
+              </div>
             </div>
 
             <div class="sheet-amount-row">
-              <span class="sheet-amount-label">{{ i18n.isEn() ? 'TOTAL TO CHARGE' : 'TOTALE DA ADDEBITARE' }}</span>
-              <span class="sheet-amount-val font-mono">{{ formatMoney(remainingToPay()) }}</span>
+              <span class="sheet-amount-label">
+                {{ alreadyPaid() > 0 
+                  ? (i18n.isEn() ? 'FINAL TRANCHE (50% TO CHARGE)' : 'SALDO FINALE (50% DA ADDEBITARE)') 
+                  : (selectedTranche() === 'deposit' 
+                    ? (i18n.isEn() ? 'TRANCHE 1 (50% DEPOSIT TO CHARGE)' : 'TRANCHE 1 (ACCONTO 50% DA ADDEBITARE)') 
+                    : (i18n.isEn() ? '100% FULL AMOUNT TO CHARGE' : 'TOTALE 100% DA ADDEBITARE')) }}
+              </span>
+              <span class="sheet-amount-val font-mono">{{ formatMoney(currentChargeAmount()) }}</span>
             </div>
           </div>
 
@@ -117,15 +180,26 @@ interface DueItem {
                 type="button"
                 class="btn-confirm-apple-pay"
                 (click)="confirmApplePay()">
-                <span class="face-id-icon">⊡</span> {{ i18n.isEn() ? 'Confirm with Face ID / Touch ID' : 'Conferma con Face ID / Touch ID' }}
+                <span class="face-id-icon">⊡</span> 
+                {{ i18n.isEn() 
+                  ? (alreadyPaid() > 0 
+                    ? 'Pay Final 50% Balance with Apple Pay' 
+                    : (selectedTranche() === 'deposit' 
+                      ? 'Pay 50% Deposit with Apple Pay' 
+                      : 'Pay 100% in Full with Apple Pay')) 
+                  : (alreadyPaid() > 0 
+                    ? 'Paga Saldo 50% con Apple Pay' 
+                    : (selectedTranche() === 'deposit' 
+                      ? 'Paga Acconto 50% con Apple Pay' 
+                      : 'Paga 100% Totale con Apple Pay')) }}
               </button>
             }
           </div>
 
           <p class="sheet-subhint">
             {{ i18n.isEn() 
-              ? 'Official commercial invoice and receipt will be automatically delivered to ' + clientEmail() + ' and childhood.friendship.official@gmail.com.'
-              : 'La Fattura Elettronica SDI e la ricevuta quietanzata saranno recapitate automaticamente a ' + clientEmail() + ' e allo studio childhood.friendship.official@gmail.com.' }}
+              ? 'Official commercial invoice, terms of service and receipt automatically delivered to ' + clientEmail() + ' and childhood.friendship.official@gmail.com.'
+              : 'Fattura Elettronica SDI / quietanza e condizioni contrattuali recapitate automaticamente a ' + clientEmail() + ' e allo studio childhood.friendship.official@gmail.com.' }}
           </p>
         </div>
       </div>
@@ -202,6 +276,142 @@ interface DueItem {
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       letter-spacing: 0.02em;
+    }
+
+    .pay-tranche-badge {
+      font-size: 0.68rem;
+      background: rgba(52, 211, 153, 0.15);
+      color: #34D399;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      font-weight: 700;
+    }
+
+    .sheet-tranche-picker, .sheet-progress-box {
+      margin-bottom: 14px;
+    }
+
+    .tranche-cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .tranche-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: #FFFFFF;
+    }
+    .tranche-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .tranche-card.active {
+      background: rgba(52, 211, 153, 0.12);
+      border-color: #34D399;
+      box-shadow: 0 0 16px rgba(52, 211, 153, 0.2);
+    }
+
+    .card-pill {
+      font-size: 0.6rem;
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .tranche-card.active .card-pill {
+      background: #34D399;
+      color: #000000;
+    }
+
+    .card-heading {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    .card-price {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .card-caption {
+      font-size: 0.64rem;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.25;
+    }
+
+    .sheet-progress-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+    .progress-steps-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .p-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .p-step.done {
+      color: #34D399;
+    }
+    .p-divider {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.8rem;
+    }
+    .step-check, .step-number {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      font-weight: 800;
+    }
+    .p-step.done .step-check {
+      background: #34D399;
+      color: #000000;
+    }
+    .p-step.active .step-number {
+      background: #FFFFFF;
+      color: #000000;
+    }
+
+    .sheet-methods-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .method-badge {
+      font-size: 0.72rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: #FFFFFF;
+      font-weight: 600;
     }
 
     .pay-box-header {
@@ -562,6 +772,7 @@ export class PaymentBoxesComponent {
   protected readonly showApplePaySheet = signal(false);
   protected readonly isAuthorizing = signal(false);
   protected readonly localPaidOverride = signal<number | null>(null);
+  protected readonly selectedTranche = signal<'deposit' | 'full'>('deposit');
 
   constructor() {
     effect(() => {
@@ -632,7 +843,7 @@ export class PaymentBoxesComponent {
     if (p.paidAmountCents !== undefined && p.paidAmountCents !== null) {
       return Number((p.paidAmountCents / 100).toFixed(2));
     }
-    return Number((this.totalWithVat() * 0.5).toFixed(2));
+    return 0;
   });
 
   protected readonly remainingToPay = computed(() => {
@@ -700,6 +911,17 @@ export class PaymentBoxesComponent {
     return result;
   });
 
+  protected readonly depositAmount = computed(() => {
+    return Number((this.totalWithVat() * 0.5).toFixed(2));
+  });
+
+  protected readonly currentChargeAmount = computed(() => {
+    if (this.alreadyPaid() <= 0) {
+      return this.selectedTranche() === 'deposit' ? this.depositAmount() : this.totalWithVat();
+    }
+    return this.remainingToPay();
+  });
+
   protected openApplePaySheet(): void {
     this.showApplePaySheet.set(true);
   }
@@ -712,17 +934,27 @@ export class PaymentBoxesComponent {
 
   protected confirmApplePay(): void {
     this.isAuthorizing.set(true);
-    const amountPaid = this.remainingToPay();
+    const isDeposit = this.alreadyPaid() <= 0 && this.selectedTranche() === 'deposit';
+    const amountCharged = this.currentChargeAmount();
+
     setTimeout(() => {
       this.isAuthorizing.set(false);
       this.showApplePaySheet.set(false);
-      const newTotal = this.totalWithVat();
-      this.localPaidOverride.set(newTotal);
-      localStorage.setItem(`cf_paid_override_${this.project().id}`, String(newTotal));
 
-      const successMsg = this.i18n.isEn()
-        ? `Apple Pay payment of ${this.formatMoney(amountPaid)} authorized successfully! Commercial invoice and receipt sent to ${this.clientEmail()} and childhood.friendship.official@gmail.com.`
-        : `Pagamento Apple Pay di ${this.formatMoney(amountPaid)} autorizzato con successo! Fattura SDI e quietanza inviate a ${this.clientEmail()} e a childhood.friendship.official@gmail.com.`;
+      const newPaid = isDeposit ? this.depositAmount() : this.totalWithVat();
+      this.localPaidOverride.set(newPaid);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`cf_paid_override_${this.project().id}`, String(newPaid));
+        window.dispatchEvent(new Event('storage'));
+      }
+
+      const successMsg = isDeposit
+        ? (this.i18n.isEn()
+            ? `Tranche 1 (50% Deposit: ${this.formatMoney(amountCharged)}) authorized successfully via Apple Pay / Stripe! Retainer invoice & commercial contract sent to ${this.clientEmail()} and childhood.friendship.official@gmail.com.`
+            : `Tranche 1 (Acconto 50%: ${this.formatMoney(amountCharged)}) autorizzata con successo via Apple Pay / Stripe! Ricevuta fiscale d'acconto e contratto inviati a ${this.clientEmail()} e a childhood.friendship.official@gmail.com.`)
+        : (this.i18n.isEn()
+            ? `Final settlement of ${this.formatMoney(amountCharged)} authorized successfully via Apple Pay / Stripe! Project 100% Settled. Final tax receipt sent to ${this.clientEmail()} and childhood.friendship.official@gmail.com.`
+            : `Saldo finale di ${this.formatMoney(amountCharged)} autorizzato con successo via Apple Pay / Stripe! Progetto saldato al 100%. Fattura quietanzata inviata a ${this.clientEmail()} e a childhood.friendship.official@gmail.com.`);
 
       this.toast.success(successMsg);
     }, 1200);
