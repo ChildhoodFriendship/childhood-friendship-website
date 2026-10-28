@@ -57,35 +57,37 @@ interface SoldServiceModule {
       @if (project(); as p) {
 
         <!-- HEADER MINIMALE DEL PROGETTO -->
-        <header class="project-header">
-          <div class="header-badge-row">
-            @if (isLive(p)) {
-              <span class="tag-badge tag-live">
-                <span class="dot pulse-green" aria-hidden="true"></span>
-                LIVE
-              </span>
-              @if (p.targetUrl) {
-                <a class="btn-preview-primary" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  {{ i18n.isEn() ? 'Visit Live App ↗' : 'Visita il sito Live ↗' }}
-                </a>
-              }
-            } @else {
-              <span class="tag-badge tag-dev">
-                <span class="dot pulse-violet" aria-hidden="true"></span>
-                {{ i18n.isEn() ? 'IN DEVELOPMENT' : 'IN SVILUPPO' }}
-              </span>
-
-              @if (p.stagingUrl) {
-                <a class="btn-preview-primary" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" [title]="i18n.isEn() ? 'Open interactive staging preview' : 'Apri anteprima interattiva staging'">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                  {{ i18n.isEn() ? 'Live Staging Preview ↗' : 'Anteprima Staging ↗' }}
-                </a>
-              }
-            }
-          </div>
-
+        <header class="project-header" [class.header-subviews]="activeTab() !== 'overview'">
           <h1 class="project-title">{{ p.name }}</h1>
+
+          @if (activeTab() === 'overview') {
+            <div class="header-badge-row">
+              @if (isLive(p)) {
+                <span class="tag-badge tag-live">
+                  <span class="dot pulse-green" aria-hidden="true"></span>
+                  LIVE
+                </span>
+                @if (p.targetUrl) {
+                  <a class="btn-preview-primary" [href]="p.targetUrl" target="_blank" rel="noopener noreferrer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    {{ i18n.isEn() ? 'Visit Live App ↗' : 'Visita il sito Live ↗' }}
+                  </a>
+                }
+              } @else {
+                <span class="tag-badge tag-dev">
+                  <span class="dot pulse-violet" aria-hidden="true"></span>
+                  {{ i18n.isEn() ? 'IN DEVELOPMENT' : 'IN SVILUPPO' }}
+                </span>
+
+                @if (p.stagingUrl) {
+                  <a class="btn-preview-primary" [href]="p.stagingUrl" target="_blank" rel="noopener noreferrer" [title]="i18n.isEn() ? 'Open interactive staging preview' : 'Apri anteprima interattiva staging'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    {{ i18n.isEn() ? 'Live Staging Preview ↗' : 'Anteprima Staging ↗' }}
+                  </a>
+                }
+              }
+            </div>
+          }
         </header>
 
         <!-- CONTENUTO DELLE 4 VISTE SELEZIONABILI -->
@@ -458,6 +460,13 @@ interface SoldServiceModule {
       text-align: center;
       margin-bottom: 20px;
       gap: 10px;
+    }
+
+    .header-subviews {
+      margin-bottom: 14px;
+    }
+    .header-subviews .project-title {
+      font-size: clamp(1.35rem, 3.2vw, 1.85rem);
     }
 
     .header-badge-row {

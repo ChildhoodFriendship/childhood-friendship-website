@@ -53,15 +53,6 @@ interface DisplayReceiptItem {
       @if (isOpen()) {
         <div class="collapsible-body receipt-body">
           <div class="receipt-container">
-            <div class="receipt-actions-bar no-print">
-              <button
-                type="button"
-                class="btn-print-receipt"
-                (click)="printReceipt($event)"
-                [title]="i18n.isEn() ? 'Print or save receipt as PDF' : 'Stampa o salva scontrino come PDF'">
-                🖨️ {{ i18n.isEn() ? 'Print / Download PDF' : 'Stampa o salva come PDF' }}
-              </button>
-            </div>
             <!-- Scontrino termico fedele alla copia fisica -->
             <article class="receipt">
               <!-- Taglio carta dentellato superiore -->
@@ -389,18 +380,9 @@ interface DisplayReceiptItem {
 
     .receipt-container {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
+      justify-content: center;
       padding: 10px 0;
       width: 100%;
-    }
-
-    .receipt-actions-bar {
-      display: flex;
-      justify-content: flex-end;
-      width: 100%;
-      max-width: 400px;
     }
 
     .receipt {
