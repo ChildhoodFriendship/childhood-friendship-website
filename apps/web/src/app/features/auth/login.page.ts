@@ -59,13 +59,13 @@ const STRONG = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
               <span>Email</span>
               <input class="input" type="email" formControlName="email" autocomplete="username" placeholder="nome@azienda.it" required />
             </label>
-            <label class="field">
+            <div class="field">
               <div class="field-head-row">
-                <span>Password</span>
+                <label for="login-password">Password</label>
                 <button type="button" class="btn-link" (click)="toggleForgot(true)">Password dimenticata?</button>
               </div>
-              <input class="input" type="password" formControlName="password" autocomplete="current-password" placeholder="••••••••••" required />
-            </label>
+              <input id="login-password" class="input" type="password" formControlName="password" autocomplete="current-password" placeholder="••••••••••" required />
+            </div>
             <button class="btn btn-primary" type="submit" [disabled]="loading()">
               {{ loading() ? 'Accesso in corso…' : 'Accedi' }}
             </button>
