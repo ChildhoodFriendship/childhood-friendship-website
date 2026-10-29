@@ -3,6 +3,7 @@ import type {
   AnalysisKind, CampaignStatus, DocumentStatus, DocumentType, IndexingStatus, InvoiceStatus, LeadService, LeadStatus,
   MarketingContentStatus, MarketingContentType, PaymentStatus, PaymentTranche, Phase, PlatformKind, ProjectStatus, ProjectType, Role
 } from './catalog.js';
+import type { Currency, QuoteCalc } from './billing.js';
 
 export type { Role } from './catalog.js';
 
@@ -34,7 +35,9 @@ export interface ProjectDto {
   status: ProjectStatus; type: ProjectType; isOnline: boolean; indexingStatus: IndexingStatus;
   /** Preventivo interno: voci e prezzi (non visibili al cliente). */
   quoteItems: QuoteItem[];
+  /** Incassato (al netto dei bolli): scritto solo dai pagamenti registrati. */
   paidAmountCents?: number | null;
+  currency: Currency;
   paymentDeadline?: string | null;
   targetUrl: string | null; stagingUrl: string | null; repositoryUrl: string | null;
   startDate: string | null; deadline: string | null;
@@ -185,3 +188,17 @@ export interface InvoiceDto {
   number: string | null; issueDate: string | null; amountCents: number; currency: string;
   status: InvoiceStatus; sdiStatus: string | null; pdfUrl: string | null; xmlUrl: string | null; createdAt: string;
 }
+
+/** Riepilogo economico del progetto per portale e admin. */
+export interface BillingSummaryDto {
+  currency: Currency;
+  quote: QuoteCalc;
+  /** Pagamento online attivo: P.IVA registrata e provider configurato. */
+  paymentsEnabled: boolean;
+  /** Fatturazione attiva: P.IVA registrata. */
+  invoicingEnabled: boolean;
+  company: { brand: string; owner: string; vatLabel: string; email: string; taxRegime: string };
+  payments: PaymentDto[];
+  invoices: InvoiceDto[];
+}
+

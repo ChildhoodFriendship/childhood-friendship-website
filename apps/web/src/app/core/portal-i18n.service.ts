@@ -11,7 +11,6 @@ export class PortalI18nService {
   readonly isEn = computed(() => this.lang() === 'en');
   readonly currencySymbol = computed(() => (this.isEn() ? '$' : '€'));
   readonly currencyCode = computed(() => (this.isEn() ? 'USD' : 'EUR'));
-  readonly vatRate = computed(() => (this.isEn() ? 0 : 0.22));
 
   /** Traduzioni reattive della landing page */
   readonly landing = computed<LandingTranslations>(() => LANDING_TRANSLATIONS[this.lang()]);

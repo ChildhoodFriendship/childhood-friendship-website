@@ -104,3 +104,13 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Test RBAC allineati alla decisione `783548b` (preventivo visibile al cliente in sola lettura); +6 test fatturazione/firma.
 - Nuova pagina `compliance.md` (regole fiscali, Neon in UE, DPA).
 - Verifica: `npm run check`, `npm run test` (58/58), `npm run build` passati.
+
+## 2026-10-30 — feature — vendita conforme: preventivo forfettario, contratto canonico, pagamenti e fatture
+
+- `@cf/shared/billing` (calcolo unico: niente IVA, bollo per fattura, acconto/saldo) e `@cf/shared/contract` (testo IT/EN + Allegato A con il preventivo, `CONTRACT_VERSION`).
+- Migrazione `0010_valuta_progetto`: `projects.currency` (EUR/USD, mai convertita); USD = documenti in inglese.
+- Firma: solo il cliente, una volta per versione; il server ricostruisce il testo, salva testo + SHA-256, invia copia via email. Dopo la firma preventivo/valuta/cliente bloccati.
+- Pagamenti: checkout Stripe con importo dal server e webhook firmato idempotente; bonifici e fatture registrati dal team; tutto attivo solo con P.IVA nel profilo aziendale.
+- Portale: card Documenti/Pagamenti ridisegnate per mobile; riepilogo "non è un documento fiscale"; tolti W-8BEN-E, P.IVA e indirizzo inventati, IVA 22%, pagamento simulato e stati in `localStorage`; obiettivi, prodotti e fasi ora dai dati del progetto (descrizione, preventivo, checklist) invece di contenuti fissi.
+- Admin: preventivo con valuta e totali forfettari; nuova card «Contratto, incassi e fatture».
+- Verifica: `npm run check`, `npm run test` (64/64), `npm run build`, `npm run e2e` (6/6).

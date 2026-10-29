@@ -18,7 +18,7 @@ export interface TestEnv { app: Express; ctx: AppContext; handle: DbHandle }
 
 export const INGEST_TOKEN = 'test-ingest-token-0123456789abcdef';
 
-export async function setup(ai: AiProvider | null = null, storage: FileStorage | null = null, mailer: Mailer | null = null): Promise<TestEnv> {
+export async function setup(ai: AiProvider | null = null, storage: FileStorage | null = null, mailer: Mailer | null = null, extra: Partial<Pick<AppContext, 'payments' | 'company'>> = {}): Promise<TestEnv> {
   const env = loadEnv({
     NODE_ENV: 'test',
     DATABASE_URL: 'pglite:memory',
@@ -30,7 +30,7 @@ export async function setup(ai: AiProvider | null = null, storage: FileStorage |
   });
   const handle = await createDb(env.DATABASE_URL);
   await runMigrations(handle.db, env.DATABASE_URL);
-  const ctx: AppContext = { env, db: handle.db, box: new SecretBox(env.CREDENTIALS_KEY), ai, storage, mailer };
+  const ctx: AppContext = { env, db: handle.db, box: new SecretBox(env.CREDENTIALS_KEY), ai, storage, mailer, ...extra };
   return { app: createApp(ctx), ctx, handle };
 }
 

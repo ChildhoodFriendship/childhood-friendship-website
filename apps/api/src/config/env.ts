@@ -27,6 +27,9 @@ const envSchema = z.object({
   // Email transazionali (Resend): mittente su dominio verificato, es. "Childhood Friendship <noreply@dominio.it>"
   RESEND_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().optional(),
+  // Pagamenti online (Stripe): attivi solo con P.IVA registrata in @cf/shared/company e con entrambe le chiavi
+  STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
   // Cron giornaliero di Vercel (conservazione dei dati): Vercel lo invia come "Authorization: Bearer <CRON_SECRET>"
   CRON_SECRET: z.string().min(24).optional()
 });

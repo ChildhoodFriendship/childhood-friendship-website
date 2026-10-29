@@ -1,0 +1,93 @@
+/* Card dei documenti del portale (riepilogo, contratto, pagamenti): stesso ritmo di spazi su mobile e desktop. */
+:host { display: block; width: 100%; }
+
+.doc-card {
+  background: rgba(18, 12, 30, 0.72);
+  border: 1px solid rgba(124, 58, 237, 0.28);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.doc-card.ok { border-color: rgba(16, 185, 129, 0.35); }
+
+.doc-head {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 14px 14px 14px 16px;
+}
+.doc-head.clickable { cursor: pointer; }
+.doc-head + .doc-body { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+
+.doc-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: rgba(124, 58, 237, 0.14); color: #c4b5fd;
+}
+.doc-card.ok .doc-icon { background: rgba(16, 185, 129, 0.14); color: #6ee7b7; }
+
+.doc-titles { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.doc-title {
+  margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; color: #f5f3ff;
+  overflow-wrap: anywhere;
+}
+.doc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap;
+  background: rgba(255, 255, 255, 0.06); color: #c9c2dc; border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.pill.ok { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.35); }
+.pill.warn { background: rgba(217, 119, 6, 0.12); color: #fbbf24; border-color: rgba(217, 119, 6, 0.35); }
+.muted { color: #a79bc2; font-size: 12px; }
+
+.doc-actions { display: flex; align-items: center; gap: 6px; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.04); color: #ddd6fe;
+  border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer;
+}
+.icon-btn:hover { background: rgba(124, 58, 237, 0.18); }
+.icon-btn:focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
+.chev { transition: transform 0.2s ease; }
+.chev.open { transform: rotate(90deg); }
+
+.doc-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; color: #ddd6fe; font-size: 14px; line-height: 1.55; }
+
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline;
+  padding: 8px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.row:last-child { border-bottom: 0; }
+.row .label { min-width: 0; overflow-wrap: anywhere; }
+.row .amount { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; color: #f5f3ff; }
+.row.total .label, .row.total .amount { font-weight: 800; color: #fff; }
+
+.note {
+  margin: 0; padding: 10px 12px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px; color: #b9b0d0;
+}
+
+.btn-primary-cf {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0; cursor: pointer;
+  background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; font-weight: 700; font-size: 14px;
+}
+.btn-primary-cf:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 420px) {
+  .doc-head { grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; padding: 12px; }
+  .doc-icon { width: 36px; height: 36px; border-radius: 10px; }
+  .doc-title { font-size: 14px; }
+  .doc-body { padding: 14px 12px; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .doc-card { background: #fff; border-color: #ccc; color: #000; }
+  .doc-title, .doc-body, .row .amount { color: #000 !important; }
+}

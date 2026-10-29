@@ -7,7 +7,19 @@ Regole durevoli per dati aziendali, pagamenti, fatture e fornitori. Il codice pr
 - Fonte unica: `packages/shared/src/company.ts` (`COMPANY`, `vatLabel()`, `isFiscallyActive()`).
 - Forma prevista: ditta individuale di Lorenzo Garoffolo, regime forfettario; collaboratori (Mirko) autorizzati al trattamento (art. 29 GDPR).
 - Nessun dato fiscale inventato: finché `vatNumber`, `taxCode` e `registeredOffice` sono `null`, l'interfaccia mostra «P.IVA in fase di attribuzione».
-- Oggi usano il profilo: informativa privacy e footer. Da collegare: contratto, email transazionali, riepilogo preventivo nel portale (vedi punti aperti in `current-status.md`).
+- Usano il profilo: informativa, footer, contratto, email, riepilogo del portale, area admin. Pagamenti online e registrazione fatture si attivano da soli quando `isFiscallyActive()` è vero (P.IVA, C.F., sede).
+
+## Preventivo, valuta e calcoli
+
+- Fonte unica dei calcoli: `packages/shared/src/billing.ts` (`computeQuote`): niente IVA (forfettario), bollo 2 € per fattura sopra 77,47 € addebitato al cliente, acconto 50% + saldo 50%, canoni mensili a parte.
+- Valuta per progetto (`projects.currency`, migrazione `0010`): EUR o USD, mai convertita. USD = documenti in inglese. Il selettore IT/EN del portale cambia solo la lingua dell'interfaccia.
+
+## Flusso di vendita
+
+1. Il team prepara progetto e preventivo (valuta, voci, scadenza acconto) e invita il cliente.
+2. Il cliente firma il contratto dal portale. Da quel momento preventivo, valuta e cliente sono bloccati (409).
+3. Entro `INVOICE_WITHIN_DAYS` (10) giorni dalla firma: fattura dell'acconto + link di pagamento. Prima della fattura non è dovuto nulla (art. 2.3 del contratto).
+4. Incasso: Stripe Checkout (webhook firmato) oppure bonifico registrato dal team. Fattura emessa sul servizio di fatturazione e registrata in admin.
 
 ## Pagamenti e fatture
 
@@ -25,15 +37,18 @@ flowchart LR
 - Tabelle `payments` e `invoices` (migrazione `0009`). Una fattura punta al pagamento che la origina.
 - Lo stato «pagato» lo scrive solo il server da webhook firmato; `(provider, provider_payment_id)` univoco = webhook idempotente.
 - Numero progressivo, data, stato SDI, PDF e XML arrivano solo dal provider di fatturazione: l'app non numera mai fatture e il browser non emette documenti fiscali.
-- API in sola lettura: `GET /api/projects/:id/billing/payments` e `/invoices` (team e cliente del progetto; id e metadati del provider non esposti).
+- API: `GET /billing/summary|payments|invoices` (team e cliente); `POST /billing/checkout` (cliente, importo calcolato dal server, solo dopo la firma e con P.IVA + Stripe); `POST /billing/payments` (team, bonifico); `POST /billing/invoices` (team, solo con P.IVA). Webhook Stripe su `POST /api/webhooks/payments` (corpo grezzo, firma HMAC verificata, idempotente, controllo importo/valuta).
+- Env: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (eventi `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`, `checkout.session.async_payment_failed`).
 - Ruolo `cf_app`: niente `DELETE` su `contract_signatures`, `payments`, `invoices` (registri da conservare 10 anni).
 - Forfettario: niente IVA in fattura, dicitura di franchigia (L. 190/2014), bollo 2 € sopra 77,47 €; clienti extra UE con codice destinatario `XXXXXXX`; ritenuta non applicata.
 - Clienti USA: eventuale W-8BEN ufficiale IRS (persona fisica), firmato dal titolare, solo su richiesta del cliente. Mai certificati fiscali generati dall'app.
 
 ## Firma del contratto
 
-- Tabella `contract_signatures` (migrazione `0009`): firmatario, email, IP, user agent, data, versione, testo del consenso.
-- Conservazione: 10 anni dalla fine del rapporto. Da migliorare: hash calcolato sul testo integrale del contratto firmato.
+- Testo canonico in `packages/shared/src/contract.ts` (`buildContract`, `CONTRACT_VERSION`): la stessa funzione genera la pagina del portale e, sul server, il testo firmato (contratto + Allegato A con il preventivo).
+- Alla firma (solo ruolo `client`, una volta per versione) si salvano in `contract_signatures`: testo integrale e SHA-256 in `metadata`, firmatario, email, IP, user agent, data. Copia del testo con i dati della firma inviata via email a cliente e studio.
+- Cambiare il testo = nuova `CONTRACT_VERSION` (le firme precedenti restano valide per la loro versione).
+- Conservazione: 10 anni dalla fine del rapporto.
 
 ## Database in UE (Neon)
 

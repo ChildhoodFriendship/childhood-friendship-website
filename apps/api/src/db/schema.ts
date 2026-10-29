@@ -109,6 +109,8 @@ export const projects = pgTable('projects', {
   type: leadServiceEnum().notNull().default('altro'),
   paidAmountCents: integer('paid_amount_cents'),
   paymentDeadline: text('payment_deadline'),
+  /** Valuta del preventivo (EUR/USD): gli importi non vengono mai convertiti. */
+  currency: text().notNull().default('EUR'),
   /** Preventivo interno: [{ id, name, priceCents, monthly }] */
   quoteItems: jsonb().$type<{ id: string; name: string; priceCents: number; monthly: boolean }[]>().notNull().default([]),
   isOnline: boolean().notNull().default(false),
@@ -123,7 +125,11 @@ export const projects = pgTable('projects', {
   archivedAt: ts(),
   createdAt: createdAt(),
   updatedAt: updatedAt()
-}, (t) => [index('projects_client_idx').on(t.clientId), index('projects_status_idx').on(t.status)]);
+}, (t) => [
+  index('projects_client_idx').on(t.clientId),
+  index('projects_status_idx').on(t.status),
+  check('projects_currency_valid', sql`${t.currency} in ('EUR', 'USD')`)
+]);
 
 export const tasks = pgTable('tasks', {
   id: id(),

@@ -14,7 +14,7 @@ import { credentialsRouter } from './modules/credentials/credentials.routes.js';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import { documentsRouter } from './modules/documents/documents.routes.js';
 import { contractRouter } from './modules/contract/contract.routes.js';
-import { billingRouter } from './modules/billing/billing.routes.js';
+import { billingRouter, paymentsWebhookRouter } from './modules/billing/billing.routes.js';
 import { leadsRouter, publicLeadsRouter } from './modules/leads/leads.routes.js';
 import { marketingRouter } from './modules/marketing/marketing.routes.js';
 import { messagesRouter } from './modules/messages/messages.routes.js';
@@ -35,6 +35,8 @@ export function createApp(ctx: AppContext): Express {
   app.disable('x-powered-by');
   app.set('trust proxy', ctx.env.TRUST_PROXY);
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } }, crossOriginResourcePolicy: { policy: 'same-origin' } }));
+  // Webhook dei pagamenti: corpo grezzo per la verifica della firma, prima del parser JSON
+  app.use('/api/webhooks/payments', paymentsWebhookRouter(ctx));
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 

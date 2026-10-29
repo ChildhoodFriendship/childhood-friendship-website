@@ -4,6 +4,7 @@ import {
   MARKETING_CONTENT_STATUSES, MARKETING_CONTENT_TYPES, PHASES, PLATFORM_KINDS, PROJECT_STATUSES, PROJECT_TYPES, ROLES,
   type DocumentTypeDef
 } from './catalog.js';
+import { CURRENCIES } from './billing.js';
 
 const trimmed = (max: number) => z.string().trim().max(max);
 const optText = (max: number) => trimmed(max).optional().nullable();
@@ -105,7 +106,8 @@ export const projectInputSchema = z.object({
   status: z.enum(PROJECT_STATUSES).default('in_sviluppo'),
   type: z.enum(PROJECT_TYPES).default('altro'),
   quoteItems: z.array(quoteItemSchema).max(50, 'Massimo 50 voci').default([]),
-  paidAmountCents: cents.optional().nullable(),
+  /** Valuta del preventivo: gli importi non vengono mai convertiti. */
+  currency: z.enum(CURRENCIES).default('EUR'),
   paymentDeadline: isoDate.optional().nullable(),
   isOnline: z.boolean().default(false),
   indexingStatus: z.enum(INDEXING_STATUSES).default('non_indicizzato'),
@@ -352,3 +354,42 @@ export type CampaignInput = z.input<typeof campaignInputSchema>;
 export type LeadPublicInput = z.input<typeof leadPublicSchema>;
 export type LeadPatch = z.input<typeof leadPatchSchema>;
 export type AiDocumentInput = z.input<typeof aiDocumentSchema>;
+
+/* ---------- Pagamenti e fatture ---------- */
+
+/** Avvio del pagamento online di una tranche: l'importo lo calcola sempre il server. */
+export const checkoutRequestSchema = z.object({
+  tranche: z.enum(['acconto', 'saldo'])
+});
+
+/** Incasso fuori piattaforma (es. bonifico) registrato dal team. */
+export const manualPaymentSchema = z.object({
+  tranche: z.enum(['acconto', 'saldo', 'canone', 'altro']),
+  method: z.enum(['bonifico', 'contanti', 'altro']),
+  /** Compenso incassato, senza marca da bollo. */
+  netCents: cents.refine((v) => v > 0, 'Importo maggiore di zero'),
+  stampDutyCents: cents.default(0),
+  paidAt: isoDate,
+  reference: optText(200)
+});
+
+/** Fattura emessa sul servizio di fatturazione elettronica e registrata qui: numero e data sono quelli del provider. */
+export const invoiceRegisterSchema = z.object({
+  provider: trimmed(60).min(1).default('fatture_in_cloud'),
+  providerInvoiceId: optText(120),
+  number: trimmed(40).min(1, 'Numero fattura richiesto'),
+  issueDate: isoDate,
+  amountCents: cents.refine((v) => v > 0, 'Importo maggiore di zero'),
+  paymentId: z.uuid().optional().nullable(),
+  status: z.enum(['emessa', 'consegnata', 'scartata', 'annullata']).default('emessa'),
+  sdiStatus: optText(120),
+  pdfUrl: optUrl,
+  xmlUrl: optUrl
+});
+
+export const contractSignSchema = z.object({
+  signerName: trimmed(120).min(3, 'Il nome del firmatario deve contenere almeno 3 caratteri'),
+  vexatiousAccepted: z.literal(true, { message: 'Devi approvare espressamente le clausole indicate' }),
+  locale: z.enum(['it', 'en']).default('it')
+});
+

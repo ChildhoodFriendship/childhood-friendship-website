@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
-import type { MessageDto, PortalProjectDto } from '@cf/shared/types';
+import { PHASES, PHASE_LABELS, type Phase } from '@cf/shared/catalog';
+import type { MessageDto, PortalProjectDto, PortalTaskDto } from '@cf/shared/types';
 import { Api } from '../../core/api';
 import { ToastService } from '../../core/toast.service';
 import { PortalI18nService } from '../../core/portal-i18n.service';
@@ -13,28 +14,19 @@ export type PortalTab = 'overview' | 'timeline' | 'documents' | 'payments' | 'ch
 
 interface ProjectMilestone {
   number: number;
-  titleEn: string;
-  titleIt: string;
+  title: string;
   status: 'completed' | 'in_progress' | 'upcoming';
-  dateEn: string;
-  dateIt: string;
-  descEn: string;
-  descIt: string;
-  deliverablesEn: string[];
-  deliverablesIt: string[];
+  date: string | null;
+  deliverables: { title: string; done: boolean }[];
 }
 
-interface SoldServiceModule {
-  icon?: string;
-  titleEn: string;
-  titleIt: string;
-  badgeEn?: string;
-  badgeIt?: string;
-  descEn: string;
-  descIt: string;
-  featuresEn: string[];
-  featuresIt: string[];
-}
+const PHASE_TITLES: Record<Phase, { it: string; en: string }> = {
+  strategia: { it: PHASE_LABELS.strategia, en: 'Strategy' },
+  progettazione: { it: PHASE_LABELS.progettazione, en: 'Design' },
+  realizzazione: { it: PHASE_LABELS.realizzazione, en: 'Development' },
+  rilascio: { it: PHASE_LABELS.rilascio, en: 'Launch' },
+  post_lancio: { it: PHASE_LABELS.post_lancio, en: 'After launch' }
+};
 
 /**
  * Portale Cliente Childhood Friendship — Redesign Minimal & Mobile App Style
@@ -100,50 +92,46 @@ interface SoldServiceModule {
             <section class="tab-view animate-fade-in" aria-labelledby="overview-heading">
               <h2 id="overview-heading" class="sr-only">{{ i18n.isEn() ? 'Project Overview' : 'Panoramica Progetto' }}</h2>
 
-              <!-- SEZIONE OBIETTIVI (MINIMAL) -->
+              <!-- SEZIONE OBIETTIVI (dalla descrizione del progetto) -->
+              @if (objectives().length) {
               <div class="section-block">
                 <div class="section-title-wrap">
                   <h3 class="section-title">{{ i18n.isEn() ? 'Objectives' : 'Obiettivi' }}</h3>
                 </div>
 
                 <div class="objectives-grid">
-                  @for (obj of objectives; track obj.titleIt; let idx = $index) {
+                  @for (obj of objectives(); track $index; let idx = $index) {
                     <div class="objective-card">
                       <div class="obj-num-col">
-                        <span class="obj-big-number">0{{ idx + 1 }}</span>
+                        <span class="obj-big-number">{{ idx < 9 ? '0' : '' }}{{ idx + 1 }}</span>
                       </div>
                       <div class="obj-content-col">
-                        <h4 class="obj-title">{{ i18n.isEn() ? obj.titleEn : obj.titleIt }}</h4>
-                        <p class="obj-desc">{{ i18n.isEn() ? obj.descEn : obj.descIt }}</p>
+                        <h4 class="obj-title">{{ obj.title }}</h4>
+                        @if (obj.desc) { <p class="obj-desc">{{ obj.desc }}</p> }
                       </div>
                     </div>
                   }
                 </div>
               </div>
+              }
 
-              <!-- SEZIONE PRODOTTI (MINIMAL) -->
+              <!-- SEZIONE PRODOTTI (dalle voci del preventivo) -->
+              @if (serviceModules().length) {
               <div class="section-block">
                 <div class="section-title-wrap">
                   <h3 class="section-title">{{ i18n.isEn() ? 'Products' : 'Prodotti' }}</h3>
                 </div>
 
                 <div class="services-grid">
-                  @for (mod of serviceModules(); track mod.titleEn) {
+                  @for (mod of serviceModules(); track $index) {
                     <div class="service-module-card">
-                      <h4 class="module-title">{{ i18n.isEn() ? mod.titleEn : mod.titleIt }}</h4>
-                      <p class="module-desc">{{ i18n.isEn() ? mod.descEn : mod.descIt }}</p>
-                      <ul class="module-features">
-                        @for (feat of (i18n.isEn() ? mod.featuresEn : mod.featuresIt); track feat) {
-                          <li>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                            <span>{{ feat }}</span>
-                          </li>
-                        }
-                      </ul>
+                      <h4 class="module-title">{{ mod.name }}</h4>
+                      @if (mod.monthly) { <p class="module-desc">{{ i18n.isEn() ? 'Recurring service' : 'Servizio ricorrente' }}</p> }
                     </div>
                   }
                 </div>
               </div>
+              }
             </section>
           }
 
@@ -155,15 +143,19 @@ interface SoldServiceModule {
               <h2 id="timeline-heading" class="sr-only">{{ i18n.isEn() ? 'Milestones' : 'Milestone' }}</h2>
 
               <div class="timeline-top-bar">
-                <span class="progress-text">{{ i18n.isEn() ? 'Progress: 60%' : 'Avanzamento: 60%' }}</span>
+                <span class="progress-text">{{ i18n.isEn() ? 'Progress' : 'Avanzamento' }}: {{ progress() }}%</span>
                 <div class="progress-bar-mini">
-                  <div class="progress-fill" style="width: 60%"></div>
+                  <div class="progress-fill" [style.width.%]="progress()"></div>
                 </div>
               </div>
 
+              @if (!milestones().length) {
+                <p class="obj-desc">{{ i18n.isEn() ? 'The project plan will appear here once work starts.' : 'Le fasi del progetto compariranno qui all\'avvio dei lavori.' }}</p>
+              }
               <!-- TIMELINE VERTICALE MOBILE APP STYLE -->
               <div class="timeline-container">
-                @for (m of milestones; track m.number) {
+                @for (m of milestones(); track m.number) {
+
                   <div class="timeline-step" [class.step-completed]="m.status === 'completed'" [class.step-active]="m.status === 'in_progress'" [class.step-upcoming]="m.status === 'upcoming'">
                     <div class="timeline-marker-col">
                       <div class="timeline-marker">
@@ -196,9 +188,9 @@ interface SoldServiceModule {
                               @else if (m.status === 'in_progress') { {{ i18n.isEn() ? 'IN PROGRESS' : 'IN CORSO' }} }
                               @else { {{ i18n.isEn() ? 'UPCOMING' : 'IN ARRIVO' }} }
                             </span>
-                            <span class="step-date">{{ i18n.isEn() ? m.dateEn : m.dateIt }}</span>
+                            @if (m.date) { <span class="step-date">{{ m.date }}</span> }
                           </div>
-                          <h3 class="step-title">{{ i18n.isEn() ? 'Phase ' + m.number : 'Fase ' + m.number }}: {{ i18n.isEn() ? m.titleEn : m.titleIt }}</h3>
+                          <h3 class="step-title">{{ i18n.isEn() ? 'Phase ' + m.number : 'Fase ' + m.number }}: {{ m.title }}</h3>
                         </div>
 
                         @if (m.status === 'completed') {
@@ -212,14 +204,13 @@ interface SoldServiceModule {
 
                       @if (isExpanded(m)) {
                         <div class="step-collapsible-body animate-fade-in">
-                          <p class="step-desc">{{ i18n.isEn() ? m.descEn : m.descIt }}</p>
 
                           <div class="step-deliverables">
                             <ul>
-                              @for (d of (i18n.isEn() ? m.deliverablesEn : m.deliverablesIt); track d) {
+                              @for (d of m.deliverables; track $index) {
                                 <li>
-                                  <span class="bullet-check">✓</span>
-                                  <span>{{ d }}</span>
+                                  <span class="bullet-check">{{ d.done ? '✓' : '·' }}</span>
+                                  <span>{{ d.title }}</span>
                                 </li>
                               }
                             </ul>
@@ -1329,193 +1320,39 @@ export class PortalProjectPage {
     });
   }
 
-  /** Obiettivi strategici di progetto */
-  protected readonly objectives = [
-    {
-      titleEn: 'Zero Bounce 1-Tap Emergency Calling',
-      titleIt: 'Chiamata Immediata 1-Tap Senza Rimbalzo',
-      descEn: 'Instant mobile dispatch trigger capturing high-intent lockouts without navigation hurdles.',
-      descIt: 'Inoltro telefonico immediato per convertire istantaneamente gli utenti in emergenza da smartphone.'
-    },
-    {
-      titleEn: 'Instant Apple Pay Retainer Lock-in',
-      titleIt: 'Incasso Acconto Istantaneo Apple Pay',
-      descEn: 'Secures customer booking deposit with biometric Face ID before technician dispatch.',
-      descIt: 'Blocca l’acconto con Face ID / Carta prima della partenza del tecnico, azzerando le uscite a vuoto.'
-    },
-    {
-      titleEn: 'Sub-Second Edge Latency PWA',
-      titleIt: 'Latenza Sub-Secondo & PWA Mobile',
-      descEn: 'Global edge caching ensuring near-instant load even under unstable 4G/5G mobile networks.',
-      descIt: 'Caching CDN edge globale per caricamento immediato anche su reti cellulari deboli.'
-    },
-    {
-      titleEn: 'Local Authority & High Ticket Reach',
-      titleIt: 'Dominio Locale Nevada & Alto Spreading',
-      descEn: 'Geotargeted schema markup positioning your service in high-ticket suburbs and commercial zones.',
-      descIt: 'Markup schema.org strutturato per presidiare i quartieri a maggior capacità di spesa.'
-    }
-  ];
+  /** Obiettivi: una riga della descrizione del progetto per obiettivo ("Titolo: dettaglio"). */
+  protected readonly objectives = computed(() => (this.project()?.description ?? '')
+    .split(/\r?\n/).map((l) => l.replace(/^[-*•\d.)\s]+/, '').trim()).filter(Boolean).slice(0, 8)
+    .map((l) => { const i = l.indexOf(':'); return i > 0 ? { title: l.slice(0, i).trim(), desc: l.slice(i + 1).trim() } : { title: l, desc: '' }; }));
 
-  /** Moduli predefiniti */
-  protected readonly defaultModules: SoldServiceModule[] = [
-    {
-      titleEn: 'Emergency 24/7 Dispatch Architecture & 1-Tap Calling',
-      titleIt: 'Piattaforma Emergenza 24/7 & Chiamata 1-Tap Istantanea',
-      descEn: 'Ultra-fast mobile landing interface engineered to convert emergency callers locked out of homes or vehicles.',
-      descIt: 'Interfaccia mobile ad alta conversione per catturare istantaneamente clienti bloccati fuori casa o auto.',
-      featuresEn: [
-        '1-Tap Direct Call Router (No form friction)',
-        'Emergency Night Mode high-contrast UX',
-        'Automatic GPS location address sharing',
-        'Direct connection to on-call dispatcher'
-      ],
-      featuresIt: [
-        'Pulsante Chiamata 1-Tap istantaneo',
-        'Interfaccia notturna ad altissimo contrasto',
-        'Condivisione rapida posizione e indirizzo',
-        'Inoltro diretto al tecnico reperibile'
-      ]
-    },
-    {
-      titleEn: 'Apple Pay & Stripe Real-Time Retainer Checkout Gateway',
-      titleIt: 'Gateway Checkout Acconto Apple Pay & Stripe in Tempo Reale',
-      descEn: 'Instant deposit authorization via Apple Pay, Google Pay and Cards to secure emergency calls prior to technician roll-out.',
-      descIt: 'Autorizzazione immediata acconto con Face ID o carta per garantire l’uscita del tecnico e azzerare i no-show.',
-      featuresEn: [
-        'Biometric 1-Click Face ID / Touch ID payment',
-        'Automated digital invoice & receipt delivery',
-        '50% Deposit & 50% Final balance split logic',
-        'PCI-DSS Level 1 compliant tokenized flow'
-      ],
-      featuresIt: [
-        'Pagamento biometrico Face ID / Touch ID a 1-click',
-        'Ricevuta e fattura digitale inviate via email',
-        'Gestione a 2 tranche: 50% Acconto e 50% Saldo',
-        'Crittografia certificata PCI-DSS Level 1'
-      ]
-    },
-    {
-      titleEn: 'High-Speed Mobile PWA & Nevada Local SEO Engine',
-      titleIt: 'PWA Mobile Ultra-Rapida & Motore SEO Locale Nevada',
-      descEn: 'Progressive Web App deployable directly on smartphone home screens with localized schema markup for Nevada search dominancy.',
-      descIt: 'Web App installabile su home screen con ottimizzazione schema.org per dominare le ricerche locali a Las Vegas e Henderson.',
-      featuresEn: [
-        'Sub-second first contentful paint (< 1.1s)',
-        'LocalBusiness JSON-LD structured metadata',
-        'Add to Home Screen offline-capable caching',
-        'High-ranking suburb micro-landing pages'
-      ],
-      featuresIt: [
-        'Caricamento sub-secondo (LCP < 1.1s)',
-        'Metadati strutturati LocalBusiness JSON-LD',
-        'Aggiunta a schermata Home come App nativa',
-        'Presidio delle zone ad alto reddito (Henderson, Summerlin)'
-      ]
-    }
-  ];
+  /** Prodotti: le voci del preventivo, senza testi inventati. */
+  protected readonly serviceModules = computed(() => (this.project()?.quoteItems ?? []).filter((i) => i.name.trim()).map((i) => ({ name: i.name.trim(), monthly: i.monthly })));
 
-  /** Servizi e moduli architetturali concordati — popolati dinamicamente dai quoteItems del progetto admin */
-  protected readonly serviceModules = computed<SoldServiceModule[]>(() => {
-    const p = this.project();
-    const items = p?.quoteItems;
-    if (!items || items.length === 0) {
-      return this.defaultModules;
-    }
+  protected readonly tasks = signal<PortalTaskDto[]>([]);
 
-    return items.map(item => {
-      const name = item.name.trim();
-      const match = this.defaultModules.find(m =>
-        m.titleEn.toLowerCase().includes(name.toLowerCase()) ||
-        name.toLowerCase().includes(m.titleEn.toLowerCase()) ||
-        m.titleIt.toLowerCase().includes(name.toLowerCase()) ||
-        name.toLowerCase().includes(m.titleIt.toLowerCase())
-      );
-      if (match) {
-        return match;
-      }
-      return {
-        titleEn: name,
-        titleIt: name,
-        descEn: `Module and feature specifications commissioned and verified under official project scope.`,
-        descIt: `Modulo e specifiche architetturali concordate e commissionate nel preventivo di progetto.`,
-        featuresEn: [
-          `Full responsive implementation and mobile UX optimization`,
-          `Continuous integration and verified staging release`,
-          `Cloud security and production compliance`
-        ],
-        featuresIt: [
-          `Implementazione responsive e ottimizzazione mobile UX`,
-          `Rilascio e collaudo continuo in ambiente staging`,
-          `Sicurezza cloud e conformità standard di produzione`
-        ]
-      };
-    });
+  /** Avanzamento reale: checklist del progetto visibile al cliente. */
+  protected readonly progress = computed(() => {
+    const t = this.tasks();
+    return t.length ? Math.round((t.filter((x) => x.done).length / t.length) * 100) : 0;
   });
 
-  /** Roadmap e Milestones di Progetto */
-  protected readonly milestones: ProjectMilestone[] = [
-    {
-      number: 1,
-      titleEn: 'Strategic Brief & Cloud Architecture Setup',
-      titleIt: 'Brief Strategico & Setup Architettura Cloud',
-      status: 'completed',
-      dateEn: 'October 24, 2026',
-      dateIt: '24 Ottobre 2026',
-      descEn: 'Diagnostic analysis of the broken Wix 404 domain, target audience definition, and initial Vercel + Neon Postgres scaffolding.',
-      descIt: 'Diagnosi tecnica dell’errore 404 Wix, definizione target NAICS e inizializzazione ambiente cloud Vercel + Neon Postgres.',
-      deliverablesEn: ['Technical audit report', 'Database schema migration', 'Cloud deployment pipeline'],
-      deliverablesIt: ['Report di audit tecnico', 'Schema database e migrazioni', 'Pipeline di deploy cloud']
-    },
-    {
-      number: 2,
-      titleEn: 'Mobile UX & 1-Tap Emergency Interface Design',
-      titleIt: 'Design UX Mobile & Interfaccia di Emergenza 1-Tap',
-      status: 'completed',
-      dateEn: 'October 26, 2026',
-      dateIt: '26 Ottobre 2026',
-      descEn: 'Dark-luxury aesthetic wireframes, responsive click-to-call mechanics, and cross-border commercial terms drafting.',
-      descIt: 'Wireframe responsive ad alto contrasto, logica di chiamata immediata e redazione condizioni commerciali.',
-      deliverablesEn: ['High-contrast mobile layout', 'Component library', 'B2B software license agreement draft'],
-      deliverablesIt: ['Layout mobile ad alto contrasto', 'Libreria componenti', 'Bozza contratto licenza B2B']
-    },
-    {
-      number: 3,
-      titleEn: 'Core PWA Development & Stripe Retainer Gateway',
-      titleIt: 'Sviluppo Core PWA & Gateway Acconti Stripe',
-      status: 'in_progress',
-      dateEn: 'October 28, 2026 (Active)',
-      dateIt: '28 Ottobre 2026 (In corso)',
-      descEn: 'Active engineering of the mobile web app, 2-tranche payment logic (50% deposit / 50% balance), and client portal dashboard.',
-      descIt: 'Implementazione frontend PWA, logica a due tranche (50% acconto / 50% saldo) e nuovo portale clienti mobile style.',
-      deliverablesEn: ['2-Tranche Apple Pay modal', 'Dynamic thermal quote receipt', 'Mobile app bottom dock navigation'],
-      deliverablesIt: ['Modal Apple Pay a 2 tranche', 'Scontrino termico dinamico', 'Navigazione bottom dock mobile app']
-    },
-    {
-      number: 4,
-      titleEn: 'Staging Environment Review & Client Sign-off',
-      titleIt: 'Revisione Ambiente di Staging & Approvazione Cliente',
-      status: 'upcoming',
-      dateEn: 'November 10, 2026 (Estimated)',
-      dateIt: '10 Novembre 2026 (Stimata)',
-      descEn: 'Full 10-day review period for the client to test live staging build, verify emergency call routing, and trigger test transactions.',
-      descIt: 'Finestra di 10 giorni per il cliente per collaudare lo staging, testare le chiamate e simulare i pagamenti.',
-      deliverablesEn: ['Interactive staging preview', 'Client feedback checklist', 'Digital contract execution'],
-      deliverablesIt: ['Anteprima interattiva staging', 'Checklist di collaudo cliente', 'Firma digitale del contratto']
-    },
-    {
-      number: 5,
-      titleEn: 'Official Domain Go-Live & Nevada Local SEO Indexing',
-      titleIt: 'Rilascio Ufficiale su Dominio & Setup SEO Nevada',
-      status: 'upcoming',
-      dateEn: 'November 15, 2026 (Estimated)',
-      dateIt: '15 Novembre 2026 (Stimata)',
-      descEn: 'Production DNS pointing, SSL certificate provision, Google Maps business integration, and handover of final source code.',
-      descIt: 'Puntamento DNS del dominio cliente, emissione certificati SSL, sincronizzazione Google Maps e consegna finale.',
-      deliverablesEn: ['Official live launch', 'Google Search Console sitemap indexing', '30-day warranty coverage begins'],
-      deliverablesIt: ['Lancio live ufficiale', 'Indicizzazione sitemap Search Console', 'Attivazione garanzia 30 giorni']
-    }
-  ];
+  /** Fasi del progetto ricavate dalla checklist (una fase per gruppo di attività). */
+  protected readonly milestones = computed<ProjectMilestone[]>(() => {
+    const t = this.tasks();
+    const en = this.i18n.isEn();
+    const phases = PHASES.filter((ph) => t.some((x) => x.phase === ph));
+    let activeFound = false;
+    return phases.map((ph: Phase, idx) => {
+      const items = t.filter((x) => x.phase === ph);
+      const allDone = items.every((x) => x.done);
+      let status: ProjectMilestone['status'] = 'upcoming';
+      if (allDone) status = 'completed';
+      else if (!activeFound) { status = 'in_progress'; activeFound = true; }
+      const due = items.map((x) => x.dueDate).filter((d): d is string => !!d).sort().pop() ?? null;
+      const date = due ? new Date(due).toLocaleDateString(en ? 'en-US' : 'it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
+      return { number: idx + 1, title: PHASE_TITLES[ph][en ? 'en' : 'it'], status, date, deliverables: items.map((x) => ({ title: x.title, done: x.done })) };
+    });
+  });
 
   setTab(tab: PortalTab): void {
     this.activeTab.set(tab);
@@ -1614,10 +1451,10 @@ export class PortalProjectPage {
     try {
       const p = await this.api.get<PortalProjectDto>(`/projects/${id}`);
       this.project.set(p);
+      void this.api.get<PortalTaskDto[]>(`/projects/${id}/tasks`).then((t) => this.tasks.set(t)).catch(() => this.tasks.set([]));
 
-      const isUsProject = /us|usa|america|miami|new york|california|las vegas|vegas|los angeles|austin|beverly hills|brickell|dollar|\$/i.test(
-        (p.description || '') + ' ' + (p.name || '') + ' ' + (p.clientName || '')
-      );
+      // Progetto in dollari = cliente USA: portale in inglese, salvo scelta esplicita del cliente
+      const isUsProject = p.currency === 'USD';
       if (isUsProject && typeof window !== 'undefined' && !localStorage.getItem('cf_portal_lang')) {
         this.i18n.setLang('en');
       }

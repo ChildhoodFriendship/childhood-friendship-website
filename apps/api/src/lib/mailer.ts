@@ -1,3 +1,4 @@
+import { COMPANY, vatLabel } from '@cf/shared/company';
 import { and, eq } from 'drizzle-orm';
 import type { Env } from '../config/env.js';
 import type { Database } from '../db/client.js';
@@ -127,7 +128,7 @@ export function renderWelcomeMail(opts: WelcomeMailOptions): Pick<MailMessage, '
     '',
     'A presto,',
     'Lorenzo & Mirko — Childhood Friendship',
-    'Email: childhood.friendship.official@gmail.com · Padova (PD)'
+    `Email: ${COMPANY.email} · ${COMPANY.city}`
   ].join('\n');
 
   const html = `<!doctype html>
@@ -189,8 +190,8 @@ export function renderWelcomeMail(opts: WelcomeMailOptions): Pick<MailMessage, '
           <!-- Footer -->
           <tr>
             <td style="padding:24px 36px 36px 36px;border-top:1px solid #23163d;text-align:center;font-size:12px;line-height:1.6;color:#6b5f85;">
-              <strong style="color:#8d83a8;">Childhood Friendship</strong> · P.IVA IT04982710284 · Padova (PD)<br>
-              Email ufficiale: <a href="mailto:childhood.friendship.official@gmail.com" style="color:#a855f7;text-decoration:none;">childhood.friendship.official@gmail.com</a><br>
+              <strong style="color:#8d83a8;">Childhood Friendship</strong> · ${esc(vatLabel())} · ${esc(COMPANY.city)}<br>
+              Email ufficiale: <a href="mailto:${esc(COMPANY.email)}" style="color:#a855f7;text-decoration:none;">${esc(COMPANY.email)}</a><br>
               Ricevi questa email perché hai inviato una richiesta di preventivo su <a href="https://childhood-friendship-website-pi.vercel.app" style="color:#a855f7;text-decoration:none;">childhoodfriendship.it</a>.
             </td>
           </tr>
@@ -223,7 +224,7 @@ export function renderPasswordResetMail(opts: PasswordResetMailOptions): Pick<Ma
     'Se non hai richiesto tu il ripristino della password, ignora questa email: la tua password attuale rimarrà invariata e al sicuro.',
     '',
     'Childhood Friendship Team',
-    'childhood.friendship.official@gmail.com'
+    COMPANY.email
   ].join('\n');
 
   const html = `<!doctype html>
@@ -271,7 +272,7 @@ export function renderPasswordResetMail(opts: PasswordResetMailOptions): Pick<Ma
           </tr>
           <tr>
             <td style="padding:20px 36px 32px 36px;border-top:1px solid #23163d;text-align:center;font-size:12px;color:#6b5f85;">
-              Childhood Friendship · <a href="mailto:childhood.friendship.official@gmail.com" style="color:#a855f7;text-decoration:none;">childhood.friendship.official@gmail.com</a>
+              Childhood Friendship · <a href="mailto:${esc(COMPANY.email)}" style="color:#a855f7;text-decoration:none;">${esc(COMPANY.email)}</a>
             </td>
           </tr>
         </table>
@@ -300,12 +301,12 @@ export interface ContractExecutedMailOptions {
 export function renderContractExecutedMail(opts: ContractExecutedMailOptions): Pick<MailMessage, 'subject' | 'text' | 'html'> {
   const isEn = !!opts.isEn;
   const subject = isEn
-    ? `Contract Executed & Confirmed — ${opts.projectName}`
-    : `Contratto Sottoscritto & Esecutivo — ${opts.projectName}`;
+    ? `Agreement signed — ${opts.projectName}`
+    : `Contratto firmato — ${opts.projectName}`;
 
   const text = isEn
-    ? `Master Services Agreement executed for ${opts.projectName}.\nSigner: ${opts.signerName} (${opts.signerEmail})\nTimestamp: ${opts.signedAtIso}\nIP Address: ${opts.ipAddress}\nSHA-256 Hash: ${opts.signatureHash}\n\nAccess portal: ${opts.portalUrl}`
-    : `Il contratto di sviluppo per ${opts.projectName} è stato firmato con valore legale.\nFirmatario: ${opts.signerName} (${opts.signerEmail})\nData: ${opts.signedAtIso}\nIP: ${opts.ipAddress}\nHash crittografico: ${opts.signatureHash}\n\nAccedi al portale: ${opts.portalUrl}`;
+    ? `The agreement for ${opts.projectName} has been signed electronically.\nSigner: ${opts.signerName} (${opts.signerEmail})\nTimestamp: ${opts.signedAtIso}\nIP Address: ${opts.ipAddress}\nSHA-256 Hash: ${opts.signatureHash}\n\nAccess portal: ${opts.portalUrl}`
+    : `Il contratto per ${opts.projectName} è stato firmato elettronicamente.\nFirmatario: ${opts.signerName} (${opts.signerEmail})\nData: ${opts.signedAtIso}\nIP: ${opts.ipAddress}\nImpronta SHA-256: ${opts.signatureHash}\n\nAccedi al portale: ${opts.portalUrl}`;
 
   const html = `<!doctype html>
 <html lang="${isEn ? 'en' : 'it'}">
@@ -318,11 +319,11 @@ export function renderContractExecutedMail(opts: ContractExecutedMailOptions): P
           <tr>
             <td style="padding:28px 32px;background:linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(124,58,237,0.1) 100%);border-bottom:1px solid #281944;">
               <span style="display:inline-block;padding:4px 10px;background:rgba(16,185,129,0.2);border:1px solid #10b981;border-radius:999px;font-size:11px;font-weight:700;color:#10b981;letter-spacing:0.05em;text-transform:uppercase;">
-                ${isEn ? 'E-SIGN VERIFIED & EXECUTED' : 'CONTRATTO SOTTOSCRITTO A NORMA'}
+                ${isEn ? 'AGREEMENT SIGNED' : 'CONTRATTO FIRMATO'}
               </span>
               <h1 style="margin:12px 0 4px 0;font-size:22px;font-weight:800;color:#ffffff;">${esc(opts.projectName)}</h1>
               <p style="margin:0;font-size:13px;color:#a79bc2;">
-                ${isEn ? 'Electronic Signature Audit Certificate (15 U.S.C. § 7001)' : 'Certificato di Sottoscrizione Elettronica (Reg. UE 910/2014)'}
+                ${isEn ? 'Electronic signature record' : 'Registro della firma elettronica'}
               </p>
             </td>
           </tr>
@@ -330,14 +331,14 @@ export function renderContractExecutedMail(opts: ContractExecutedMailOptions): P
             <td style="padding:28px 32px;">
               <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;color:#d8d1e8;">
                 ${isEn 
-                  ? `The Master Services Agreement for <strong>${esc(opts.projectName)}</strong> has been legally signed and countersigned.`
-                  : `Il Contratto Quadro di Sviluppo per <strong>${esc(opts.projectName)}</strong> è stato sottoscritto con pieno valore legale ed efficacia esecutiva.`
+                  ? `The agreement for <strong>${esc(opts.projectName)}</strong> has been signed electronically. A record of the signature is attached and stored on the platform.`
+                  : `Il contratto per <strong>${esc(opts.projectName)}</strong> è stato firmato elettronicamente. In allegato il registro della firma, conservato anche sulla piattaforma.`
                 }
               </p>
               
               <div style="background:#0a0513;border:1px solid #281944;border-radius:12px;padding:16px;margin:20px 0;">
                 <div style="font-size:11px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
-                  ${isEn ? 'Audit Trail Evidence' : 'Tracciamento Probatorio e Impronta'}
+                  ${isEn ? 'Signature record' : 'Dati della firma'}
                 </div>
                 <table style="width:100%;font-size:12px;color:#c7bedb;border-collapse:collapse;">
                   <tr><td style="padding:4px 0;color:#7e729a;width:110px;">${isEn ? 'Signer:' : 'Firmatario:'}</td><td style="color:#ffffff;font-weight:600;">${esc(opts.signerName)}</td></tr>
@@ -357,8 +358,8 @@ export function renderContractExecutedMail(opts: ContractExecutedMailOptions): P
           </tr>
           <tr>
             <td style="padding:16px 32px 24px 32px;border-top:1px solid #23163d;text-align:center;font-size:11px;color:#6b5f85;">
-              Childhood Friendship Studio · Ingegneria Software & Sistemi Digitali<br>
-              <a href="mailto:childhood.friendship.official@gmail.com" style="color:#a855f7;text-decoration:none;">childhood.friendship.official@gmail.com</a>
+              ${esc(COMPANY.brand)} · ${esc(vatLabel())}<br>
+              <a href="mailto:${esc(COMPANY.email)}" style="color:#a855f7;text-decoration:none;">${esc(COMPANY.email)}</a>
             </td>
           </tr>
         </table>

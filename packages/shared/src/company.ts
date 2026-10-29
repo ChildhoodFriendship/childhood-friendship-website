@@ -34,7 +34,7 @@ export const COMPANY: CompanyProfile = {
   taxCode: null,
   registeredOffice: null,
   city: 'Padova (PD)',
-  email: 'lorenzo@cfofficial.it',
+  email: 'childhood.friendship.official@gmail.com',
   pec: null,
   taxRegime: 'forfettario',
   collaborators: ['Mirko']
@@ -45,6 +45,11 @@ export const VAT_PENDING_LABEL = 'P.IVA in fase di attribuzione';
 /** "P.IVA 01234567890" oppure l'etichetta di attesa: mai un numero inventato. */
 export function vatLabel(c: CompanyProfile = COMPANY): string {
   return c.vatNumber ? `P.IVA ${c.vatNumber}` : VAT_PENDING_LABEL;
+}
+
+/** Versione inglese per i documenti dei clienti esteri. */
+export function vatLabelEn(c: CompanyProfile = COMPANY): string {
+  return c.vatNumber ? `Italian VAT no. IT${c.vatNumber}` : 'Italian VAT number being assigned';
 }
 
 /** Profilo fiscale completo: solo allora si possono attivare pagamenti e fatturazione. */

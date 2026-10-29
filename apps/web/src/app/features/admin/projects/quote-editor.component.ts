@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PROJECT_TYPES, PROJECT_TYPE_BASE_PRICE_CENTS, PROJECT_TYPE_LABELS, PROJECT_TYPE_SUGGESTED_PARTS, type ProjectType } from '@cf/shared/catalog';
+import { computeQuote, formatMoney, type Currency } from '@cf/shared/billing';
 import type { QuoteItem } from '@cf/shared/types';
 import { ToastService } from '../../../core/toast.service';
 import { euro } from '../../../shared/labels';
@@ -20,7 +21,7 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
   template: `
     <section class="card stack quote-card">
       <div class="row-between head-bar">
-        <h2>Preventivo e Condizioni di Pagamento</h2>
+        <h2>Preventivo</h2>
         @if (dirty()) {
           <span class="badge-dirty">● Modifiche non salvate</span>
         } @else {
@@ -53,7 +54,7 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
           @if (rows().length) {
             <div class="item head muted small">
               <span>Descrizione Voce</span>
-              <span>Prezzo (€)</span>
+              <span>Prezzo</span>
               <span class="text-center">Mensile</span>
               <span></span>
             </div>
@@ -83,81 +84,53 @@ const newId = (): string => crypto.randomUUID().slice(0, 12);
         }
       </div>
 
-      <!-- SEZIONE PAGAMENTI E SCADENZE (Richiesta utente) -->
+      <!-- VALUTA, SCADENZA E TOTALI (regime forfettario: niente IVA) -->
       <div class="payment-control-box">
-        <div class="box-title-row">
-          <span class="box-icon">💳</span>
-          <h3 class="box-title">Stato Pagamenti & Scadenza Saldatura</h3>
-        </div>
-
         <div class="payment-grid">
-          <!-- PARTE GIÀ PAGATA DALL'UTENTE -->
           <div class="pay-field-col">
-            <label class="field-label" for="paid-input">
-              <span>IMPORTO GIÀ PAGATO DALL'UTENTE (€)</span>
-            </label>
-            <div class="input-money-wrap">
-              <span class="currency-symbol">€</span>
-              <input
-                id="paid-input"
-                class="input input-money font-mono"
-                type="number"
-                min="0"
-                step="50"
-                [disabled]="archived()"
-                [ngModel]="paidEuros()"
-                (ngModelChange)="onPaidEurosChange($event)"
-                placeholder="0.00" />
-            </div>
+            <label class="field-label" for="currency-input"><span>VALUTA DEL PREVENTIVO</span></label>
+            <select id="currency-input" class="input" [disabled]="archived()" [ngModel]="currency()" (ngModelChange)="onCurrencyChange($event)">
+              <option value="EUR">Euro (€) — cliente italiano/UE, documenti in italiano</option>
+              <option value="USD">Dollaro ($) — cliente USA, documenti in inglese</option>
+            </select>
           </div>
-
-          <!-- SCADENZA PAGAMENTO -->
           <div class="pay-field-col">
-            <label class="field-label" for="deadline-input">
-              <span>SCADENZA PAGAMENTO</span>
-            </label>
+            <label class="field-label" for="deadline-input"><span>SCADENZA PAGAMENTO ACCONTO</span></label>
             <div class="input-date-wrap">
-              <input
-                id="deadline-input"
-                class="input input-date font-mono"
-                type="date"
-                [disabled]="archived()"
-                [ngModel]="paymentDeadline()"
-                (ngModelChange)="onDeadlineChange($event)" />
+              <input id="deadline-input" class="input input-date font-mono" type="date" [disabled]="archived()"
+                     [ngModel]="paymentDeadline()" (ngModelChange)="onDeadlineChange($event)" />
             </div>
           </div>
         </div>
 
-        <!-- Riepilogo Finanziario Live -->
         <div class="financial-summary-bar">
           <div class="sum-item">
-            <span class="sum-label">Imponibile</span>
-            <strong class="sum-val font-mono">{{ eur(oneOffCents()) }}</strong>
+            <span class="sum-label">Totale una tantum</span>
+            <strong class="sum-val font-mono">{{ money(quote().oneOffCents) }}</strong>
           </div>
           <div class="sum-item">
-            <span class="sum-label">+ IVA (22%)</span>
-            <span class="sum-val font-mono">{{ eur(vatCents()) }}</span>
+            <span class="sum-label">Bolli (2 € per fattura &gt; 77,47 €)</span>
+            <span class="sum-val font-mono">{{ money(stampCents()) }}</span>
           </div>
           <div class="sum-item sum-total">
-            <span class="sum-label">Totale con IVA</span>
-            <strong class="sum-val font-mono">{{ eur(totalWithVatCents()) }}</strong>
+            <span class="sum-label">Totale dovuto</span>
+            <strong class="sum-val font-mono">{{ money(quote().oneOffCents + stampCents()) }}</strong>
           </div>
-          <div class="sum-item sum-paid">
-            <span class="sum-label">Già Pagato</span>
-            <strong class="sum-val font-mono text-green">{{ eur(currentPaidCents()) }}</strong>
-          </div>
-          <div class="sum-item sum-remaining">
-            <span class="sum-label">Residuo Da Pagare</span>
-            <strong class="sum-val font-mono text-amber">{{ eur(remainingCents()) }}</strong>
-          </div>
+          @for (t of quote().tranches; track t.tranche) {
+            <div class="sum-item" [class.sum-paid]="t.paid" [class.sum-remaining]="!t.paid">
+              <span class="sum-label">{{ t.tranche === 'acconto' ? 'Acconto 50%' : 'Saldo 50%' }}{{ t.paid ? ' ✓ pagato' : '' }}</span>
+              <strong class="sum-val font-mono" [class.text-green]="t.paid" [class.text-amber]="!t.paid">{{ money(t.totalCents) }}</strong>
+            </div>
+          }
         </div>
+        <p class="muted small" style="margin: 8px 0 0;">Regime forfettario: nessuna IVA in fattura. Gli incassi si registrano sotto (bonifico) o arrivano da Stripe: qui non si scrive a mano l'importo pagato.</p>
       </div>
 
       @if (monthlyCents() > 0) {
         <div class="monthly-callout">
           <span class="monthly-icon">🔄</span>
           <div>
-            <strong>Canone Mensile Manutenzione / Assistenza: {{ eur(monthlyCents()) }}/mese</strong>
+            <strong>Canone Mensile Manutenzione / Assistenza: {{ money(monthlyCents()) }}/mese</strong>
             <p class="muted small" style="margin: 2px 0 0;">Fatturato separatamente con cadenza mensile a partire dalla data di lancio del progetto.</p>
           </div>
         </div>
@@ -536,8 +509,7 @@ export class QuoteEditorComponent {
   protected readonly dirty = signal(false);
   protected readonly saving = signal(false);
 
-  // Campi pagamento e scadenze (richiesta utente)
-  protected readonly paidCents = signal<number | null>(null);
+  protected readonly currency = signal<Currency>('EUR');
   protected readonly paymentDeadline = signal<string>('');
 
   protected readonly suggestions = computed(() => {
@@ -547,39 +519,29 @@ export class QuoteEditorComponent {
 
   protected readonly hasBase = computed(() => this.rows().some((r) => r.name.startsWith('Prezzo base')));
   protected readonly oneOffCents = computed(() => this.rows().filter((r) => !r.monthly).reduce((a, r) => a + toCents(r.price), 0));
-  protected readonly vatCents = computed(() => Math.round(this.oneOffCents() * 0.22));
-  protected readonly totalWithVatCents = computed(() => this.oneOffCents() + this.vatCents());
   protected readonly monthlyCents = computed(() => this.rows().filter((r) => r.monthly).reduce((a, r) => a + toCents(r.price), 0));
+  /** Stesso calcolo del portale e del checkout (forfettario: niente IVA, bollo per fattura). */
+  protected readonly quote = computed(() => computeQuote(
+    this.rows().map((r) => ({ priceCents: toCents(r.price), monthly: r.monthly })),
+    this.store.project()?.paidAmountCents ?? 0
+  ));
+  protected readonly stampCents = computed(() => this.quote().tranches.reduce((s, t) => s + t.stampDutyCents, 0));
 
-  protected readonly paidEuros = computed(() => {
-    const c = this.paidCents();
-    return c !== null ? Number((c / 100).toFixed(2)) : null;
-  });
-
-  protected readonly currentPaidCents = computed(() => {
-    const c = this.paidCents();
-    if (c !== null) return c;
-    // Default 50% di acconto sul totale se non esplicitato
-    return Math.round(this.totalWithVatCents() * 0.5);
-  });
-
-  protected readonly remainingCents = computed(() => {
-    return Math.max(0, this.totalWithVatCents() - this.currentPaidCents());
-  });
+  protected money(cents: number): string { return formatMoney(cents, this.currency()); }
 
   constructor() {
     effect(() => {
       const p = this.store.project();
       if (p && !this.dirty()) {
-        this.load(p.type, p.quoteItems, p.paidAmountCents ?? null, p.paymentDeadline ?? p.deadline ?? '');
+        this.load(p.type, p.quoteItems, p.currency, p.paymentDeadline ?? '');
       }
     });
   }
 
-  private load(type: ProjectType, items: QuoteItem[], paidCents: number | null, paymentDeadline: string): void {
+  private load(type: ProjectType, items: QuoteItem[], currency: Currency, paymentDeadline: string): void {
     this.type.set(type);
     this.rows.set(items.map((i) => ({ id: i.id, name: i.name, price: i.priceCents / 100, monthly: i.monthly })));
-    this.paidCents.set(paidCents);
+    this.currency.set(currency === 'USD' ? 'USD' : 'EUR');
     this.paymentDeadline.set(paymentDeadline);
   }
 
@@ -609,24 +571,8 @@ export class QuoteEditorComponent {
     this.dirty.set(true);
   }
 
-  protected onPaidEurosChange(euros: number | null): void {
-    if (euros === null || euros === undefined || isNaN(Number(euros)) || Number(euros) < 0) {
-      this.paidCents.set(null);
-    } else {
-      this.paidCents.set(Math.round(Number(euros) * 100));
-    }
-    this.dirty.set(true);
-  }
-
-  protected setPaidPercent(pct: number): void {
-    const total = this.totalWithVatCents();
-    if (pct <= 0) {
-      this.paidCents.set(0);
-    } else if (pct >= 100) {
-      this.paidCents.set(total);
-    } else {
-      this.paidCents.set(Math.round(total * (pct / 100)));
-    }
+  protected onCurrencyChange(c: Currency): void {
+    this.currency.set(c);
     this.dirty.set(true);
   }
 
@@ -661,7 +607,7 @@ export class QuoteEditorComponent {
   protected reset(): void {
     const p = this.store.project();
     this.dirty.set(false);
-    if (p) this.load(p.type, p.quoteItems, p.paidAmountCents ?? null, p.paymentDeadline ?? p.deadline ?? '');
+    if (p) this.load(p.type, p.quoteItems, p.currency, p.paymentDeadline ?? '');
   }
 
   protected async save(): Promise<void> {
@@ -680,7 +626,7 @@ export class QuoteEditorComponent {
       await this.store.update({
         type: this.type(),
         quoteItems: items.map((r) => ({ id: r.id, name: r.name.trim(), priceCents: toCents(r.price), monthly: r.monthly })),
-        paidAmountCents: this.paidCents(),
+        currency: this.currency(),
         paymentDeadline: this.paymentDeadline() || null
       });
       this.dirty.set(false);

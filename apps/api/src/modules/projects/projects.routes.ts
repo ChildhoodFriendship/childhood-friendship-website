@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { CONTRACT_VERSION } from '@cf/shared/contract';
 import { projectInputSchema, projectListQuerySchema, projectPatchSchema } from '@cf/shared/schemas';
 import type { ProjectHealthCheckDto } from '@cf/shared/types';
 import type { AppContext } from '../../context.js';
-import { clients, credentials, projects } from '../../db/schema.js';
+import { clients, contractSignatures, credentials, projects } from '../../db/schema.js';
 import { audit } from '../../lib/audit.js';
-import { badRequest, notFound } from '../../lib/http-error.js';
+import { badRequest, conflict, notFound } from '../../lib/http-error.js';
 import { serialize } from '../../lib/serialize.js';
 import { defined, emptyToNull, parse } from '../../lib/validate.js';
 import { isTeam, requireAdmin, requireTeam } from '../../middleware/auth.js';
@@ -48,6 +49,16 @@ export function projectsRouter(ctx: AppContext): Router {
     const start = input.startDate !== undefined ? input.startDate : project.startDate;
     const end = input.deadline !== undefined ? input.deadline : project.deadline;
     if (start && end && end < start) throw badRequest('La scadenza precede la data di inizio');
+    // Dopo la firma preventivo, valuta e cliente sono quelli del contratto: non si cambiano
+    const norm = (items: { id: string; name: string; priceCents: number; monthly?: boolean }[]) => JSON.stringify(items.map((i) => [i.id, i.name, i.priceCents, !!i.monthly]));
+    const quoteChanged = (input.quoteItems !== undefined && norm(input.quoteItems) !== norm(project.quoteItems))
+      || (input.currency !== undefined && input.currency !== project.currency)
+      || (input.clientId !== undefined && input.clientId !== project.clientId);
+    if (quoteChanged) {
+      const [signed] = await ctx.db.select({ id: contractSignatures.id }).from(contractSignatures)
+        .where(and(eq(contractSignatures.projectId, project.id), eq(contractSignatures.contractVersion, CONTRACT_VERSION))).limit(1);
+      if (signed) throw conflict('Contratto già firmato: preventivo, valuta e cliente non si possono più modificare');
+    }
     await ctx.db.update(projects).set(input).where(eq(projects.id, project.id));
     await audit(ctx.db, req, { action: 'project.updated', entity: 'project', entityId: project.id, projectId: project.id, meta: { fields: Object.keys(input) } });
     res.json(serialize(await service.get(project.id)));

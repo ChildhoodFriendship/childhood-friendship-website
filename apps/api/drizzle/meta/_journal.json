@@ -71,6 +71,13 @@
       "when": 1793299299569,
       "tag": "0009_fatturazione_firme",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793313538092,
+      "tag": "0010_valuta_progetto",
+      "breakpoints": true
     }
   ]
 }

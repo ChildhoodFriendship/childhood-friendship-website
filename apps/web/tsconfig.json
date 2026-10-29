@@ -30,6 +30,12 @@
       ],
       "@cf/shared/company": [
         "../../packages/shared/src/company.ts"
+      ],
+      "@cf/shared/billing": [
+        "../../packages/shared/src/billing.ts"
+      ],
+      "@cf/shared/contract": [
+        "../../packages/shared/src/contract.ts"
       ]
     }
   },
