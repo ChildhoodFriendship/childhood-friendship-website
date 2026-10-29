@@ -14,6 +14,7 @@ import { credentialsRouter } from './modules/credentials/credentials.routes.js';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import { documentsRouter } from './modules/documents/documents.routes.js';
 import { contractRouter } from './modules/contract/contract.routes.js';
+import { billingRouter } from './modules/billing/billing.routes.js';
 import { leadsRouter, publicLeadsRouter } from './modules/leads/leads.routes.js';
 import { marketingRouter } from './modules/marketing/marketing.routes.js';
 import { messagesRouter } from './modules/messages/messages.routes.js';
@@ -73,6 +74,7 @@ export function createApp(ctx: AppContext): Express {
   nested.use('/marketing', marketingRouter(ctx));
   nested.use('/ai', aiRouter(ctx));
   nested.use('/files', filesRouter(ctx));
+  nested.use('/billing', billingRouter(ctx));
   api.use('/projects/:projectId', nested);
 
   app.use('/api', api);

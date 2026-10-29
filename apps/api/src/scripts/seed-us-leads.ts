@@ -1,5 +1,7 @@
 /**
- * Popola il database con i 10 Lead ad Alto Pagamento USA verificati.
+ * Popola il database con 10 lead USA (attività commerciali, solo dati pubblici della scheda Google).
+ * Nessun nome di persona e nessun dato economico stimato: i segnali in `notes` vanno verificati prima del contatto.
+ * Se il lead esiste già (stesso telefono) aggiorna SOLO i campi descrittivi: stato, prezzo ed esito del CRM restano intatti.
  * Esecuzione: npm run leads:seed --workspace=@cf/api
  */
 import { eq } from 'drizzle-orm';
@@ -10,7 +12,7 @@ import { leads } from '../db/schema.js';
 
 const US_LEADS = [
   {
-    name: 'Hen Biton (President)',
+    name: 'President',
     company: 'Quick Key Locksmith LV Inc',
     phone: '+1 702-659-9779',
     category: 'Emergency 24/7 Locksmith & Mobile Dispatch',
@@ -22,8 +24,8 @@ const US_LEADS = [
     offeredService: 'Piattaforma di Emergenza Mobile 24/7 con Chiamata Istantanea 1-Tap e Checkout Acconto Apple Pay',
     score: 99,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 561622: $1.1M - $1.85M/anno (~$3.500 - $6.500/giorno). DIAGNOSI TECNICA: Il sito Wix attuale risponde con HTTP 404 Not Found - ConnectYourDomain Error. Perdita massiccia di chiamate giornaliere da clienti bloccati fuori casa o auto. Il preventivo da $3.250 si ripaga con 7-8 chiamate di emergenza.',
-    outreachMessage: 'Hi Hen, I noticed your Quick Key Locksmith Google Maps listing is getting searches, but when customers tap your website, it throws a Wix 404 ConnectYourDomain error. Anyone locked out is bouncing to other locksmiths. We can deploy a lightning-fast mobile booking & dispatch app with 1-tap Apple Pay/Card deposits so you secure every call before competitors do. Let\'s fix this today.',
+    notes: 'DIAGNOSI TECNICA: Il sito Wix attuale risponde con HTTP 404 Not Found - ConnectYourDomain Error. Chi cerca un fabbro in emergenza trova un sito non raggiungibile. [Segnali da verificare prima del contatto.]',
+    outreachMessage: 'Hi there, I noticed your Quick Key Locksmith Google Maps listing is getting searches, but when customers tap your website, it throws a Wix 404 ConnectYourDomain error. Anyone locked out is bouncing to other locksmiths. We can deploy a lightning-fast mobile booking & dispatch app with 1-tap Apple Pay/Card deposits so you secure every call before competitors do. Let\'s fix this today.',
     waLink: 'https://wa.me/17026599779'
   },
   {
@@ -39,7 +41,7 @@ const US_LEADS = [
     offeredService: 'Portale Digitale Preventivi Veicoli Europei con Targa/VIN e Prenotazione Diagnostica',
     score: 98,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 811111: $2.2M - $3.8M/anno (~$8.500 - $14.500/giorno). ZERO SITO WEB su Maps e registri statali DMV. 89 recensioni (4.5★). Ticket medio $1.200 - $2.500. Due riparazioni coprono l\'intero portale.',
+    notes: 'ZERO SITO WEB su Maps. 89 recensioni (4.5★). [Segnali da verificare prima del contatto.]',
     outreachMessage: 'Hi team at European Auto Repair, your reputation on S Jones Blvd for European imports is great, but you have zero website linked on your Google profile. High-end BMW, Porsche and Maserati drivers want to book diagnostics online. Our digital booking portal costs $3,250 flat—covered by just 2 brake/transmission jobs. Let\'s get you set up.',
     waLink: 'https://wa.me/17029721595'
   },
@@ -56,12 +58,12 @@ const US_LEADS = [
     offeredService: 'Portale Abbonamenti Mensili Ricorrenti (Unlimited Wash Club) con Addebito Automatico Stripe',
     score: 97,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 811192: $2.5M - $4.2M/anno (~$7.500 - $13.000/giorno). Oltre 1.200 recensioni su Maps. Flusso 250-400 vetture/giorno. ZERO SITO WEB. Vendere abbonamenti mensili digitali creerebbe una rendita fissa da $20.000+/mese.',
+    notes: 'Oltre 1.200 recensioni su Maps. ZERO SITO WEB. Opportunità: abbonamenti mensili online. [Segnali da verificare prima del contatto.]',
     outreachMessage: 'Hi Crossbay Car Wash, you have over 1,200 reviews and hundreds of cars daily in Ozone Park, but zero digital portal to sell recurring monthly Unlimited Wash Club memberships online. Even 100 members paying $39/mo brings $3,900/mo guaranteed recurring revenue. We build the complete system with Apple Pay & card billing for a flat $3,250.',
     waLink: 'https://wa.me/17188436097'
   },
   {
-    name: 'Manu Larragoitia (Owner / Master Tech)',
+    name: 'Owner / Master Tech',
     company: "702's Garage",
     phone: '+1 702-612-1575',
     category: 'Auto Repair & Diagnostics',
@@ -73,8 +75,8 @@ const US_LEADS = [
     offeredService: 'Piattaforma Web per Prenotazione Tagliandi e Preventivi Trasparenti Online',
     score: 96,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 811111: $1.4M - $2.4M/anno (~$5.000 - $9.000/giorno). Officina registrata Nevada DMV. Zero sito web. Incasso giornaliero copre l\'intero costo in 4 ore.',
-    outreachMessage: "Hi Manu, great work at 702's Garage on Arville St. We noticed you have no official website listed on your DMV & Google business profile. Drivers searching nearby can't view your services or book a slot online. We create turnkey booking portals for independent shops at $3,250 flat—paid off in half a day.",
+    notes: 'Zero sito web. [Segnali da verificare prima del contatto.]',
+    outreachMessage: "Hi there, great work at 702's Garage on Arville St. We noticed you have no official website listed on your DMV & Google business profile. Drivers searching nearby can't view your services or book a slot online. We create turnkey booking portals for independent shops at $3,250 flat—paid off in half a day.",
     waLink: 'https://wa.me/17026121575'
   },
   {
@@ -90,7 +92,7 @@ const US_LEADS = [
     offeredService: 'Showroom Digitale Piani Cucina con Calcolatore Preventivi al Metro Quadro',
     score: 96,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 238340: $950k - $1.8M/anno (~$3.500 - $6.500/giorno). ZERO SITO WEB. Vendono forniture da $4.000 - $12.000 a commessa. Un solo piano cucina ripaga il portale 2x.',
+    notes: 'ZERO SITO WEB. Opportunità: portfolio lavori e richiesta preventivo online. [Segnali da verificare prima del contatto.]',
     outreachMessage: 'Hi Felix Marble & Granite team, you craft high-end stone countertops in Las Vegas, but have zero website for homeowners to browse stone slabs or calculate square-foot estimates. One single kitchen countertop remodel ($5,000+) completely pays for our $3,250 custom digital showcase.',
     waLink: 'https://wa.me/17022795820'
   },
@@ -107,12 +109,12 @@ const US_LEADS = [
     offeredService: 'Piattaforma Mobile Detailing con Selezione Pacchetti e Pagamento Anticipato',
     score: 95,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 811192: $550k - $950k/anno. DIAGNOSI TECNICA: stirrindetailing.com risponde con HTTP 404 Not Found (Nginx). I clienti ad alto reddito di Summerlin che cercano detailing trovano un vicolo cieco.',
+    notes: 'DIAGNOSI TECNICA: stirrindetailing.com risponde con HTTP 404 Not Found (Nginx). [Segnali da verificare prima del contatto.]',
     outreachMessage: 'Hi Stirrin Detailing, your website stirrindetailing.com is returning a 404 Nginx Not Found error right now. Summerlin clients trying to book ceramic coatings can\'t reach you. We replace broken sites with a slick mobile booking engine with Apple Pay at $3,250 flat. Let\'s restore your traffic.',
     waLink: 'https://wa.me/17027394541'
   },
   {
-    name: 'Nate (Owner)',
+    name: 'Owner',
     company: "Nate's The Great Mobile Car Care LLC",
     phone: '+1 786-739-9696',
     category: 'Mobile Detailing & Ceramic Coatings',
@@ -124,8 +126,8 @@ const US_LEADS = [
     offeredService: 'Piattaforma Detailing & Trattamenti Ceramici Miami con Calendario e Acconto Carta',
     score: 95,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 811192: $650k - $1.1M/anno. DIAGNOSI TECNICA: natesmobiledetailing.com bloccato con Cloudflare Error 1001: DNS resolution error. 97 recensioni (4.5★) ma sito inaccessibile.',
-    outreachMessage: 'Hi Nate, your website natesmobiledetailing.com is showing Cloudflare Error 1001 and blocking every customer in Miami. We can fix your DNS and give you a sleek luxury booking app with Apple Pay deposits for $3,250, paid off in less than a day of detailing work.',
+    notes: 'DIAGNOSI TECNICA: natesmobiledetailing.com bloccato con Cloudflare Error 1001: DNS resolution error. 97 recensioni (4.5★) ma sito inaccessibile. [Segnali da verificare prima del contatto.]',
+    outreachMessage: 'Hi there, your website natesmobiledetailing.com is showing Cloudflare Error 1001 and blocking every customer in Miami. We can fix your DNS and give you a sleek luxury booking app with Apple Pay deposits for $3,250, paid off in less than a day of detailing work.',
     waLink: 'https://wa.me/17867399696'
   },
   {
@@ -141,7 +143,7 @@ const US_LEADS = [
     offeredService: 'Catalogo Digitale Lavorazioni di Pregio e Modulo Preventivo con Foto',
     score: 94,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 337121: $700k - $1.3M/anno. ZERO SITO WEB. Lavorano su barche e auto da collezione senza un portfolio online. Ticket da $1.500 a $6.000.',
+    notes: 'ZERO SITO WEB. Lavorano su barche e auto da collezione senza un portfolio online. [Segnali da verificare prima del contatto.]',
     outreachMessage: 'Hi JBM Upholstery, you work on custom classic cars and boats off Polaris Ave, but have no standalone website to showcase your leather and upholstery work. High-end owners want to see proof before calling. A clean digital showcase is $3,250 flat—covered by a single boat or car interior.',
     waLink: 'https://wa.me/17022389986'
   },
@@ -158,7 +160,7 @@ const US_LEADS = [
     offeredService: 'Sito Multilingua con Modulo Prenotazione Rapida e Scheda Interventi',
     score: 94,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 811111: $1.2M - $2.1M/anno. Licenza ufficiale DMV Nevada. ZERO SITO WEB.',
+    notes: 'ZERO SITO WEB. [Segnali da verificare prima del contatto.]',
     outreachMessage: 'Hi ABC Complete Auto Repair, your shop on Nevso Dr is busy, but you have no website for local car owners searching Google Maps nearby. We deploy turnkey garage booking sites with online quote calculators for $3,250 flat.',
     waLink: 'https://wa.me/17028890307'
   },
@@ -175,7 +177,7 @@ const US_LEADS = [
     offeredService: 'Portale Ordini Online Take-Away a Zero Commissioni con Pagamento con Carta ed Apple Pay',
     score: 93,
     status: 'qualificato' as const,
-    notes: 'Fatturato Ufficiale NAICS 722513: $1.8M - $2.9M/anno (300-450 ordini/giorno). Spendono in annunci su Google ma rimandano a profili terzi. Pagano il 30% di commissioni a UberEats su centinaia di ordini al giorno. Un portale proprio a zero commissioni gli fa risparmiare oltre $4.000 al mese.',
+    notes: 'Spendono in annunci su Google ma rimandano a profili terzi. Opportunità: ordini online diretti senza commissioni delle piattaforme di delivery. [Segnali da verificare prima del contatto.]',
     outreachMessage: 'Hi El Chacho team, you make the best birria in Vegas with hundreds of orders a day, but you\'re giving away 30% of every order to UberEats and Grubhub because you don\'t have direct online ordering. Our commission-free online ordering system with Apple Pay is $3,250 flat—you save that much in commission fees in your first month alone.',
     waLink: 'https://wa.me/17027806070'
   }
@@ -202,7 +204,9 @@ async function seed() {
       await handle.db
         .update(leads)
         .set({
-          ...item,
+          name: item.name,
+          notes: item.notes,
+          outreachMessage: item.outreachMessage,
           updatedAt: new Date()
         })
         .where(eq(leads.id, existing.id));

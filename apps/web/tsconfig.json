@@ -27,6 +27,9 @@
       ],
       "@cf/shared/types": [
         "../../packages/shared/src/types.ts"
+      ],
+      "@cf/shared/company": [
+        "../../packages/shared/src/company.ts"
       ]
     }
   },

@@ -64,6 +64,13 @@
       "when": 1793057760000,
       "tag": "0008_password_resets",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793299299569,
+      "tag": "0009_fatturazione_firme",
+      "breakpoints": true
     }
   ]
 }

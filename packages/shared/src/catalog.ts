@@ -163,3 +163,17 @@ export type AiFeature = (typeof AI_FEATURES)[number];
 
 /** Campi del progetto che il cliente non deve ricevere dall'API. */
 export const PORTAL_HIDDEN_PROJECT_FIELDS = ['repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus'] as const;
+
+/* ---------- Pagamenti e fatture ---------- */
+
+/** Stato di un incasso: lo decide solo il server (webhook del provider di pagamento), mai il browser. */
+export const PAYMENT_STATUSES = ['in_attesa', 'riuscito', 'fallito', 'rimborsato', 'annullato'] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+/** Tranche del preventivo a cui si riferisce l'incasso. */
+export const PAYMENT_TRANCHES = ['acconto', 'saldo', 'canone', 'altro'] as const;
+export type PaymentTranche = (typeof PAYMENT_TRANCHES)[number];
+
+/** Stato della fattura elettronica: numero e stato SDI arrivano dal provider di fatturazione. */
+export const INVOICE_STATUSES = ['bozza', 'emessa', 'consegnata', 'scartata', 'annullata'] as const;
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];

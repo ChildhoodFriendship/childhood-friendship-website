@@ -148,9 +148,10 @@ describe('archiviazione', () => {
 });
 
 describe('dati interni nascosti al cliente', () => {
-  const hidden = ['repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus', 'quoteItems'];
+  // quoteItems visibile al cliente in sola lettura dal commit 783548b (preventivo nel portale)
+  const hidden = ['repositoryUrl', 'marketingEnabled', 'marketingBudgetCents', 'indexingStatus'];
 
-  it('tipo e preventivo: salvati dal team, prezzi nascosti al cliente', async () => {
+  it('tipo e preventivo: salvati dal team, il cliente li legge ma non li modifica', async () => {
     const items = [
       { id: 'base', name: 'Prezzo base Sito web / landing page', priceCents: 40000 },
       { id: 'cura', name: 'Manutenzione', priceCents: 2000, monthly: true }
@@ -161,8 +162,7 @@ describe('dati interni nascosti al cliente', () => {
     expect(r.body.quoteItems).toEqual([{ ...items[0], monthly: false }, items[1]]);
     const mine = (await clientA.get(`/api/projects/${projectA}`)).body;
     expect(mine.type).toBe('landing');
-    expect(mine).not.toHaveProperty('quoteItems');
-    expect(JSON.stringify(mine)).not.toContain('40000');
+    expect(mine.quoteItems).toEqual([{ ...items[0], monthly: false }, items[1]]);
     expect((await admin.patch(`/api/projects/${projectA}`, { quoteItems: [{ id: 'x', name: '', priceCents: 100 }] })).status).toBe(400);
     expect((await admin.patch(`/api/projects/${projectA}`, { type: 'astronave' })).status).toBe(400);
     expect((await clientA.patch(`/api/projects/${projectA}`, { quoteItems: [] })).status).toBe(403);

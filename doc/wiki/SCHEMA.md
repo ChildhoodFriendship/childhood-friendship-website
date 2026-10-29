@@ -11,6 +11,7 @@ Questa wiki contiene solo conoscenza durevole: architettura, modelli, convenzion
 - `current-status.md`: snapshot verificabile e punti aperti.
 - `modules/component-catalog.md`: inventario di moduli, componenti, servizi e utility.
 - `projects/childhood-friendship-website.md`: configurazione e integrazioni del progetto.
+- `compliance.md`: regole fiscali e privacy, Neon in UE, fornitori.
 - `bugs/`: schede di bug durevoli; vuota finché non esiste una diagnosi verificata.
 - `log.md`: storico sintetico, append-only.
 
@@ -28,12 +29,13 @@ Postgres/Neon in produzione · PGlite in locale
 packages/shared: tipi, catalogo dominio, schemi Zod
 ```
 
-Entità principali: `users`, `sessions`, `clients`, `projects`, `tasks`, `documents`, `document_versions`, `messages`, `credentials`, `appointments`, `marketing_*`, `leads`, `audit_log`, `ai_usage`.
+Entità principali: `users`, `sessions`, `clients`, `projects`, `tasks`, `documents`, `document_versions`, `messages`, `credentials`, `marketing_*`, `leads`, `project_files`, `contract_signatures`, `payments`, `invoices`, `password_resets`, `audit_log`, `ai_usage`.
 
 Relazioni essenziali:
 
 - un cliente possiede progetti e utenti cliente;
-- un progetto possiede checklist, documenti, messaggi, credenziali, appuntamenti e dati marketing;
+- un progetto possiede checklist, documenti, messaggi, credenziali, materiali, firme del contratto, incassi, fatture e dati marketing;
+- una fattura punta all'incasso che la origina; numero e stato SDI arrivano dal provider di fatturazione;
 - un documento ha versioni e flusso bozza → revisione → approvato/modifiche richieste;
 - i lead possono essere convertiti in clienti;
 - ogni mutazione sensibile produce audit.

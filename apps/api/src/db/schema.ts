@@ -1,10 +1,10 @@
 import { relations, sql } from 'drizzle-orm';
 import {
-  boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid
+  boolean, check, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid
 } from 'drizzle-orm/pg-core';
 import {
-  ANALYSIS_KINDS, CAMPAIGN_STATUSES, DOCUMENT_STATUSES, INDEXING_STATUSES, LEAD_SERVICES, LEAD_STATUSES,
-  MARKETING_CONTENT_STATUSES, MARKETING_CONTENT_TYPES, PHASES, PLATFORM_KINDS, PROJECT_STATUSES, ROLES
+  ANALYSIS_KINDS, CAMPAIGN_STATUSES, DOCUMENT_STATUSES, INDEXING_STATUSES, INVOICE_STATUSES, LEAD_SERVICES, LEAD_STATUSES,
+  MARKETING_CONTENT_STATUSES, MARKETING_CONTENT_TYPES, PAYMENT_STATUSES, PAYMENT_TRANCHES, PHASES, PLATFORM_KINDS, PROJECT_STATUSES, ROLES
 } from '@cf/shared/catalog';
 
 export const roleEnum = pgEnum('role', ROLES);
@@ -19,6 +19,9 @@ export const campaignStatusEnum = pgEnum('campaign_status', CAMPAIGN_STATUSES);
 export const analysisKindEnum = pgEnum('analysis_kind', ANALYSIS_KINDS);
 export const leadStatusEnum = pgEnum('lead_status', LEAD_STATUSES);
 export const leadServiceEnum = pgEnum('lead_service', LEAD_SERVICES);
+export const paymentStatusEnum = pgEnum('payment_status', PAYMENT_STATUSES);
+export const paymentTrancheEnum = pgEnum('payment_tranche', PAYMENT_TRANCHES);
+export const invoiceStatusEnum = pgEnum('invoice_status', INVOICE_STATUSES);
 
 const id = () => uuid().primaryKey().defaultRandom();
 const createdAt = () => timestamp({ withTimezone: true, mode: 'date' }).notNull().defaultNow();
@@ -297,6 +300,60 @@ export const leads = pgTable('leads', {
   createdAt: createdAt(),
   updatedAt: updatedAt()
 }, (t) => [index('leads_status_idx').on(t.status, t.createdAt), uniqueIndex('leads_place_id_uq').on(t.placeId)]);
+
+/* ---------- Pagamenti e fatture ---------- */
+
+/**
+ * Incassi: una riga per ogni pagamento confermato o tentato presso il provider (es. Stripe).
+ * Lo stato cambia solo da webhook firmato lato server; `providerPaymentId` rende idempotente la ricezione.
+ */
+export const payments = pgTable('payments', {
+  id: id(),
+  projectId: uuid().notNull().references(() => projects.id, { onDelete: 'restrict' }),
+  clientId: uuid().notNull().references(() => clients.id, { onDelete: 'restrict' }),
+  tranche: paymentTrancheEnum().notNull().default('altro'),
+  provider: text().notNull(),
+  providerPaymentId: text().notNull(),
+  amountCents: integer().notNull(),
+  currency: text().notNull().default('EUR'),
+  status: paymentStatusEnum().notNull().default('in_attesa'),
+  paidAt: ts(),
+  metadata: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: createdAt(),
+  updatedAt: updatedAt()
+}, (t) => [
+  uniqueIndex('payments_provider_uq').on(t.provider, t.providerPaymentId),
+  index('payments_project_idx').on(t.projectId, t.createdAt),
+  check('payments_amount_positive', sql`${t.amountCents} > 0`)
+]);
+
+/**
+ * Fatture elettroniche emesse tramite il provider di fatturazione (SDI).
+ * Numero progressivo, data, stato SDI, PDF e XML arrivano SOLO dal provider: l'app non numera mai le fatture.
+ */
+export const invoices = pgTable('invoices', {
+  id: id(),
+  projectId: uuid().notNull().references(() => projects.id, { onDelete: 'restrict' }),
+  clientId: uuid().notNull().references(() => clients.id, { onDelete: 'restrict' }),
+  paymentId: uuid().references(() => payments.id, { onDelete: 'set null' }),
+  provider: text().notNull(),
+  providerInvoiceId: text(),
+  number: text(),
+  issueDate: date({ mode: 'string' }),
+  amountCents: integer().notNull(),
+  currency: text().notNull().default('EUR'),
+  status: invoiceStatusEnum().notNull().default('bozza'),
+  sdiStatus: text(),
+  pdfUrl: text(),
+  xmlUrl: text(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt()
+}, (t) => [
+  uniqueIndex('invoices_provider_uq').on(t.provider, t.providerInvoiceId),
+  index('invoices_project_idx').on(t.projectId, t.createdAt),
+  index('invoices_payment_idx').on(t.paymentId),
+  check('invoices_amount_positive', sql`${t.amountCents} > 0`)
+]);
 
 /** Materiali caricati su un progetto (logo, foto, testi): file su Vercel Blob, metadati qui. */
 export const projectFiles = pgTable('project_files', {

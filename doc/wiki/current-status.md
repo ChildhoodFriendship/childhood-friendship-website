@@ -1,6 +1,6 @@
 # Stato corrente
 
-> Snapshot documentale: 2026-10-14 · branch osservato: `main`.
+> Snapshot documentale: 2026-10-29 · branch osservato: `main`.
 
 ## Sistema
 
@@ -16,9 +16,9 @@
 
 | Controllo | Esito registrato |
 |---|---|
-| `npm run check` | passato per shared, API e web il 2026-10-14 |
-| `npm run test` | 52/52 test API passati il 2026-10-15 |
-| `npm run build` | passato web + API il 2026-10-14; scena 3D e feature restano lazy |
+| `npm run check` | passato per shared, API e web il 2026-10-29 |
+| `npm run test` | 58/58 test API passati il 2026-10-29 |
+| `npm run build` | passato web + API il 2026-10-29; scena 3D e feature restano lazy |
 | `npm run e2e` | 6/6 test Playwright passati il 2026-10-15 (anche in CI) |
 | Smoke test Chromium | passato nello snapshot precedente; non rieseguito in questa migrazione |
 
@@ -36,7 +36,12 @@ Il smoke test browser resta un'evidenza precedente; la migrazione documentale no
 
 ## Punti aperti e limiti
 
-- Privacy: informativa e cookie policy pubblicate ma da far validare; database Neon negli USA (valutare regione UE).
+- Fiscale: P.IVA non ancora aperta. Contratto (`contract.routes.ts`, `project-contract.component.ts`), email (`mailer.ts`) e riepilogo nel portale (`quote-receipt.component.ts`) contengono ancora P.IVA, indirizzo e certificato W-8BEN-E non reali e vanno collegati a `@cf/shared/company`; il pagamento Apple Pay del portale è una simulazione (nessun addebito). Vedi `compliance.md`.
+- Pagamenti e fatture: tabelle e API in lettura pronte (`0009`); mancano webhook Stripe e integrazione con il provider di fatturazione (dopo la P.IVA).
+- Migrazione `0009` da applicare in produzione (CI su push in `main`): crea `contract_signatures`, finora assente in produzione.
+- Lead USA già in produzione con nomi e stime del vecchio seed: rieseguire `npm run leads:seed -w @cf/api` contro produzione per ripulire nome, note e messaggio (stato e prezzo restano). I vecchi dati restano nella storia git.
+
+- Privacy: informativa aggiornata (titolare ditta individuale, firma, pagamenti, fatture) ma da far validare; database Neon negli USA: procedura di migrazione in UE in `compliance.md`; DPA dei fornitori da archiviare.
 
 - Email transazionali pronte ma disattivate finché non si configurano `RESEND_API_KEY` e `MAIL_FROM` (dominio verificato).
 - Rate limit globale in memoria per istanza; login, refresh e form pubblico condivisi su Postgres.

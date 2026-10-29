@@ -93,3 +93,14 @@ Formato: `## YYYY-MM-DD â€” tipo â€” oggetto`. Il log Ã¨ append-only.
 
 - n8n: «CF Lead Hunter» e «CF CRM - Bot» uniti in un solo workflow (id `cfLeadHunterPDS1`, «CF · Clienti — ricerca automatica e bot Telegram»). Cosa cercare e dove si cambia nel nodo «Configurazione ricerca» (categorie di attività locali, non solo food); messaggio AI adattato al tipo di attività; tolte costanti residue del vecchio CRM sul Pi. Il vecchio workflow bot è disattivato e rinominato «[DA ELIMINARE]». Backup JSON in `~/cfwork` sul Pi.
 - Footer: tolta l'email (resta nelle pagine Privacy e Cookie, dove è richiesta).
+
+## 2026-10-29 â€” security â€” firme, incassi e fatture; privacy; seed USA ripulito
+
+- Migrazione `0009_fatturazione_firme` (idempotente, snapshot Drizzle rigenerato): crea `contract_signatures` (mancava in produzione), `payments`, `invoices`; allinea l'enum `project_status` a `in_sviluppo`/`lanciato`; grant a `cf_app` anche su `password_resets` (mancavano in `0008`); niente DELETE per `cf_app` su firme, incassi e fatture. Verificata anche l'applicazione su un DB fermo a `0008`.
+- Rimosso il DDL a runtime da `bootstrap.ts` (ora tutto nelle migrazioni).
+- API `/api/projects/:id/billing/payments|invoices` in sola lettura; nessuna scrittura dal browser.
+- Nuovo profilo aziendale `@cf/shared/company` (nessun dato fiscale inventato); informativa: titolare ditta individuale, collaboratori autorizzati, firma elettronica, pagamenti e fatture, conservazione 10 anni, Stripe, provider fatture, commercialista, SDI; contatto `lorenzo@cfofficial.it`.
+- Seed lead USA: niente nomi di persona nÃ© fatturati/stime inventati; in aggiornamento tocca solo nome, note e messaggio.
+- Test RBAC allineati alla decisione `783548b` (preventivo visibile al cliente in sola lettura); +6 test fatturazione/firma.
+- Nuova pagina `compliance.md` (regole fiscali, Neon in UE, DPA).
+- Verifica: `npm run check`, `npm run test` (58/58), `npm run build` passati.

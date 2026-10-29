@@ -13,6 +13,7 @@ Mappa compatta della documentazione di `childhood-friendship-website`.
 
 - [Catalogo componenti e moduli](modules/component-catalog.md) — componenti Angular, servizi, API e utility.
 - [Progetto Childhood Friendship](projects/childhood-friendship-website.md) — scopo, workspace, configurazione e integrazioni.
+- [Conformità fiscale e privacy](compliance.md) — profilo aziendale, pagamenti e fatture, Neon in UE, fornitori (DPA).
 - [Bug tracciati](bugs/.gitkeep) — nessuna scheda attiva al momento.
 
 ## Manutenzione

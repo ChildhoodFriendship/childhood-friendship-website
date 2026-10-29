@@ -1,7 +1,7 @@
 /** DTO restituiti dall'API (solo tipi: nessun costo nel bundle). */
 import type {
-  AnalysisKind, CampaignStatus, DocumentStatus, DocumentType, IndexingStatus, LeadService, LeadStatus,
-  MarketingContentStatus, MarketingContentType, Phase, PlatformKind, ProjectStatus, ProjectType, Role
+  AnalysisKind, CampaignStatus, DocumentStatus, DocumentType, IndexingStatus, InvoiceStatus, LeadService, LeadStatus,
+  MarketingContentStatus, MarketingContentType, PaymentStatus, PaymentTranche, Phase, PlatformKind, ProjectStatus, ProjectType, Role
 } from './catalog.js';
 
 export type { Role } from './catalog.js';
@@ -171,4 +171,17 @@ export interface ProjectHealthCheckDto {
   dbLatencyMs: number;
   checkedAt: string;
   accessProbes?: AccessProbeDto[];
+}
+
+/** Incasso registrato dal server (webhook del provider). */
+export interface PaymentDto {
+  id: string; projectId: string; clientId: string; tranche: PaymentTranche; provider: string;
+  amountCents: number; currency: string; status: PaymentStatus; paidAt: string | null; createdAt: string;
+}
+
+/** Fattura elettronica: numero, data e stato SDI arrivano dal provider di fatturazione. */
+export interface InvoiceDto {
+  id: string; projectId: string; clientId: string; paymentId: string | null; provider: string;
+  number: string | null; issueDate: string | null; amountCents: number; currency: string;
+  status: InvoiceStatus; sdiStatus: string | null; pdfUrl: string | null; xmlUrl: string | null; createdAt: string;
 }
