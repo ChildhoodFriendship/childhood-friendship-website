@@ -16,7 +16,23 @@
       "destination": "/api/index.mjs"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/(caveau|privacy|cookie|login|registrati|register)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/invito/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/reset-password/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/portale/:path*",
       "destination": "/index.html"
     }
   ],
