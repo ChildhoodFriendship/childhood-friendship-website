@@ -12,17 +12,6 @@
   },
   "rewrites": [
     {
-      "source": "/",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": "(.*)text/markdown(.*)"
-        }
-      ],
-      "destination": "/llms-full.txt"
-    },
-    {
       "source": "/api/:path*",
       "destination": "/api/index.mjs"
     },
