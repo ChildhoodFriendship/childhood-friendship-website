@@ -141,5 +141,6 @@ await writeFile(indexPath, html);
 
 await writeFile(resolve(web, 'public/llms.txt'), llms);
 await writeFile(resolve(web, 'public/llms-full.txt'), llmsFull);
+await writeFile(resolve(web, 'public/index.md'), llmsFull);
 await writeFile(resolve(web, 'public/sitemap.xml'), sitemap);
 console.log(`[seo] llms.txt ${llms.length} B · llms-full.txt ${llmsFull.length} B · sitemap ${urls.length} URL · index.html aggiornato (${html.length} B)`);

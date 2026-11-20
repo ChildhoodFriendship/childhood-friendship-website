@@ -12,6 +12,17 @@
   },
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": "(.*)text/markdown(.*)"
+        }
+      ],
+      "destination": "/llms-full.txt"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/index.mjs"
     },
@@ -89,6 +100,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</llms.txt>; rel=\"alternate\"; type=\"text/plain\"; title=\"Indice per LLM\", </llms-full.txt>; rel=\"alternate\"; type=\"text/plain\"; title=\"Contenuto completo in testo\""
         }
       ]
     }
