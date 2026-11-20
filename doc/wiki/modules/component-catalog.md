@@ -1,58 +1,52 @@
-# Catalogo componenti, moduli e servizi
+---
+title: "Catalogo componenti e moduli"
+status: active
+role: application
+source:
+  references:
+    - part: other
+      path: apps/api/src/lib/notify.ts
+    - part: model
+      path: packages/shared/src/types.ts
+    - part: model
+      path: packages/shared/src/catalog.ts
+    - part: model
+      path: packages/shared/src/schemas.ts
+---
 
-Inventario derivato dal codice corrente. La presenza nel repository non equivale a verifica browser o produzione.
+## Short Description
 
-## Web: shell e landing
+Questa sezione mappa i componenti principali della web app, dell’API e del package shared del superproject.
 
-| Elemento | Scopo | Input/output e vincoli |
-|---|---|---|
-| `AppComponent` | shell root e outlet | bootstrap standalone |
-| `LandingPageComponent` | compone le sezioni | layout e ordine della landing |
-| `HeaderComponent` / `FooterComponent` | navigazione e chiusura pagina | anchor accessibili |
-| `HeroComponent` / `SceneComponent` | hero e scena Three.js | WebGL, cleanup risorse, caricamento differito |
-| `ManifestoComponent` / `AboutComponent` | identità e manifesto | contenuto statico; particelle decorative |
-| `ServicesComponent` | offerte | array tipizzato readonly |
-| `MethodComponent` | processo di lavoro | stato di fase e scena condivisa |
-| `PortfolioComponent` | portfolio 3D | Signal/computed, evento `cf:portfolio`, link opzionali |
-| `ContactSectionComponent` | raccolta contatti | stato `idle/submitting/success/error`, validazione e API lead |
-| `OutroComponent` / `CaveauPage` | finale e ambiente 3D | animazioni, accessibilità, fallback/reduced motion |
+## Description
 
-## Web: app autenticata
+Il codice è raggruppato per responsabilità: shell e landing pubblica, aree web autenticate, middleware/route API e catalogo condiviso. La mappa sintetizza i confini già documentati; la presenza di un nome in elenco non sostituisce l’ispezione del sorgente.
 
-| Modulo | Elementi | Contratto |
-|---|---|---|
-| `core` | `Api`, `ApiError`, `AuthService`, interceptor, guard, `ToastService` | Promise/HTTP, sessione in Signal, ruoli |
-| `shared` | badge, modal, overlay, conferme, Markdown, document view, thread, labels | riuso UI; Markdown sanitizzato; `ConfirmService` |
-| `features/auth` | login, invito, password | route pubbliche; sessione e redirect |
-| `features/admin` | shell, dashboard, progetti, clienti, lead, utenti, audit, marketing | route `/admin/**`, ruoli team/admin |
-| `features/portal` | elenco e dettaglio progetto, documenti, messaggi, appuntamenti | route `/portale/**`, solo cliente |
+## Functional Characteristics
 
-## API e dominio
+- Shows landing pubblica, hero, portfolio, contatti e pagine applicative attraverso `apps/web`.
+- Manages UI admin e portale tramite feature e route separate.
+- Validates gli input API con schemi Zod condivisi.
+- Stores dati tramite Drizzle e PostgreSQL nel backend.
+- Notifies il team per gli eventi configurati nel modulo di notifica, secondo la documentazione di progetto.
 
-| Modulo/servizio | Scopo | Vincoli |
-|---|---|---|
-| middleware app | helmet, cookie, rate limit, CSRF, auth, ruoli, project scope, error handler | ordine middleware obbligatorio |
-| route modules | auth, users, clients, projects, tasks, documents, messages, credentials, appointments, marketing, leads, AI, audit | input Zod; audit sulle mutazioni |
-| `SecretBox` | cifra credenziali cliente | AES-256-GCM; reveal solo admin |
-| `serialize` / `HttpError` | output e errori uniformi | mai restituire segreti/hash |
-| migration/admin scripts | DB e bootstrap admin | CLI, mai DDL via HTTP |
+| Area | Responsabilità verificata |
+|---|---|
+| Web shell/landing | Bootstrap, contenuti pubblici, sezioni e navigazione |
+| Web admin/portal | Gestione interna e flussi cliente con DTO dedicati |
+| API middleware/routes | Autenticazione, autorizzazione, validazione, audit e servizi applicativi |
+| `SecretBox` | Cifratura e rivelazione controllata delle credenziali cliente |
+| `packages/shared` | Tipi, catalogo dominio, DTO e schemi Zod |
+| Utility 3D | Scene/rig/animazioni della landing e del caveau, con caricamento differito |
 
-## Shared
+## Interfaces And Protocols
 
-- `packages/shared/src/types.ts`: tipi e DTO condivisi.
-- `packages/shared/src/catalog.ts`: catalogo documenti, fasi e stati.
-- `packages/shared/src/schemas.ts`: schemi Zod per input API.
+La web app usa l’API HTTP/JSON. Gli endpoint n8n/lead e i provider di notifica sono integrazioni server-side; documentare i loro payload e segreti solo nei punti dedicati e senza valori segreti.
 
-## Asset e utility 3D
+## Dependencies And Relationships
 
-- `builder-scene.ts`, `builder-rig.ts`: scena, rig, pose, IK e animazioni.
-- `rig-builder.mjs`, `rig-partner.mjs`: generazione rig dei modelli GLB.
-- `particle-text.ts`: testo particellare decorativo.
-- `contacts.ts`, `projects.data.ts`, `textures.ts`, `audio.ts`: dati e asset della landing/caveau.
+I moduli web dipendono dai DTO e schemi condivisi; l’API dipende da `packages/shared`, Drizzle e PostgreSQL. I moduli 3D dipendono dalle utility e dagli asset del frontend.
 
-## Vincoli di integrazione
+## Procedures
 
-- La scena 3D non deve bloccare contenuto o reduced motion.
-- Lo stato locale resta vicino alla feature; niente stato globale senza necessità.
-- Le chiamate web usano i servizi core; le conferme non usano API browser native.
-- Il browser non importa Zod direttamente: il contratto viene applicato lato API/shared secondo la configurazione workspace.
+Quando si aggiunge o sposta un modulo, verificare l’effettivo package, route, responsabilità e test; aggiornare il relativo documento, la wiki index e il log. Non inferire il comportamento del portale dai modelli admin o viceversa.

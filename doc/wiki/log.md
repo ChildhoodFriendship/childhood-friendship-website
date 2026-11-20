@@ -114,3 +114,9 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Portale: card Documenti/Pagamenti ridisegnate per mobile; riepilogo "non è un documento fiscale"; tolti W-8BEN-E, P.IVA e indirizzo inventati, IVA 22%, pagamento simulato e stati in `localStorage`; obiettivi, prodotti e fasi ora dai dati del progetto (descrizione, preventivo, checklist) invece di contenuti fissi.
 - Admin: preventivo con valuta e totali forfettari; nuova card «Contratto, incassi e fatture».
 - Verifica: `npm run check`, `npm run test` (64/64), `npm run build`, `npm run e2e` (6/6).
+
+## 2026-11-20 — docs — standardizzazione guida superproject
+
+- Aggiunta la schema documentale alla root e riorganizzate overview/aree della wiki sotto `doc/wiki/`.
+- Conservati come documenti di supporto gli snapshot di stato, la pagina compliance e il log storico.
+- Non sono stati eseguiti build, test, deployment o verifiche provider in questo aggiornamento documentale.

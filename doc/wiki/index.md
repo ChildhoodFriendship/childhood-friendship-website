@@ -1,21 +1,27 @@
-# Wiki del progetto
+# Wiki del superproject Childhood Friendship
 
-Mappa compatta della documentazione di `childhood-friendship-website`.
+Mappa della documentazione di `childhood-friendship-website`. La schema normativa è alla root del repository.
 
-## Orientamento
+## Progetto
 
-1. [Schema](SCHEMA.md) — modello della wiki e architettura dati.
-2. [Guida agenti](agent-guide.md) — regole operative e gate di verifica.
-3. [Stato corrente](current-status.md) — verifiche, milestone aperti e limiti.
-4. [Log](log.md) — decisioni e modifiche rilevanti.
+- [Panoramica del superproject](overview.md)
+- [Schema della documentazione](../../SCHEMA.md)
+- [README del repository](../../README.md)
+- [Istruzioni per agenti e contributor](../../AGENTS.md)
 
 ## Aree
 
-- [Catalogo componenti e moduli](modules/component-catalog.md) — componenti Angular, servizi, API e utility.
-- [Progetto Childhood Friendship](projects/childhood-friendship-website.md) — scopo, workspace, configurazione e integrazioni.
-- [Conformità fiscale e privacy](compliance.md) — profilo aziendale, pagamenti e fatture, Neon in UE, fornitori (DPA).
-- [Bug tracciati](bugs/.gitkeep) — nessuna scheda attiva al momento.
+- [Architettura del superproject](architecture/overview.md)
+  - [Architettura di sistema](architecture/system-architecture.md)
+- [Moduli applicativi](modules/overview.md)
+  - [Catalogo componenti](modules/component-catalog.md)
+- [Contesto del progetto](projects/overview.md)
+  - [Childhood Friendship](projects/childhood-friendship-website.md)
 
-## Manutenzione
+## Documenti di supporto
 
-Ogni pagina nuova deve essere collegata qui; ogni modifica sostanziale deve aggiungere una voce sintetica a [log.md](log.md). Non conservare segreti o dettagli temporanei.
+- [Stato corrente](current-status.md) — snapshot datato, da riconfermare prima di interventi esterni.
+- [Conformità fiscale e privacy](compliance.md) — guida operativa, non attestazione di conformità.
+- [Guida operativa agenti](agent-guide.md)
+- [Log](log.md)
+- [Bug tracciati](bugs/.gitkeep)

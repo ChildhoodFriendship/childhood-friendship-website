@@ -1,45 +1,39 @@
-# Childhood Friendship
+---
+title: "Childhood Friendship"
+status: active
+role: application
+source:
+  references:
+    - part: configuration
+      path: package.json
+    - part: configuration
+      path: apps/web/package.json
+    - part: configuration
+      path: apps/api/package.json
+---
 
-## Scopo
+## Short Description
 
-Piattaforma software di Childhood Friendship: sito pubblico commerciale, area admin per clienti/progetti/documenti/marketing e portale clienti. Il form pubblico alimenta i lead interni.
+Childhood Friendship è la piattaforma software del superproject, con sito pubblico, area team/admin e portale clienti.
 
-## Configurazione
+## Description
 
-| Area | Configurazione |
-|---|---|
-| Workspace | npm workspaces `apps/*`, `packages/*` |
-| Web | `apps/web`, Angular standalone; dev `npm run dev:web` |
-| API | `apps/api`, Express/Drizzle; dev `npm run dev:api` |
-| Shared | `packages/shared` per tipi, catalogo e schemi |
-| Locale | Node ≥22, PGlite in `apps/api/.data`, proxy web → API |
-| Produzione prevista | Vercel + Postgres/Neon |
+La repository contiene workspace npm, web app Angular standalone, API Express/Drizzle e package shared. Il contesto registrato nel README include landing pubblica, admin e portale clienti. Le configurazioni e le verifiche provider/deploy sono datate e non sostituiscono un controllo live.
 
-Comandi principali: `npm run check`, `npm run test`, `npm run build`, `npm run db:generate`, `npm run db:migrate`, `npm run admin:create`.
+## Functional Characteristics
 
-## Route e integrazioni
+- Shows contenuti pubblici e aree applicative distinte per team e clienti.
+- Manages progetti, documenti, lead e workflow associati tramite API e UI secondo il codice documentato.
+- Validates dati d’ingresso attraverso schemi condivisi.
 
-- `/`: landing con form lead, portfolio e scena 3D.
-- `/login`, `/invito/:token`: autenticazione e inviti.
-- `/admin/**`: area team/admin.
-- `/portale/**`: area clienti.
-- `/caveau`: ambiente 3D separato.
-- `POST /api/public/leads`: endpoint pubblico del form.
-- Le altre API sono autenticate; le mutazioni usano CSRF.
-- Provider AI configurabile (Gemini o compatibile OpenAI); non salvare chiavi nella wiki.
+## Interfaces And Protocols
 
-## Flusso locale minimo
+La web app comunica con l’API server-side. Gli endpoint, i dati visibili a ciascun ruolo e i provider attivi devono essere verificati in sorgente e nel target operativo.
 
-1. `npm ci`.
-2. Copiare `apps/api/.env.example` in `.env` e compilare i segreti localmente.
-3. Avviare API e web con gli script workspace.
-4. Eseguire check, test e build prima dell'handoff.
-5. Per lo schema: modificare `apps/api/src/db/schema.ts`, generare una migrazione e verificarla.
+## Dependencies And Relationships
 
-## Peculiarità
+Il progetto dipende da Angular, Express, Drizzle, PostgreSQL e dai pacchetti shared. Per dati aziendali, pagamenti, privacy e fornitori usare [compliance.md](../compliance.md), senza interpretarlo come parere o attestazione legale.
 
-- Il client non vede credenziali, marketing, versioni documento, documenti non pubblici o audit.
-- Il documento usa versioning ottimistico e approvazione cliente.
-- Gli account nascono da invito; l'admin si crea solo da CLI.
-- Hosting, dominio, cloud e infrastruttura non sono dati da hardcodare nel frontend o nella wiki.
-- La build non sostituisce verifica browser, mobile, accessibilità o provider esterni.
+## Procedures
+
+Per avvio e comandi verificare il [README](../../../README.md); per stato datato di provider e deploy consultare [current-status.md](../current-status.md) e riverificare prima di operare.

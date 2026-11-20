@@ -9,7 +9,7 @@ Monorepo con sito pubblico, area admin per la gestione dei progetti e portale cl
 | `apps/web` | Angular 22: landing (`/`), area admin (`/admin`), portale clienti (`/portale`) |
 | `apps/api` | API Express 5 + Drizzle ORM su Postgres (Neon) — auth, progetti, documenti, marketing, AI |
 | `packages/shared` | Catalogo del dominio, schemi Zod e DTO condivisi |
-| `doc/wiki` | Fonte di verità per regole, architettura, decisioni e stato (vedi `Agents.md`) |
+| `doc/wiki` | Wiki documentale del superproject; navigazione in `doc/wiki/index.md` |
 
 ## Avvio rapido
 
@@ -34,3 +34,5 @@ Accedi da `http://localhost:4200/login`. I clienti e i colleghi entrano solo tra
 | `npm run db:migrate` | Applica le migrazioni al `DATABASE_URL` configurato |
 
 Deploy, variabili d'ambiente e procedure operative: `doc/wiki/current-status.md`.
+
+Istruzioni per il repository: [`AGENTS.md`](AGENTS.md). Schema editoriale wiki: [`SCHEMA.md`](SCHEMA.md). Panoramica del superproject: [`doc/wiki/overview.md`](doc/wiki/overview.md).
