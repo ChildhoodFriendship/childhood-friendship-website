@@ -97,7 +97,9 @@ const jsonld = {
     { '@type': 'WebSite', '@id': `${SITE}/#site`, url: `${SITE}/`, name: COMPANY.brand, inLanguage: 'it-IT', publisher: { '@id': `${SITE}/#org` } }
   ]
 };
-const ldBlock = `<!-- SEO:JSONLD:START (generato da scripts/build-seo.mjs) -->\n  <script type="application/ld+json">\n${JSON.stringify(jsonld, null, 2)}\n  </script>\n  <!-- SEO:JSONLD:END -->`;
+// In fondo al body e minificato: così la head resta corta e il contenuto vero inizia presto nell'HTML
+// (alcuni strumenti AI leggono solo i primi KB del documento).
+const ldBlock = `<!-- SEO:JSONLD:START -->\n  <script type="application/ld+json">${JSON.stringify(jsonld)}</script>\n  <!-- SEO:JSONLD:END -->`;
 
 // ---------- contenuto statico dentro <cf-root> ----------
 const li = (arr) => `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
@@ -120,8 +122,8 @@ ${t.portfolio.projects.map((p) => `          <article><h3>${esc(p.name)} — ${e
     <!-- SEO:STATIC:END -->`;
 
 const headStyle = `<!-- SEO:STYLE:START -->
-  <style>.seo-static{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}</style>
-  <noscript><style>.seo-static{position:static;width:auto;height:auto;margin:0;padding:2rem;overflow:visible;clip:auto;white-space:normal;color:#fff;background:#120A26;font-family:system-ui,sans-serif;line-height:1.5}.seo-static a{color:#c4b5fd}</style></noscript>
+  <style>.seo-static{position:relative;box-sizing:border-box;height:100vh;overflow:hidden;padding:2rem;background:#120A26;color:#f4f0ff;font:16px/1.5 system-ui,sans-serif}.seo-static::after{content:"";position:absolute;inset:0;background:#120A26}.seo-static a{color:#c4b5fd}</style>
+  <noscript><style>.seo-static{height:auto;overflow:visible}.seo-static::after{display:none}</style></noscript>
   <link rel="alternate" type="text/plain" href="/llms-full.txt" title="Contenuto del sito in testo">
   <!-- SEO:STYLE:END -->`;
 
@@ -134,10 +136,17 @@ const swap = (name, block, fallbackRe, fallbackWrap) => {
   else if (fallbackRe.test(html)) html = html.replace(fallbackRe, () => fallbackWrap(block));
   else throw new Error(`index.html: punto di inserimento non trovato per ${name}`);
 };
-swap('JSONLD', ldBlock, /<script type="application\/ld\+json">[\s\S]*?<\/script>/, (b) => b);
+// il JSON-LD sta in fondo al body: rimuovo le vecchie posizioni (head o blocco marcato) e lo reinserisco prima di </body>
+html = html.replace(/\s*<!-- SEO:JSONLD:START[\s\S]*?<!-- SEO:JSONLD:END -->/, '').replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/, '');
+html = html.replace(/<\/body>/, () => `  ${ldBlock}\n</body>`);
 swap('STATIC', staticHtml, /<cf-root><\/cf-root>/, (b) => `<cf-root>\n    ${b}\n  </cf-root>`);
 swap('STYLE', headStyle, /<\/head>/, (b) => `  ${b}\n</head>`);
+// head snella: via keywords (obsoleto), twitter:* duplicati di Open Graph e commenti
+html = html.replace(/\s*<meta name="keywords"[^>]*>/, '').replace(/\s*<meta name="twitter:(title|description|image)"[^>]*>/g, '').replace(/\s*<!--(?! SEO:)[\s\S]*?-->/g, '');
 await writeFile(indexPath, html);
+const h1At = Buffer.byteLength(html.slice(0, html.indexOf('<h1>')));
+if (h1At > 4000) console.warn(`[seo] ATTENZIONE: il contenuto inizia al byte ${h1At} (>4000): gli strumenti che leggono solo l'inizio dell'HTML non lo vedrebbero`);
+else console.log(`[seo] il contenuto inizia al byte ${h1At}`);
 
 await writeFile(resolve(web, 'public/llms.txt'), llms);
 await writeFile(resolve(web, 'public/llms-full.txt'), llmsFull);
