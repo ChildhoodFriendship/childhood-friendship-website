@@ -114,3 +114,10 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Portale: card Documenti/Pagamenti ridisegnate per mobile; riepilogo "non è un documento fiscale"; tolti W-8BEN-E, P.IVA e indirizzo inventati, IVA 22%, pagamento simulato e stati in `localStorage`; obiettivi, prodotti e fasi ora dai dati del progetto (descrizione, preventivo, checklist) invece di contenuti fissi.
 - Admin: preventivo con valuta e totali forfettari; nuova card «Contratto, incassi e fatture».
 - Verifica: `npm run check`, `npm run test` (64/64), `npm run build`, `npm run e2e` (6/6).
+
+## 2026-10-31 — project — demo SDS Glass & Mirrors (lead USA)
+
+- Nuovo sito demo statico in `Desktop/sds-glass-mirrors` (IT/EN), repository GitHub **privato** `Lorenzozero/sds-glass-mirrors`; scheda in `projects/sds-glass-mirrors.md`.
+- Fuori dal monorepo: nessun codice, dipendenza o dato del database di questa piattaforma toccati.
+- Lead non ancora contattato; da confermare col titolare «preventivo gratuito», indirizzo e uso di nome/recensioni prima di qualsiasi pubblicazione.
+- Verifica: Lighthouse mobile (con dominio impostato) accessibilità 100, best practice 100, SEO 100, prestazioni 47.

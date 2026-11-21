@@ -9,6 +9,19 @@ if (typeof window !== 'undefined' && 'scrollRestoration' in history) {
   }
 }
 
+// iOS Safari ignora user-scalable=no: blocca il pizzico (gesture*) e il doppio tap per zoomare
+if (typeof document !== 'undefined') {
+  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(type, (event) => event.preventDefault(), { passive: false });
+  }
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (event) => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 300) event.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+}
+
 bootstrapApplication(AppComponent, appConfig).catch((error: unknown) => {
   console.error(error);
 });
