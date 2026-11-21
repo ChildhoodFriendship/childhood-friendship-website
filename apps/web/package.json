@@ -4,7 +4,10 @@
   "private": true,
   "scripts": {
     "start": "ng serve --proxy-config proxy.conf.json",
+    "seo": "node scripts/build-seo.mjs",
+    "prebuild": "node scripts/build-seo.mjs",
     "build": "ng build",
+    "precheck": "node scripts/build-seo.mjs",
     "check": "ng build --configuration development"
   },
   "dependencies": {

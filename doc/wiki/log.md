@@ -120,3 +120,10 @@ Formato: `## YYYY-MM-DD — tipo — oggetto`. Il log è append-only.
 - Aggiunta la schema documentale alla root e riorganizzate overview/aree della wiki sotto `doc/wiki/`.
 - Conservati come documenti di supporto gli snapshot di stato, la pagina compliance e il log storico.
 - Non sono stati eseguiti build, test, deployment o verifiche provider in questo aggiornamento documentale.
+
+## 2026-10-31 — project — demo SDS Glass & Mirrors (lead USA)
+
+- Nuovo sito demo statico in `Desktop/sds-glass-mirrors` (IT/EN), repository GitHub **privato** `Lorenzozero/sds-glass-mirrors`; scheda in `projects/sds-glass-mirrors.md`.
+- Fuori dal monorepo: nessun codice, dipendenza o dato del database di questa piattaforma toccati.
+- Lead non ancora contattato; da confermare col titolare «preventivo gratuito», indirizzo e uso di nome/recensioni prima di qualsiasi pubblicazione.
+- Verifica: Lighthouse mobile (con dominio impostato) accessibilità 100, best practice 100, SEO 100, prestazioni 47.

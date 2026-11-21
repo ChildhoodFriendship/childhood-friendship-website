@@ -16,7 +16,23 @@
       "destination": "/api/index.mjs"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/(caveau|privacy|cookie|login|registrati|register)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/invito/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/reset-password/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/portale/:path*",
       "destination": "/index.html"
     }
   ],
@@ -73,6 +89,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Link",
+          "value": "</llms.txt>; rel=\"alternate\"; type=\"text/plain\"; title=\"Indice per LLM\", </llms-full.txt>; rel=\"alternate\"; type=\"text/plain\"; title=\"Contenuto completo in testo\""
         }
       ]
     }

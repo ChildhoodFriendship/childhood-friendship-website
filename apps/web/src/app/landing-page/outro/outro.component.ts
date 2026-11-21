@@ -55,7 +55,7 @@ import { PortalI18nService } from '../../core/portal-i18n.service';
     .veil { position: absolute; inset: 0; background: #7C3AED; opacity: 0; pointer-events: none; z-index: 2; }
     @media (max-width: 899px) {
       .stage { margin-top: -38vh; }
-      .social { top: 5rem; right: 1rem; gap: .5rem; }
+      .social { top: 5rem; left: 0; right: 0; justify-content: center; gap: .75rem; }
       .ico { width: 2.75rem; height: 2.75rem; border-radius: 14px; }
       .ico svg { width: 1.25rem; height: 1.25rem; }
     }

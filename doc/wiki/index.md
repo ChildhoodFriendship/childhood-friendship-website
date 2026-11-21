@@ -17,6 +17,7 @@ Mappa della documentazione di `childhood-friendship-website`. La schema normativ
   - [Catalogo componenti](modules/component-catalog.md)
 - [Contesto del progetto](projects/overview.md)
   - [Childhood Friendship](projects/childhood-friendship-website.md)
+  - [Demo SDS Glass & Mirrors](projects/sds-glass-mirrors.md) — sito demo per un lead USA (repository privato), stato e punti aperti.
 
 ## Documenti di supporto
 
