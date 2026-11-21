@@ -1,0 +1,26 @@
+# Childhood Friendship
+
+> Studio di sviluppo software con base a Padova (Veneto), attivo in tutta Italia: siti web e landing page, web app e gestionali, app mobile iOS e Android, cura e crescita dopo il lancio.
+
+Prezzi indicativi (sempre "da"; il preventivo definitivo arriva con il prototipo). Hosting, dominio e cloud sono esclusi e restano intestati al cliente.
+
+## Servizi
+
+- [Siti web e landing page](https://childhood-friendship-website-pi.vercel.app/#servizi): da 400 €. Il primo incontro con il tuo brand. Deve lasciare il segno.
+- [Web app](https://childhood-friendship-website-pi.vercel.app/#servizi): da 800 €. Gestionali, portali e piattaforme costruiti sui tuoi processi.
+- [App mobile](https://childhood-friendship-website-pi.vercel.app/#servizi): da 1.200 €. Nella tasca dei tuoi clienti, sempre pronta.
+- [Cura e crescita](https://childhood-friendship-website-pi.vercel.app/#servizi): da 20 € / mese. Il lancio è l'inizio. Restiamo.
+
+## Il sito
+
+- [Contenuto completo del sito in testo](https://childhood-friendship-website-pi.vercel.app/llms-full.txt): servizi, prezzi, metodo, portfolio, contatti
+- [Chi siamo](https://childhood-friendship-website-pi.vercel.app/#chi-siamo): Siamo amici da quando eravamo bambini. Abbiamo imparato a costruire cose insieme molto prima che diventasse un mestiere, e quel modo di lavorare non l'abbiamo più cambiato.
+- [Il metodo](https://childhood-friendship-website-pi.vercel.app/#metodo): Ascoltiamo → Progettiamo → Costruiamo → Restiamo
+- [Portfolio](https://childhood-friendship-website-pi.vercel.app/#progetti): Gelateria da Cristian, Sissy HairStyle, SickFitPro, Abeona, Presenze NFC, Area clienti CF
+- [Contatti](https://childhood-friendship-website-pi.vercel.app/#contatti): quiz di 6 domande oppure childhood.friendship.official@gmail.com
+
+## Legale
+
+- [Privacy](https://childhood-friendship-website-pi.vercel.app/privacy)
+- [Cookie](https://childhood-friendship-website-pi.vercel.app/cookie)
+- Ditta individuale di Lorenzo Garoffolo, Padova (PD) · P.IVA in fase di attribuzione · regime forfettario

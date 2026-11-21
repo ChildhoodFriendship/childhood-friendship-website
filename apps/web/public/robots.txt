@@ -4,4 +4,72 @@ Disallow: /admin/
 Disallow: /portale/
 Disallow: /api/
 
+# Crawler di assistenti AI: ammessi sul contenuto pubblico (stessi divieti dell'area riservata)
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+User-agent: CCBot
+Allow: /
+Disallow: /admin/
+Disallow: /portale/
+Disallow: /api/
+
+# Indice testuale per LLM: https://childhood-friendship-website-pi.vercel.app/llms.txt
 Sitemap: https://childhood-friendship-website-pi.vercel.app/sitemap.xml
